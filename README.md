@@ -355,16 +355,14 @@ This allows you to immediately explore all features without creating accounts or
 ### Test Credentials
 
 **Admin Account:**
-- Email: `admin@example.com`
-- Password: `password`
+- Email: `admin@cookhub.com`
+- Password: `admin`
 
 **Sample User Accounts:**
-- Email: `john@example.com` - Regular user
-- Email: `maria@example.com` - Contributor
-- Email: `tom@example.com` - Regular user
-- Email: `amy@example.com` - Contributor
-
-All sample accounts use `password` as the password.
+- Email: `user@cookhub.com` - Password: `user` - Regular user (John Doe)
+- Email: `maria@cookhub.com` - Password: `maria123` - Regular user (Maria Garcia)
+- Email: `tom@cookhub.com` - Password: `tom123` - Regular user (Tom Baker)
+- Email: `amy@cookhub.com` - Password: `amy123` - Regular user (Amy Wilson)
 
 ---
 
@@ -375,12 +373,6 @@ All sample accounts use `password` as the password.
 - Implement HTTPS for all communications
 - Add proper input validation and sanitization
 - Use secure cookie handling for session management
-
----
-
-## 📝 License
-
-This project is part of the CSX3006 coursework at Assumption University.
 
 ---
 
