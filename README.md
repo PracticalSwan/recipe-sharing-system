@@ -4,18 +4,20 @@ A collaborative web application that enables users to share, discover, and inter
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
-- [User Roles & Functions](#user-roles--functions)
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [System Architecture](#️-system-architecture)
+- [User Roles & Functions](#-user-roles--functions)
   - [Admin Dashboard](#admin-dashboard)
   - [Contributor Module](#contributor-module)
   - [User Module](#user-module)
-- [Installation & Setup](#installation--setup)
-- [Available Scripts](#available-scripts)
-- [Project Structure](#project-structure)
-- [Technologies Used](#technologies-used)
-- [Data Storage](#data-storage)
+- [Installation & Setup](#-installation--setup)
+- [Available Scripts](#-available-scripts)
+- [Project Structure](#-project-structure)
+- [Technologies Used](#️-technologies-used)
+- [Data Storage](#-data-storage)
+- [Security Considerations](#-security-considerations)
+- [Support](#-support)
 
 ## 🎯 Overview
 
