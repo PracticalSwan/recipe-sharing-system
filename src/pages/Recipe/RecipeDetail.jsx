@@ -1,0 +1,307 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { storage } from '../../lib/storage';
+import { useAuth } from '../../context/AuthContext';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Card, CardContent } from '../../components/ui/Card';
+import { Modal } from '../../components/ui/Modal';
+import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit } from 'lucide-react';
+
+export function RecipeDetail() {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const [recipe, setRecipe] = useState(null);
+    const [author, setAuthor] = useState(null);
+    const [reviews, setReviews] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [rating, setRating] = useState(5);
+    const [isLiked, setIsLiked] = useState(false);
+    const [isFavorited, setIsFavorited] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+    const [viewCount, setViewCount] = useState(0);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+    useEffect(() => {
+        const recipes = storage.getRecipes();
+        const found = recipes.find(r => r.id === id);
+        if (!found) {
+            navigate('/');
+            return;
+        }
+        setRecipe(found);
+
+        const users = storage.getUsers();
+        setAuthor(users.find(u => u.id === found.authorId));
+
+        setReviews(storage.getReviews(id));
+
+        // Record view (only once per user)
+        if (user) {
+            const newViewCount = storage.recordView(user.id, id);
+            setViewCount(newViewCount);
+            setIsLiked(storage.hasUserLiked(user.id, id));
+            setIsFavorited(storage.hasUserFavorited(user.id, id));
+        } else {
+            setViewCount(found.viewedBy?.length || 0);
+        }
+        setLikeCount(found.likedBy?.length || 0);
+    }, [id, navigate, user]);
+
+    const handleToggleLike = () => {
+        if (!user) return;
+        const result = storage.toggleLike(user.id, id);
+        setIsLiked(result.liked);
+        setLikeCount(result.count);
+    };
+
+    const handleToggleFavorite = () => {
+        if (!user) return;
+        const nowFavorited = storage.toggleFavorite(user.id, id);
+        setIsFavorited(nowFavorited);
+        window.dispatchEvent(new CustomEvent('favoriteToggled'));
+    };
+
+    const handleSubmitReview = (e) => {
+        e.preventDefault();
+        if (!newComment.trim()) return;
+
+        storage.addReview({
+            recipeId: id,
+            userId: user.id,
+            username: user.username,
+            avatar: user.avatar,
+            rating,
+            comment: newComment
+        });
+
+        setReviews(storage.getReviews(id));
+        setNewComment('');
+    };
+
+    const handleDeleteReview = (reviewId) => {
+        if (window.confirm('Are you sure you want to delete your review?')) {
+            storage.deleteReview(reviewId);
+            setReviews(storage.getReviews(id));
+        }
+    };
+
+    const handleEditRecipe = () => {
+        navigate(`/recipes/edit/${id}`);
+    };
+
+    const handleDeleteRecipe = () => {
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const confirmDeleteRecipe = () => {
+        storage.deleteRecipe(id);
+        window.dispatchEvent(new CustomEvent('recipeUpdated'));
+        setIsDeleteConfirmOpen(false);
+        navigate('/profile?tab=recipes');
+    };
+
+    const isOwner = user && recipe?.authorId === user.id;
+
+    if (!recipe) return <div className="p-10 text-center">Loading...</div>;
+
+    return (
+        <div className="max-w-4xl mx-auto space-y-6 animate-page-in">
+            <Button variant="ghost" className="mb-2 pl-0 hover:bg-transparent hover:text-cool-gray-90" onClick={() => navigate(-1)}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            </Button>
+
+            {/* Header */}
+            <div className="flex flex-col md:flex-row gap-6">
+                {/* Smaller Image */}
+                <div className="w-full md:w-2/5 aspect-[4/3] max-h-[280px] overflow-hidden rounded-xl bg-cool-gray-10 flex-shrink-0">
+                    <img src={recipe.images?.[0]} alt={recipe.title} className="h-full w-full object-cover" />
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 space-y-3">
+                    <div className="flex justify-between items-start">
+                        <Badge>{recipe.category}</Badge>
+                        <span className="text-sm text-cool-gray-60 shrink-0">
+                            {new Date(recipe.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </span>
+                    </div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-cool-gray-90">{recipe.title}</h1>
+
+                    <div className="flex items-center gap-4 text-sm text-cool-gray-60">
+                        <Link to={`/users/${author?.id}`} className="flex items-center gap-2 group">
+                            <img src={author?.avatar || 'https://via.placeholder.com/32'} className="h-7 w-7 rounded-full" alt="" />
+                            <span className="font-medium text-cool-gray-90 group-hover:underline">{author?.username || 'Unknown'}</span>
+                        </Link>
+                        <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>{recipe.prepTime + recipe.cookTime} min</span>
+                        </div>
+                    </div>
+
+                    <p className="text-sm text-cool-gray-60 leading-relaxed line-clamp-3">
+                        {recipe.description}
+                    </p>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3 pt-2 flex-wrap">
+                        <Button
+                            variant={isLiked ? 'primary' : 'outline'}
+                            size="sm"
+                            onClick={handleToggleLike}
+                            className="gap-1.5"
+                        >
+                            <Heart className={`h-4 w-4 ${isLiked ? 'fill-white' : ''}`} />
+                            {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+                        </Button>
+                        <Button
+                            variant={isFavorited ? 'primary' : 'outline'}
+                            size="sm"
+                            onClick={handleToggleFavorite}
+                            className="gap-1.5"
+                        >
+                            <Bookmark className={`h-4 w-4 ${isFavorited ? 'fill-white' : ''}`} />
+                            {isFavorited ? 'Saved' : 'Save'}
+                        </Button>
+                        
+                        {/* Edit/Delete buttons for recipe owner */}
+                        {isOwner && (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleEditRecipe}
+                                    className="gap-1.5"
+                                >
+                                    <Edit className="h-4 w-4" />
+                                    Edit
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDeleteRecipe}
+                                    className="gap-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete
+                                </Button>
+                            </>
+                        )}
+                        
+                        <div className="flex items-center gap-1 text-sm text-cool-gray-60 ml-auto">
+                            <Eye className="h-4 w-4" />
+                            <span>{viewCount} views</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content Grid */}
+            <div className="grid md:grid-cols-[1fr_2fr] gap-6">
+                {/* Ingredients */}
+                <Card>
+                    <CardContent className="p-5">
+                        <h3 className="text-lg font-bold mb-3">Ingredients</h3>
+                        <ul className="space-y-2">
+                            {recipe.ingredients.map((ing, i) => (
+                                <li key={i} className="flex justify-between items-center text-sm border-b border-cool-gray-10 pb-1.5 last:border-0">
+                                    <span className="font-medium text-cool-gray-90">{ing.name}</span>
+                                    <span className="text-cool-gray-60">{ing.quantity} {ing.unit}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </CardContent>
+                </Card>
+
+                {/* Instructions */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold">Instructions</h3>
+                    <div className="space-y-3">
+                        {recipe.instructions.map((step, i) => (
+                            <div key={i} className="flex gap-3">
+                                <div className="flex-none flex items-center justify-center w-7 h-7 rounded-full bg-cool-gray-20 text-cool-gray-90 font-bold text-xs">
+                                    {i + 1}
+                                </div>
+                                <p className="text-cool-gray-60 text-sm pt-0.5">{step}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Reviews Section */}
+            <div className="pt-6 border-t border-cool-gray-20">
+                <h3 className="text-xl font-bold mb-4">Reviews ({reviews.length})</h3>
+
+                {/* Comment Form */}
+                <div className="mb-6 flex gap-3">
+                    <img src={user?.avatar} className="h-9 w-9 rounded-full" alt="" />
+                    <form onSubmit={handleSubmitReview} className="flex-1 space-y-2">
+                        <textarea
+                            className="w-full rounded-lg border border-cool-gray-30 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90"
+                            placeholder="Share your thoughts..."
+                            rows={2}
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                        />
+                        <div className="flex justify-between items-center">
+                            <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <button key={star} type="button" onClick={() => setRating(star)} className={`text-lg cursor-pointer ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}>★</button>
+                                ))}
+                            </div>
+                            <Button type="submit" size="sm" disabled={!newComment.trim()}>Post</Button>
+                        </div>
+                    </form>
+                </div>
+
+                {/* Review List */}
+                <div className="space-y-4">
+                    {reviews.map(review => (
+                        <div key={review.id} className="flex gap-3 group">
+                            <img src={review.avatar || 'https://via.placeholder.com/36'} className="h-9 w-9 rounded-full" alt="" />
+                            <div className="flex-1 space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                    <Link to={`/users/${review.userId}`} className="font-semibold text-cool-gray-90 text-sm hover:underline">{review.username}</Link>
+                                    <div className="flex text-yellow-500 text-xs">
+                                        {'★'.repeat(review.rating)}
+                                    </div>
+                                    <span className="text-[10px] text-cool-gray-30">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                    {/* Delete button - only visible to review author */}
+                                    {user && user.id === review.userId && (
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 ml-auto opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                                            onClick={() => handleDeleteReview(review.id)}
+                                            title="Delete Review"
+                                        >
+                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                        </Button>
+                                    )}
+                                </div>
+                                <p className="text-cool-gray-60 text-sm">{review.comment}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Delete Confirmation Modal */}
+            <Modal 
+                isOpen={isDeleteConfirmOpen} 
+                onClose={() => setIsDeleteConfirmOpen(false)}
+                title="Delete Recipe"
+            >
+                <div className="space-y-4">
+                    <p className="text-cool-gray-60">Are you sure you want to delete this recipe? This action cannot be undone.</p>
+                    <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
+                        <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={confirmDeleteRecipe}>Delete Recipe</Button>
+                    </div>
+                </div>
+            </Modal>
+        </div>
+    );
+}

@@ -1,0 +1,10 @@
+export function Login() { return <div>Login Page</div>; }
+export function Signup() { return <div>Signup Page</div>; }
+export function Home() { return <div>Home Feed</div>; }
+export function RecipeDetail() { return <div>Recipe Detail</div>; }
+export function CreateRecipe() { return <div>Create Recipe</div>; }
+export function Profile() { return <div>User Profile</div>; }
+export function AdminStats() { return <div>Admin Dashboard</div>; }
+export function UserList() { return <div>User Management</div>; }
+export function AdminRecipes() { return <div>Admin Recipes</div>; }
+export function Search() { return <div>Search Page</div>; }
