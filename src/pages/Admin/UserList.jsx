@@ -1,37 +1,86 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useReducer } from 'react';
 import { storage } from '../../lib/storage';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
-import { Search, Trash2, Shield, Ban, CheckCircle } from 'lucide-react';
+import { Search, Trash2, Ban, ShieldCheck } from 'lucide-react';
+
+// Session timeout in milliseconds (5 minutes)
+const SESSION_TIMEOUT = 5 * 60 * 1000;
+
+// Reducer to force re-render for time updates
+const forceUpdateReducer = (x) => x + 1;
 
 export function UserList() {
-    const [users, setUsers] = useState([]);
+    const [users, setUsers] = useState(() => storage.getUsers());
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
+    const [deleteId, setDeleteId] = useState(null);
+    const [, forceUpdate] = useReducer(forceUpdateReducer, 0);
 
+    // Refresh periodically to update online status display
     useEffect(() => {
-        loadUsers();
+        const interval = setInterval(() => {
+            forceUpdate();
+        }, 30000);
+        return () => clearInterval(interval);
     }, []);
 
-    const loadUsers = () => {
+    const refreshUsers = () => {
         setUsers(storage.getUsers());
+    };
+
+    // Check if user was active within the session timeout (session-based activity)
+    const isUserOnline = (user) => {
+        if (!user.lastActive) return false;
+        const lastActiveTime = new Date(user.lastActive).getTime();
+        const now = new Date().getTime();
+        return (now - lastActiveTime) < SESSION_TIMEOUT;
+    };
+
+    // Derive display status: 'active' if online session, otherwise use stored status or 'inactive'
+    const getDisplayStatus = (user) => {
+        if (user.status === 'suspended') return 'suspended';
+        if (user.status === 'pending') return 'pending';
+        return isUserOnline(user) ? 'active' : 'inactive';
     };
 
     const handleStatusChange = (userId, newStatus) => {
         const user = users.find(u => u.id === userId);
         if (user) {
             storage.saveUser({ ...user, status: newStatus });
-            loadUsers();
+            const adminName = storage.getCurrentUser()?.username || 'Admin';
+            const actionLabel = newStatus === 'active' ? 'approved' : newStatus === 'suspended' ? 'suspended' : 'updated';
+            storage.addActivity({
+                type: 'admin-user',
+                text: `${adminName} ${actionLabel} ${user.username}`
+            });
+            refreshUsers();
+            window.dispatchEvent(new CustomEvent('userUpdated'));
+            window.dispatchEvent(new CustomEvent('statsUpdated'));
         }
     };
 
     const handleDelete = (userId) => {
-        // In real app, confirm first. For prototype, just delete from array logic (not fully implemented in storage.js, assume soft delete usually)
-        // But let's implement status 'deleted' or actually filter them out.
-        // For now, toggle status to 'banned' is safer than delete.
-        handleStatusChange(userId, 'banned');
+        setDeleteId(userId);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            const userToDelete = users.find(u => u.id === deleteId);
+            storage.deleteUser(deleteId);
+            const adminName = storage.getCurrentUser()?.username || 'Admin';
+            if (userToDelete) {
+                storage.addActivity({
+                    type: 'admin-user',
+                    text: `${adminName} removed ${userToDelete.username}`
+                });
+            }
+            refreshUsers();
+            setDeleteId(null);
+        }
     };
 
     const filteredUsers = users.filter(user => {
@@ -43,12 +92,9 @@ export function UserList() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-cool-gray-90">User Management</h1>
-                    <p className="text-cool-gray-60">Manage user accounts and permissions.</p>
-                </div>
-                <Button>Add User (Demo)</Button>
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-cool-gray-90">User Management</h1>
+                <p className="text-cool-gray-60">Manage user accounts and permissions.</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -76,12 +122,13 @@ export function UserList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>User</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Joined</TableHead>
-                            <TableHead>Last Active</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="w-[180px]">User</TableHead>
+                            <TableHead className="w-[200px]">Email</TableHead>
+                            <TableHead className="w-[100px]">Role</TableHead>
+                            <TableHead className="w-[140px]">Status</TableHead>
+                            <TableHead className="w-[120px]">Joined</TableHead>
+                            <TableHead className="w-[180px]">Last Active</TableHead>
+                            <TableHead className="w-[140px] text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -90,11 +137,11 @@ export function UserList() {
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <img src={user.avatar} className="h-8 w-8 rounded-full" alt="" />
-                                        <div>
-                                            <div className="font-medium">{user.username}</div>
-                                            <div className="text-xs text-cool-gray-60">{user.email}</div>
-                                        </div>
+                                        <div className="font-medium">{user.username}</div>
                                     </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="text-sm text-cool-gray-60">{user.email}</div>
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant={user.role === 'admin' ? 'default' : 'outline'}>
@@ -102,24 +149,38 @@ export function UserList() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant={user.status === 'active' ? 'success' : user.status === 'banned' ? 'error' : 'warning'}>
-                                        {user.status}
-                                    </Badge>
+                                    {(() => {
+                                        const displayStatus = getDisplayStatus(user);
+                                        return (
+                                            <Badge variant={displayStatus === 'active' ? 'success' : displayStatus === 'suspended' ? 'error' : displayStatus === 'pending' ? 'warning' : 'outline'}>
+                                                {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
+                                            </Badge>
+                                        );
+                                    })()}
                                 </TableCell>
                                 <TableCell>{new Date(user.joinedDate).toLocaleDateString()}</TableCell>
-                                <TableCell>{user.lastActive ? new Date(user.lastActive).toLocaleDateString() : 'Never'}</TableCell>
+                                <TableCell>{user.lastActive ? new Date(user.lastActive).toLocaleString() : 'Never'}</TableCell>
                                 <TableCell className="text-right">
-                                    <div className="flex justify-end gap-2">
-                                        {user.status === 'active' ? (
-                                            <Button size="icon" variant="ghost" title="Deactivate" onClick={() => handleStatusChange(user.id, 'deactivated')}>
-                                                <Ban className="h-4 w-4 text-orange-500" />
-                                            </Button>
-                                        ) : (
-                                            <Button size="icon" variant="ghost" title="Activate" onClick={() => handleStatusChange(user.id, 'active')}>
-                                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                            </Button>
-                                        )}
-                                        <Button size="icon" variant="ghost" title="Delete/Ban" onClick={() => handleDelete(user.id)}>
+                                    <div className="flex justify-end gap-1">
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            title="Approve"
+                                            onClick={() => handleStatusChange(user.id, 'active')}
+                                            disabled={user.status === 'active' || user.status === 'inactive'}
+                                        >
+                                            <ShieldCheck className={`h-4 w-4 ${(user.status === 'active' || user.status === 'inactive') ? 'text-cool-gray-30' : 'text-green-500'}`} />
+                                        </Button>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            title="Suspend"
+                                            onClick={() => handleStatusChange(user.id, 'suspended')}
+                                            disabled={user.status === 'suspended'}
+                                        >
+                                            <Ban className={`h-4 w-4 ${user.status === 'suspended' ? 'text-cool-gray-30' : 'text-red-500'}`} />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" title="Delete User" onClick={() => handleDelete(user.id)}>
                                             <Trash2 className="h-4 w-4 text-red-500" />
                                         </Button>
                                     </div>
@@ -129,6 +190,20 @@ export function UserList() {
                     </TableBody>
                 </Table>
             </div>
+
+            <Modal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                title="Delete User"
+            >
+                <div className="space-y-4">
+                    <p className="text-cool-gray-60">Are you sure you want to delete this user? This action cannot be undone.</p>
+                    <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+                        <Button variant="danger" onClick={confirmDelete} className="bg-red-500 hover:bg-red-600 focus:ring-red-500">Delete User</Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

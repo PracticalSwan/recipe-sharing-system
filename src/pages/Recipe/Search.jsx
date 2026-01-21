@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { storage } from '../../lib/storage';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Search as SearchIcon, X } from 'lucide-react';
+import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
 
 export function Search() {
     const [searchParams, setSearchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
 
-    const [recipes, setRecipes] = useState([]);
-    const [filteredRecipes, setFilteredRecipes] = useState([]);
+    const [recipes, setRecipes] = useState(() => storage.getRecipes().filter(r => r.status === 'published'));
 
     const [filters, setFilters] = useState({
         keyword: query,
@@ -22,15 +22,26 @@ export function Search() {
 
     useEffect(() => {
         // Sync filters with URL query initially
-        if (query) setFilters(prev => ({ ...prev, keyword: query }));
+        if (query) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setFilters(prev => ({ ...prev, keyword: query }));
+        }
     }, [query]);
 
     useEffect(() => {
-        const all = storage.getRecipes().filter(r => r.status === 'published');
-        setRecipes(all);
+        const refreshRecipes = () => {
+            const all = storage.getRecipes().filter(r => r.status === 'published');
+            setRecipes(all);
+        };
+        window.addEventListener('recipeUpdated', refreshRecipes);
+        window.addEventListener('favoriteToggled', refreshRecipes);
+        return () => {
+            window.removeEventListener('recipeUpdated', refreshRecipes);
+            window.removeEventListener('favoriteToggled', refreshRecipes);
+        };
     }, []);
 
-    useEffect(() => {
+    const filteredRecipes = useMemo(() => {
         let result = [...recipes];
 
         // Keyword
@@ -39,7 +50,7 @@ export function Search() {
             result = result.filter(r =>
                 r.title.toLowerCase().includes(lower) ||
                 r.description.toLowerCase().includes(lower) ||
-                r.ingredients.some(i => i.name.toLowerCase().includes(lower))
+                (r.ingredients || []).some(i => i.name.toLowerCase().includes(lower))
             );
         }
 
@@ -56,12 +67,12 @@ export function Search() {
         // Sort
         result.sort((a, b) => {
             if (filters.sort === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
-            if (filters.sort === 'rating') return (b.likes || 0) - (a.likes || 0); // Simplified rating sort via likes for now
+            if (filters.sort === 'rating') return storage.getAverageRating(b.id) - storage.getAverageRating(a.id);
             if (filters.sort === 'difficulty-asc') return ['Easy', 'Medium', 'Hard'].indexOf(a.difficulty) - ['Easy', 'Medium', 'Hard'].indexOf(b.difficulty);
             return 0;
         });
 
-        setFilteredRecipes(result);
+        return result;
     }, [recipes, filters]);
 
     const handleFilterChange = (key, value) => {
@@ -93,10 +104,9 @@ export function Search() {
                         onChange={(e) => handleFilterChange('category', e.target.value)}
                     >
                         <option value="All">All Categories</option>
-                        <option value="Italian">Italian</option>
-                        <option value="Breakfast">Breakfast</option>
-                        <option value="Asian">Asian</option>
-                        <option value="Dessert">Dessert</option>
+                        {RECIPE_CATEGORIES.map(category => (
+                            <option key={category} value={category}>{category}</option>
+                        ))}
                     </select>
 
                     <select
@@ -105,10 +115,11 @@ export function Search() {
                         onChange={(e) => handleFilterChange('difficulty', e.target.value)}
                     >
                         <option value="All">All Difficulties</option>
-                        <option value="Easy">Easy</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Hard">Hard</option>
+                        {RECIPE_DIFFICULTIES.map(level => (
+                            <option key={level} value={level}>{level}</option>
+                        ))}
                     </select>
+
 
                     <select
                         className="h-10 rounded-md border border-cool-gray-30 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90"

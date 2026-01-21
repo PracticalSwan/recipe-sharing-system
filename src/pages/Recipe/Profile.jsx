@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { storage, DEFAULT_AVATARS } from '../../lib/storage';
@@ -13,80 +13,72 @@ import { MapPin, Calendar, Settings, Check, Edit, Trash2 } from 'lucide-react';
 export function Profile() {
     const { userId } = useParams();
     const navigate = useNavigate();
-    const { user: currentUser, updateProfile } = useAuth();
+    const { user: currentUser, updateProfile, canInteract, isPending } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const defaultTab = searchParams.get('tab') || 'recipes';
 
-    const [profileUser, setProfileUser] = useState(null);
-    const [myRecipes, setMyRecipes] = useState([]);
-    const [favorites, setFavorites] = useState([]);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({});
-    const [, forceUpdate] = useState(0);
-
     const isOwnProfile = !userId || (currentUser && currentUser.id === userId);
 
-    useEffect(() => {
+    const profileUser = useMemo(() => {
         if (isOwnProfile) {
-            setProfileUser(currentUser);
-        } else {
-            const users = storage.getUsers();
-            const found = users.find(u => u.id === userId);
-            setProfileUser(found);
+            return currentUser;
         }
+        const users = storage.getUsers();
+        return users.find(u => u.id === userId) || null;
     }, [userId, currentUser, isOwnProfile]);
 
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({});
+    const [deleteRecipeId, setDeleteRecipeId] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    const buildEditForm = (user) => ({
+        username: user?.username || '',
+        firstName: user?.firstName || '',
+        lastName: user?.lastName || '',
+        email: user?.email || '',
+        bio: user?.bio || '',
+        location: user?.location || '',
+        cookingLevel: user?.cookingLevel || 'Beginner',
+        avatar: user?.avatar || DEFAULT_AVATARS[0]
+    });
+
+    const triggerRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
     useEffect(() => {
-        if (!profileUser) return;
-
-        // Only set edit form if it's own profile
-        if (isOwnProfile) {
-            setEditForm({
-                username: profileUser.username || '',
-                email: profileUser.email || '',
-                bio: profileUser.bio || '',
-                location: profileUser.location || '',
-                cookingLevel: profileUser.cookingLevel || 'Beginner',
-                avatar: profileUser.avatar || DEFAULT_AVATARS[0]
-            });
-        }
-
-        loadRecipes();
-
-        // Listen for favorite changes
-        const handleFavoriteToggle = () => {
-            forceUpdate(n => n + 1);
-            loadRecipes();
-        };
+        const handleFavoriteToggle = () => triggerRefresh();
         window.addEventListener('favoriteToggled', handleFavoriteToggle);
-        return () => window.removeEventListener('favoriteToggled', handleFavoriteToggle);
-    }, [profileUser, isOwnProfile]);
+        window.addEventListener('recipeUpdated', handleFavoriteToggle);
+        return () => {
+            window.removeEventListener('favoriteToggled', handleFavoriteToggle);
+            window.removeEventListener('recipeUpdated', handleFavoriteToggle);
+        };
+    }, [triggerRefresh]);
 
-    const loadRecipes = () => {
-        if (!profileUser) return;
-        const allRecipes = storage.getRecipes();
-        // Allow seeing published recipes of others, or all recipes if it's own profile
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const allRecipes = useMemo(() => storage.getRecipes(), [refreshKey]);
+
+    const myRecipes = useMemo(() => {
+        if (!profileUser) return [];
         const userRecipes = allRecipes.filter(r => r.authorId === profileUser.id);
+        return isOwnProfile ? userRecipes : userRecipes.filter(r => r.status === 'published');
+    }, [allRecipes, profileUser, isOwnProfile]);
 
-        if (isOwnProfile) {
-            setMyRecipes(userRecipes);
-        } else {
-            setMyRecipes(userRecipes.filter(r => r.status === 'published'));
-        }
-
-        // Favorites: Only show favorites if it's own profile? Or public?
-        if (profileUser.favorites?.length) {
-            setFavorites(allRecipes.filter(r => profileUser.favorites.includes(r.id) && r.status === 'published'));
-        } else {
-            setFavorites([]);
-        }
-    };
+    const favorites = useMemo(() => {
+        if (!profileUser?.favorites?.length) return [];
+        return allRecipes.filter(r => profileUser.favorites.includes(r.id) && r.status === 'published');
+    }, [allRecipes, profileUser]);
 
     const handleDeleteRecipe = (recipeId) => {
-        if (window.confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
-            storage.deleteRecipe(recipeId);
-            loadRecipes();
+        setDeleteRecipeId(recipeId);
+    };
+
+    const confirmDeleteRecipe = () => {
+        if (deleteRecipeId) {
+            storage.deleteRecipe(deleteRecipeId);
+            triggerRefresh();
             window.dispatchEvent(new CustomEvent('recipeUpdated'));
+            setDeleteRecipeId(null);
         }
     };
 
@@ -95,9 +87,15 @@ export function Profile() {
     };
 
     const handleSaveProfile = () => {
-        if (!isOwnProfile) return;
+        if (!isOwnProfile || !canInteract) return;
         updateProfile(editForm);
         setIsEditing(false);
+    };
+
+    const handleEditProfile = () => {
+        if (!profileUser) return;
+        setEditForm(buildEditForm(profileUser));
+        setIsEditing(true);
     };
 
     const handleAvatarSelect = (avatarUrl) => {
@@ -126,13 +124,19 @@ export function Profile() {
                         </div>
                     </div>
 
-                    {isOwnProfile && (
-                        <Button variant="outline" size="sm" className="hover:bg-cool-gray-10" onClick={() => setIsEditing(true)}>
+                    {isOwnProfile && canInteract && (
+                        <Button variant="outline" size="sm" className="hover:bg-cool-gray-10" onClick={handleEditProfile}>
                             <Settings className="h-4 w-4 mr-1.5" /> Edit Profile
                         </Button>
                     )}
                 </div>
             </div>
+
+            {isOwnProfile && isPending && (
+                <div className="rounded-lg border border-cool-gray-20 bg-cool-gray-10 p-4 text-sm text-cool-gray-60">
+                    Your account is pending approval. You can browse recipes as a guest, but you can’t update your profile yet.
+                </div>
+            )}
 
             {/* Edit Profile Modal */}
             <Modal isOpen={isEditing} onClose={() => setIsEditing(false)} title="Edit Profile" className="max-w-lg">
@@ -162,6 +166,19 @@ export function Profile() {
                             value={editForm.avatar}
                             onChange={(e) => setEditForm(prev => ({ ...prev, avatar: e.target.value }))}
                             className="mt-2"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <Input
+                            label="First Name"
+                            value={editForm.firstName}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, firstName: e.target.value }))}
+                        />
+                        <Input
+                            label="Last Name"
+                            value={editForm.lastName}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, lastName: e.target.value }))}
                         />
                     </div>
 
@@ -228,38 +245,43 @@ export function Profile() {
                 <TabsContent value="recipes" className="space-y-4">
                     <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                         {myRecipes.map(recipe => (
-                            <div key={recipe.id} className="relative group">
-                                <RecipeCard recipe={recipe} onFavoriteToggle={loadRecipes} />
-                                {isOwnProfile && (
-                                    <>
-                                        <div className="absolute top-8 left-1.5 z-10">
-                                            <Badge variant={recipe.status === 'published' ? 'success' : recipe.status === 'rejected' ? 'error' : 'warning'} className="text-[9px] px-1.5 py-0.5">
-                                                {recipe.status}
-                                            </Badge>
-                                        </div>
-                                        {/* Edit and Delete buttons */}
-                                        <div className="absolute top-8 right-1.5 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button 
-                                                size="icon" 
-                                                variant="ghost" 
-                                                className="h-7 w-7 bg-white/90 hover:bg-white shadow-sm"
-                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEditRecipe(recipe.id); }}
-                                                title="Edit Recipe"
-                                            >
-                                                <Edit className="h-3.5 w-3.5 text-cool-gray-60" />
-                                            </Button>
-                                            <Button 
-                                                size="icon" 
-                                                variant="ghost" 
-                                                className="h-7 w-7 bg-white/90 hover:bg-red-50 shadow-sm"
-                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteRecipe(recipe.id); }}
-                                                title="Delete Recipe"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                                            </Button>
-                                        </div>
-                                    </>
-                                )}
+                            <div key={recipe.id} className="h-full">
+                                <RecipeCard 
+                                    recipe={recipe} 
+                                    onFavoriteToggle={triggerRefresh}
+                                    actionOverlay={isOwnProfile && canInteract && (
+                                        <>
+                                            <div className="absolute top-8 left-1.5 z-10">
+                                                <Badge variant={recipe.status === 'published' ? 'success' : recipe.status === 'rejected' ? 'error' : 'warning'} className="text-[9px] px-1.5 py-0.5">
+                                                    {recipe.status}
+                                                </Badge>
+                                            </div>
+                                            {/* Edit and Delete buttons */}
+                                            <div className="absolute top-8 right-1.5 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button 
+                                                    size="icon" 
+                                                    variant="ghost" 
+                                                    className="h-7 w-7 bg-white/90 hover:bg-white shadow-sm"
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEditRecipe(recipe.id); }}
+                                                    title="Edit Recipe"
+                                                    aria-label="Edit recipe"
+                                                >
+                                                    <Edit className="h-3.5 w-3.5 text-cool-gray-60" />
+                                                </Button>
+                                                <Button 
+                                                    size="icon" 
+                                                    variant="ghost" 
+                                                    className="h-7 w-7 bg-white/90 hover:bg-red-50 shadow-sm"
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteRecipe(recipe.id); }}
+                                                    title="Delete Recipe"
+                                                    aria-label="Delete recipe"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
+                                />
                             </div>
                         ))}
                         {myRecipes.length === 0 && (
@@ -277,7 +299,7 @@ export function Profile() {
                 <TabsContent value="favorites">
                     <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                         {favorites.map(recipe => (
-                            <RecipeCard key={recipe.id} recipe={recipe} onFavoriteToggle={loadRecipes} />
+                            <RecipeCard key={recipe.id} recipe={recipe} onFavoriteToggle={triggerRefresh} />
                         ))}
                         {favorites.length === 0 && (
                             <div className="text-cool-gray-60 col-span-full text-center py-10 text-sm">
@@ -287,6 +309,21 @@ export function Profile() {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Delete Recipe Confirmation Modal */}
+            <Modal
+                isOpen={!!deleteRecipeId}
+                onClose={() => setDeleteRecipeId(null)}
+                title="Delete Recipe"
+            >
+                <div className="space-y-4">
+                    <p className="text-cool-gray-60">Are you sure you want to delete this recipe? This action cannot be undone.</p>
+                    <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setDeleteRecipeId(null)}>Cancel</Button>
+                        <Button variant="danger" className="bg-red-500 hover:bg-red-600 text-white" onClick={confirmDeleteRecipe}>Delete Recipe</Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

@@ -1,6 +1,5 @@
-import { twMerge } from 'tailwind-merge';
-import { clsx } from 'clsx';
 import { Loader2 } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 export function Button({
     className,
@@ -30,7 +29,7 @@ export function Button({
 
     return (
         <button
-            className={twMerge(clsx(baseStyles, variants[variant], sizes[size], className))}
+            className={cn(baseStyles, variants[variant], sizes[size], className)}
             disabled={disabled || isLoading}
             {...props}
         >

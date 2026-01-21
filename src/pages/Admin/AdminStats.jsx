@@ -4,20 +4,23 @@ import { storage } from '../../lib/storage';
 import { Users, FileText, Activity, UserPlus, ChefHat, Eye } from 'lucide-react';
 
 // StatCard component moved outside to prevent recreation on each render
-const StatCard = ({ title, value, icon: Icon, subtext }) => (
-    <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-cool-gray-60">
-                {title}
-            </CardTitle>
-            <Icon className="h-4 w-4 text-cool-gray-60" />
-        </CardHeader>
-        <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
-            {subtext && <p className="text-xs text-cool-gray-60 mt-1">{subtext}</p>}
-        </CardContent>
-    </Card>
-);
+const StatCard = ({ title, value, icon, subtext }) => {
+    const Icon = icon;
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-cool-gray-60">
+                    {title}
+                </CardTitle>
+                <Icon className="h-4 w-4 text-cool-gray-60" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                {subtext && <p className="text-xs text-cool-gray-60 mt-1">{subtext}</p>}
+            </CardContent>
+        </Card>
+    );
+};
 
 export function AdminStats() {
     const [stats, setStats] = useState({
@@ -28,7 +31,8 @@ export function AdminStats() {
         publishedRecipes: 0,
         pendingRecipes: 0,
         dailyViews: 0,
-        dailyActiveUsers: 0
+        dailyActiveUsers: 0,
+        recentActivity: []
     });
 
     useEffect(() => {
@@ -38,20 +42,33 @@ export function AdminStats() {
             const newUsersToday = storage.getNewUsersToday();
             const newContributorsToday = storage.getNewContributorsToday();
             const dailyActiveUsers = storage.getDailyActiveUsers();
-
+            // Contributors should exclude users with 'pending' status
             setStats({
-                totalUsers: users.length,
+                totalUsers: users.filter(u => u.role !== 'admin').length,
                 newUsersToday: newUsersToday.length,
-                contributors: users.filter(u => u.role === 'user').length,
-                newContributorsToday: newContributorsToday.length,
+                contributors: users.filter(u => u.role === 'user' && u.status !== 'pending').length,
+                newContributorsToday: newContributorsToday.filter(u => u.status !== 'pending').length,
                 publishedRecipes: recipes.filter(r => r.status === 'published').length,
                 pendingRecipes: recipes.filter(r => r.status === 'pending').length,
                 dailyViews: storage.getDailyViews(),
-                dailyActiveUsers: dailyActiveUsers.length
+                dailyActiveUsers: dailyActiveUsers.length,
+                recentActivity: storage.getRecentActivity(5)
             });
         };
-        
+
         loadStats();
+        const interval = setInterval(loadStats, 30000);
+        const handleStatsUpdate = () => loadStats();
+        window.addEventListener('statsUpdated', handleStatsUpdate);
+        window.addEventListener('recipeUpdated', handleStatsUpdate);
+        window.addEventListener('userUpdated', handleStatsUpdate);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('statsUpdated', handleStatsUpdate);
+            window.removeEventListener('recipeUpdated', handleStatsUpdate);
+            window.removeEventListener('userUpdated', handleStatsUpdate);
+        };
     }, []);
 
     return (
@@ -82,9 +99,19 @@ export function AdminStats() {
                         <CardTitle>Recent Activity</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-sm text-cool-gray-60">
-                            <p>User-1 created "Spaghetti Carbonara"</p>
-                            <p>Admin approved "Pancake"</p>
+                        <div className="space-y-2 text-sm text-cool-gray-60">
+                            {stats.recentActivity.length ? (
+                                stats.recentActivity.map((activity, index) => (
+                                    <div key={`${activity.type}-${activity.time}-${index}`} className="flex items-start justify-between gap-4">
+                                        <span>{activity.text}</span>
+                                        <span className="whitespace-nowrap text-xs text-cool-gray-50">
+                                            {new Date(activity.time).toLocaleString()}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>No recent activity yet.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

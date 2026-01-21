@@ -324,7 +324,6 @@ recipe-sharing-system/
 - **Tailwind CSS Vite Plugin** (v4.1.18) - Build tool integration
 - **Tailwind Merge** (v3.4.0) - Intelligent class merging
 - **Lucide React** (v0.562.0) - Icon library
-- **Framer Motion** (v12.27.5) - Animation library
 
 ### Build & Development
 - **Vite** (v7.2.4) - Fast build tool
@@ -333,7 +332,6 @@ recipe-sharing-system/
 
 ### Utilities
 - **Clsx** (v2.1.1) - Conditional className utility
-- **Date-fns** (v4.1.0) - Date manipulation library
 
 ## 💾 Data Storage
 

@@ -5,12 +5,13 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent } from '../../components/ui/Card';
+import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
 import { Plus, Trash2, UploadCloud, ArrowLeft } from 'lucide-react';
 
 export function CreateRecipe() {
     const navigate = useNavigate();
     const { id } = useParams(); // If id exists, we're in edit mode
-    const { user } = useAuth();
+    const { user, canInteract } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const isEditMode = Boolean(id);
 
@@ -32,6 +33,7 @@ export function CreateRecipe() {
 
     // Load recipe data if in edit mode
     useEffect(() => {
+        if (!canInteract) return;
         if (isEditMode) {
             const recipe = storage.getRecipeById(id);
             if (recipe) {
@@ -57,7 +59,7 @@ export function CreateRecipe() {
                 navigate('/profile?tab=recipes');
             }
         }
-    }, [id, isEditMode, user, navigate]);
+    }, [id, isEditMode, user, navigate, canInteract]);
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
@@ -192,7 +194,6 @@ export function CreateRecipe() {
                     ingredients,
                     instructions,
                     images: [formData.image || originalRecipe.images?.[0] || 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?auto=format&fit=crop&q=80'],
-                    tags: [formData.category.toLowerCase()],
                     // Keep original status, or set to pending if it was rejected (re-submit for review)
                     status: originalRecipe.status === 'rejected' ? 'pending' : originalRecipe.status
                 };
@@ -212,8 +213,7 @@ export function CreateRecipe() {
                     status: 'pending',
                     createdAt: new Date().toISOString(),
                     likedBy: [],
-                    viewedBy: [],
-                    tags: [formData.category.toLowerCase()]
+                    viewedBy: []
                 };
                 storage.saveRecipe(newRecipe);
             }
@@ -227,8 +227,20 @@ export function CreateRecipe() {
         }
     };
 
+    if (!canInteract) {
+        return (
+            <div className="max-w-2xl mx-auto space-y-4 animate-page-in">
+                <h1 className="text-2xl font-bold text-cool-gray-90">Guest Mode</h1>
+                <p className="text-cool-gray-60">
+                    Your account is pending approval. You can browse recipes as a guest, but you can’t create or edit recipes yet.
+                </p>
+                <Button variant="outline" onClick={() => navigate('/')}>Back to Discover</Button>
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-3xl mx-auto space-y-8 animate-page-in">
             <div className="flex items-center gap-3">
                 <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10">
                     <ArrowLeft className="h-5 w-5" />
@@ -272,13 +284,13 @@ export function CreateRecipe() {
                             <div>
                                 <label className="text-sm font-medium text-cool-gray-60 mb-1 block">Category</label>
                                 <select id="category" className="w-full h-10 rounded-md border border-cool-gray-30 px-3 bg-white" value={formData.category} onChange={handleChange}>
-                                    {['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Italian', 'Asian', 'Health'].map(c => <option key={c} value={c}>{c}</option>)}
+                                    {RECIPE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-cool-gray-60 mb-1 block">Difficulty</label>
                                 <select id="difficulty" className="w-full h-10 rounded-md border border-cool-gray-30 px-3 bg-white" value={formData.difficulty} onChange={handleChange}>
-                                    {['Easy', 'Medium', 'Hard'].map(c => <option key={c} value={c}>{c}</option>)}
+                                    {RECIPE_DIFFICULTIES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                         </div>

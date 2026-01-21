@@ -1,6 +1,5 @@
-import { twMerge } from 'tailwind-merge';
-import { clsx } from 'clsx';
-import React, { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
+import { cn } from '../../lib/utils';
 
 const TabsContext = createContext(null);
 
@@ -11,7 +10,7 @@ export function Tabs({ defaultValue, value, onValueChange, children, className }
 
     return (
         <TabsContext.Provider value={{ value: currentValue, onChange }}>
-            <div className={twMerge(clsx("w-full", className))}>
+            <div className={cn("w-full", className)}>
                 {children}
             </div>
         </TabsContext.Provider>
@@ -20,7 +19,7 @@ export function Tabs({ defaultValue, value, onValueChange, children, className }
 
 export function TabsList({ className, children }) {
     return (
-        <div className={twMerge(clsx("inline-flex h-10 items-center justify-center rounded-md bg-cool-gray-10 p-1 text-cool-gray-60", className))}>
+        <div className={cn("inline-flex h-10 items-center justify-center rounded-md bg-cool-gray-10 p-1 text-cool-gray-60", className)}>
             {children}
         </div>
     );
@@ -32,11 +31,11 @@ export function TabsTrigger({ value, children, className }) {
 
     return (
         <button
-            className={twMerge(clsx(
+            className={cn(
                 "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
                 isActive && "bg-white text-cool-gray-90 shadow-sm",
                 className
-            ))}
+            )}
             onClick={() => context.onChange(value)}
         >
             {children}
@@ -49,7 +48,7 @@ export function TabsContent({ value, children, className }) {
     if (context.value !== value) return null;
 
     return (
-        <div className={twMerge(clsx("mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-2", className))}>
+        <div className={cn("mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-2", className)}>
             {children}
         </div>
     );

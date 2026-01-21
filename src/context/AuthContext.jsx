@@ -24,6 +24,27 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const handleExit = () => {
+            storage.updateLastActive(user.id);
+        };
+
+        const handleDailyActive = () => storage.recordActiveUser(user.id);
+        handleDailyActive();
+        const interval = setInterval(handleDailyActive, 60 * 60 * 1000);
+
+        window.addEventListener('beforeunload', handleExit);
+        window.addEventListener('pagehide', handleExit);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('beforeunload', handleExit);
+            window.removeEventListener('pagehide', handleExit);
+        };
+    }, [user]);
+
     const login = (email, password) => {
         try {
             const loggedUser = storage.login(email, password);
@@ -35,7 +56,7 @@ export function AuthProvider({ children }) {
     };
 
     const logout = () => {
-        storage.logout();
+        storage.logout(user?.id);
         setUser(null);
     };
 
@@ -44,32 +65,42 @@ export function AuthProvider({ children }) {
         const newUser = {
             id: `user-${Date.now()}`,
             role: 'user',
-            status: 'active',
+            status: 'pending',
             joinedDate: new Date().toISOString(),
             favorites: [],
             viewedRecipes: [],
             ...userData
         };
         storage.saveUser(newUser);
+        storage.addActivity({
+            type: 'user',
+            text: `${newUser.username} joined the platform`
+        });
         // Record new user for daily stats tracking
         storage.recordNewUser(newUser.id, newUser.role);
         // Auto login
-        storage.login(userData.email, userData.password);
-        setUser(newUser);
+        const loggedInUser = storage.login(userData.email, userData.password);
+        setUser(loggedInUser);
     };
 
     const updateProfile = (updates) => {
         if (!user) return;
         const updatedUser = { ...user, ...updates };
         storage.saveUser(updatedUser);
-        localStorage.setItem('cookhub_current_user', JSON.stringify(updatedUser));
+        storage.setCurrentUser(updatedUser);
         setUser(updatedUser);
     };
+
+    const isAdmin = user?.role === 'admin';
+    const isPending = user?.status === 'pending';
+    const canInteract = Boolean(user && user.status === 'active' && !isAdmin);
 
     const value = {
         user,
         loading,
-        isAdmin: user?.role === 'admin',
+        isAdmin,
+        isPending,
+        canInteract,
         login,
         logout,
         signup,
@@ -83,6 +114,7 @@ export function AuthProvider({ children }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) {

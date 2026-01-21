@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { storage } from '../../lib/storage';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
@@ -7,24 +7,28 @@ import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function Home() {
-    const [recipes, setRecipes] = useState([]);
+    const [recipes, setRecipes] = useState(() => {
+        const allRecipes = storage.getRecipes();
+        return allRecipes.filter(r => r.status === 'published');
+    });
     const [searchTerm, setSearchTerm] = useState('');
-    const [, forceUpdate] = useState(0);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        loadRecipes();
-
-        // Listen for favorite toggles to refresh
-        const handleFavoriteToggle = () => forceUpdate(n => n + 1);
-        window.addEventListener('favoriteToggled', handleFavoriteToggle);
-        return () => window.removeEventListener('favoriteToggled', handleFavoriteToggle);
-    }, []);
-
-    const loadRecipes = () => {
+    const loadRecipes = useCallback(() => {
         const allRecipes = storage.getRecipes();
         setRecipes(allRecipes.filter(r => r.status === 'published'));
-    };
+    }, []);
+
+    useEffect(() => {
+        // Listen for updates to refresh
+        const handleRefresh = () => loadRecipes();
+        window.addEventListener('favoriteToggled', handleRefresh);
+        window.addEventListener('recipeUpdated', handleRefresh);
+        return () => {
+            window.removeEventListener('favoriteToggled', handleRefresh);
+            window.removeEventListener('recipeUpdated', handleRefresh);
+        };
+    }, [loadRecipes]);
 
     const handleSearch = (e) => {
         e.preventDefault();

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, User, Heart, Eye, Bookmark } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '../ui/Card';
@@ -7,39 +7,70 @@ import { storage } from '../../lib/storage';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 
-export function RecipeCard({ recipe, compact = false, onFavoriteToggle }) {
-    const { user } = useAuth();
-    const isLiked = user ? storage.hasUserLiked(user.id, recipe.id) : false;
-    const isFavorited = user ? storage.hasUserFavorited(user.id, recipe.id) : false;
-    // We still track viewCount/likeCount from props generally, but let's rely on recipe prop for count
-    const count = recipe.likedBy?.length || 0;
-    const viewCount = recipe.viewedBy?.length || 0;
+export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
+    const { user, canInteract } = useAuth();
+    const [isLiked, setIsLiked] = useState(false);
+    const [isFavorited, setIsFavorited] = useState(false);
+    const [likeCount, setLikeCount] = useState(recipe.likedBy?.length || 0);
+    const [viewCount, setViewCount] = useState(recipe.viewedBy?.length || 0);
+    
+    // Calculate rating
+    const reviews = storage.getReviews(recipe.id) || [];
+    const averageRating = Math.round(storage.getAverageRating(recipe.id));
 
     // Fetch author name from storage
     const author = storage.getUsers().find(u => u.id === recipe.authorId);
     const authorName = author ? author.username : `User ${recipe.authorId}`;
 
+    useEffect(() => {
+        const syncState = () => {
+            const latestRecipe = storage.getRecipeById(recipe.id);
+            setLikeCount(latestRecipe?.likedBy?.length || 0);
+            setViewCount(latestRecipe?.viewedBy?.length || 0);
+
+            if (!user) {
+                setIsLiked(false);
+                setIsFavorited(false);
+                return;
+            }
+
+            setIsLiked(storage.hasUserLiked(user.id, recipe.id));
+            setIsFavorited(storage.hasUserFavorited(user.id, recipe.id));
+        };
+
+        syncState();
+        window.addEventListener('recipeUpdated', syncState);
+        window.addEventListener('favoriteToggled', syncState);
+        return () => {
+            window.removeEventListener('recipeUpdated', syncState);
+            window.removeEventListener('favoriteToggled', syncState);
+        };
+    }, [recipe.id, user]);
+
     const handleLikeClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!user) return;
-        storage.toggleLike(user.id, recipe.id);
-        if (onFavoriteToggle) onFavoriteToggle(); // Re-using this prop to trigger refresh if needed
+        if (!user || !canInteract) return;
+        const result = storage.toggleLike(user.id, recipe.id);
+        setIsLiked(result.liked);
+        setLikeCount(result.count);
+        if (onFavoriteToggle) onFavoriteToggle();
         window.dispatchEvent(new CustomEvent('recipeUpdated')); // Generic update event
     };
 
     const handleSaveClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!user) return;
-        storage.toggleFavorite(user.id, recipe.id);
+        if (!user || !canInteract) return;
+        const result = storage.toggleFavorite(user.id, recipe.id);
+        setIsFavorited(result);
         if (onFavoriteToggle) onFavoriteToggle();
         window.dispatchEvent(new CustomEvent('favoriteToggled'));
     };
 
     return (
-        <Link to={`/recipes/${recipe.id}`} className="group block">
-            <Card className="h-full overflow-hidden transition-all hover:shadow-lg border-cool-gray-20 hover-lift cursor-pointer">
+        <Link to={`/recipes/${recipe.id}`} className="group block h-full">
+            <Card className="h-full flex flex-col overflow-hidden transition-all hover:shadow-lg border-cool-gray-20 hover-lift cursor-pointer">
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-cool-gray-10">
                     <img
                         src={recipe.images?.[0] || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=400"}
@@ -54,16 +85,22 @@ export function RecipeCard({ recipe, compact = false, onFavoriteToggle }) {
                     {/* Like Heart Overlay */}
                     <button
                         onClick={handleLikeClick}
-                        className="absolute top-1.5 left-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white transition-colors"
-                        title={isLiked ? 'Unlike' : 'Like'}
+                        className={`absolute top-1.5 left-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-colors ${canInteract ? 'hover:bg-white' : 'opacity-60 cursor-not-allowed'}`}
+                        title={canInteract ? (isLiked ? 'Unlike' : 'Like') : 'Pending accounts cannot like recipes'}
+                        aria-label={isLiked ? 'Unlike recipe' : 'Like recipe'}
+                        aria-pressed={isLiked}
+                        aria-disabled={!canInteract}
                     >
                         <Heart
                             className={`h-3.5 w-3.5 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-cool-gray-60 hover:text-red-400'}`}
                         />
                     </button>
+                    
+                    {/* External Actions Overlay */}
+                    {actionOverlay}
                 </div>
 
-                <CardContent className="p-2.5">
+                <CardContent className="p-2.5 flex-1">
                     <div className="mb-1.5 flex items-center justify-between">
                         <Badge variant="outline" className="text-[8px] uppercase tracking-wider px-1.5 py-0.5">{recipe.category}</Badge>
                         <div className="flex items-center gap-0.5 text-[10px] text-cool-gray-60">
@@ -78,13 +115,30 @@ export function RecipeCard({ recipe, compact = false, onFavoriteToggle }) {
                         </h3>
                         <button
                             onClick={handleSaveClick}
-                            className="p-1 rounded-md hover:bg-cool-gray-10 transition-colors shrink-0"
-                            title={isFavorited ? 'Unsave' : 'Save'}
+                            className={`p-1 rounded-md transition-colors shrink-0 ${canInteract ? 'hover:bg-cool-gray-10' : 'opacity-60 cursor-not-allowed'}`}
+                            title={canInteract ? (isFavorited ? 'Unsave' : 'Save') : 'Pending accounts cannot save recipes'}
+                            aria-label={isFavorited ? 'Unsave recipe' : 'Save recipe'}
+                            aria-pressed={isFavorited}
+                            aria-disabled={!canInteract}
                         >
                             <Bookmark className={cn("h-4 w-4", isFavorited ? "fill-cool-gray-90 text-cool-gray-90" : "text-cool-gray-30")} />
                         </button>
                     </div>
-                    <p className="text-[11px] text-cool-gray-60 line-clamp-2 mb-1.5">
+
+                    {/* Rating Stars - Grey if no reviews */}
+                    <div className="flex items-center gap-0.5 mb-1.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <span 
+                                key={star} 
+                                className={`text-[10px] ${averageRating >= star ? 'text-yellow-400' : 'text-cool-gray-30'}`}
+                            >
+                                ★
+                            </span>
+                        ))}
+                        <span className="text-[10px] text-cool-gray-60 ml-1">({reviews.length})</span>
+                    </div>
+
+                    <p className="text-[11px] text-cool-gray-60 line-clamp-2 mb-1.5 h-8">
                         {recipe.description}
                     </p>
 
@@ -107,7 +161,7 @@ export function RecipeCard({ recipe, compact = false, onFavoriteToggle }) {
                     </div>
                     <div className="flex items-center gap-0.5">
                         <Heart className="h-2.5 w-2.5" />
-                        <span>{count}</span>
+                        <span>{likeCount}</span>
                     </div>
                 </CardFooter>
             </Card>
