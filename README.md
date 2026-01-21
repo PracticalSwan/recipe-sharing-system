@@ -36,10 +36,15 @@ The system uses a **client-side storage approach** with localStorage, making it 
 - ✅ Comprehensive recipe management (Create, Read, Update, Delete)
 - ✅ Advanced recipe discovery (search, filtering, sorting)
 - ✅ User profile management
-- ✅ Recipe ratings and reviews
+- ✅ Recipe ratings and reviews (one review per user per recipe)
 - ✅ Favorites/saved recipes functionality
 - ✅ Admin dashboard with site analytics and metrics
 - ✅ User and recipe management tools for admins
+- ✅ Activity tracking system with real-time updates
+- ✅ Last active timestamp tracking (updated on logout/browser close)
+- ✅ Daily Active Users (DAU) tracking with session heartbeat
+- ✅ Admin activity logging (user/recipe management actions)
+- ✅ Data integrity enforcement (cascade cleanup on deletes)
 
 ## 🏗️ System Architecture
 
@@ -71,6 +76,7 @@ The system uses a **client-side storage approach** with localStorage, making it 
 #### 1. **Dashboard & Analytics**
 - View real-time metrics and site-wide analytics
 - Track daily activity and user engagement
+- **Recent Activity Feed:** Dynamic log showing latest admin actions (user status changes, recipe approvals/rejections, account deletions)
 
 **Metrics Displayed:**
 | Metric | Description |
@@ -82,7 +88,7 @@ The system uses a **client-side storage approach** with localStorage, making it 
 | Total Published Recipes | Count of approved and visible recipes |
 | Total Pending Recipes | Count of recipes awaiting approval |
 | Daily Views | Site-wide page views per day |
-| Daily Active Users (DAU) | Number of unique active users per day |
+| Daily Active Users (DAU) | Number of unique active users per day (with hourly heartbeat tracking) |
 
 #### 2. **User Management**
 - View a comprehensive list of all registered users in table format
@@ -92,16 +98,16 @@ The system uses a **client-side storage approach** with localStorage, making it 
   - Account status (Active, Inactive, Pending, Suspended)
   - User role (Admin, Contributor, User)
   - Account creation date
-  - Last activity timestamp
-- Activate or deactivate user accounts
-- Delete user accounts from the system
+  - Last activity timestamp (auto-updates on logout/browser close)
+- Activate or deactivate user accounts (logs admin action)
+- Delete user accounts from the system (logs admin action)
 
 #### 3. **Recipe Management**
 - **Recipe Approval Workflow:**
   - View all recipes (Pending, Approved, Rejected)
-  - Approve pending recipes to make them visible to users
-  - Reject recipes with optional feedback
-  - Delete any recipe from the system
+  - Approve pending recipes to make them visible to users (logs admin action)
+  - Reject recipes with optional feedback (logs admin action)
+  - Delete any recipe from the system with modal confirmation (auto-removes from all user favorites)
   - Preview complete recipe details (ingredients, instructions, contributor info)
 
 **Recipe Management Table Displays:**
@@ -209,14 +215,15 @@ Edit and manage your user profile with:
 
 #### 6. **Reviews & Ratings**
 - **Rate recipes** on a 1-5 star scale
-- **Write reviews:** Submit detailed text reviews with your thoughts
+- **Write reviews:** Submit detailed text reviews with your thoughts (one review per recipe)
+- **Update reviews:** Edit your existing review on a recipe
 - **View community ratings:** See average ratings and other user reviews
 - **Delete your reviews:** Remove your own reviews anytime
 - Contribute to recipe ratings that help the community discover great recipes
 
 ---
 
-## 🚀 Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 - **Node.js** v16 or higher
@@ -280,13 +287,13 @@ recipe-sharing-system/
 │   │       ├── Table.jsx
 │   │       └── Tabs.jsx
 │   ├── context/             # React context for state management
-│   │   └── AuthContext.jsx  # Authentication & user state
+│   │   └── AuthContext.jsx  # Authentication, user state & session tracking
 │   ├── layouts/             # Layout templates for different routes
 │   │   ├── AdminLayout.jsx
 │   │   ├── AuthLayout.jsx
 │   │   └── RootLayout.jsx
 │   ├── lib/                 # Utilities & helpers
-│   │   ├── storage.js       # LocalStorage management & seed data
+│   │   ├── storage.js       # LocalStorage management, seed data & activity logging
 │   │   └── utils.js         # Helper functions
 │   ├── pages/               # Page components
 │   │   ├── Auth/            # Authentication pages
@@ -340,29 +347,53 @@ The application uses **browser localStorage** for data persistence:
 ### Stored Data
 1. **User Accounts** - All registered user profiles and credentials
 2. **Recipes** - All submitted recipes with their metadata
-3. **Reviews & Ratings** - User feedback on recipes
+3. **Reviews & Ratings** - User feedback on recipes (enforces one per user per recipe)
 4. **Session Data** - Current logged-in user information
+5. **Daily Stats** - Page views, active users per day
+6. **Activity Logs** - Admin action history (user management, recipe approvals)
 
 ### Initial Data
-The application comes with **seed data** including:
-- Sample admin account
-- Sample user accounts with various roles
-- Sample recipes for demonstration
-- Pre-filled reviews and ratings
+The application comes with **comprehensive seed data** including:
+- Multiple admin accounts for testing admin workflows
+- Sample user accounts with various roles and statuses (active, inactive, pending)
+- Diverse sample recipes across different categories and difficulty levels
+- Pre-filled reviews and ratings for demonstration
+- Activity logs for admin dashboard
 
 This allows you to immediately explore all features without creating accounts or recipes from scratch.
 
 ### Test Credentials
 
-**Admin Account:**
-- Email: `admin@cookhub.com`
-- Password: `admin`
+**Admin Accounts:**
+| Email | Password | Name |
+|-------|----------|------|
+| `admin@cookhub.com` | `admin` | Admin (Primary) |
+| `sarah.admin@cookhub.com` | `sarah123` | Sarah Chen |
+| `mike.admin@cookhub.com` | `mike123` | Mike Johnson |
 
 **Sample User Accounts:**
-- Email: `user@cookhub.com` - Password: `user` - Regular user (John Doe)
-- Email: `maria@cookhub.com` - Password: `maria123` - Regular user (Maria Garcia)
-- Email: `tom@cookhub.com` - Password: `tom123` - Regular user (Tom Baker)
-- Email: `amy@cookhub.com` - Password: `amy123` - Regular user (Amy Wilson)
+| Email | Password | Name | Role | Status |
+|-------|----------|------|------|--------|
+| `user@cookhub.com` | `user` | John Doe | User | Active |
+| `maria@cookhub.com` | `maria123` | Maria Garcia | User | Active |
+| `tom@cookhub.com` | `tom123` | Tom Baker | User | Active |
+| `amy@cookhub.com` | `amy123` | Amy Wilson | User | Pending |
+| `bob@cookhub.com` | `bob123` | Bob Smith | User | Inactive |
+| `lisa@cookhub.com` | `lisa123` | Lisa Chen | Contributor | Active |
+| `david@cookhub.com` | `david123` | David Kim | Contributor | Active |
+
+### Resetting Data
+
+To reset all data to the initial seed state, open the browser console and run:
+```javascript
+localStorage.clear();
+location.reload();
+```
+Or use the storage utility:
+```javascript
+import { storage } from './src/lib/storage';
+storage.resetData();
+```
 
 ---
 
