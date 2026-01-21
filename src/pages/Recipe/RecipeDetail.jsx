@@ -151,6 +151,7 @@ export function RecipeDetail() {
                             size="sm"
                             onClick={handleToggleLike}
                             className="gap-1.5"
+                            aria-label={isLiked ? 'Unlike recipe' : 'Like recipe'}
                         >
                             <Heart className={`h-4 w-4 ${isLiked ? 'fill-white' : ''}`} />
                             {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
@@ -160,6 +161,7 @@ export function RecipeDetail() {
                             size="sm"
                             onClick={handleToggleFavorite}
                             className="gap-1.5"
+                            aria-label={isFavorited ? 'Unsave recipe' : 'Save recipe'}
                         >
                             <Bookmark className={`h-4 w-4 ${isFavorited ? 'fill-white' : ''}`} />
                             {isFavorited ? 'Saved' : 'Save'}
@@ -246,9 +248,17 @@ export function RecipeDetail() {
                             onChange={(e) => setNewComment(e.target.value)}
                         />
                         <div className="flex justify-between items-center">
-                            <div className="flex gap-0.5">
+                            <div className="flex gap-0.5" role="group" aria-label="Rating">
                                 {[1, 2, 3, 4, 5].map(star => (
-                                    <button key={star} type="button" onClick={() => setRating(star)} className={`text-lg cursor-pointer ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}>★</button>
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setRating(star)}
+                                        className={`text-lg cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded-sm ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                                        aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                                    >
+                                        ★
+                                    </button>
                                 ))}
                             </div>
                             <Button type="submit" size="sm" disabled={!newComment.trim()}>Post</Button>
@@ -273,9 +283,10 @@ export function RecipeDetail() {
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            className="h-8 w-8 ml-auto opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                                            className="h-8 w-8 ml-auto opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-red-50"
                                             onClick={() => handleDeleteReview(review.id)}
                                             title="Delete Review"
+                                            aria-label="Delete Review"
                                         >
                                             <Trash2 className="h-4 w-4 text-red-500" />
                                         </Button>

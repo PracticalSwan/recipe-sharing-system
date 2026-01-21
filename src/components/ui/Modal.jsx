@@ -36,7 +36,7 @@ export function Modal({ isOpen, onClose, title, children, className }) {
                     <h3 className="text-lg font-semibold leading-6 text-cool-gray-90">
                         {title}
                     </h3>
-                    <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full">
+                    <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full" aria-label="Close modal">
                         <X className="h-4 w-4" />
                     </Button>
                 </div>

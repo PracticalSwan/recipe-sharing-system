@@ -35,7 +35,7 @@ export function Navbar() {
                     </Link>
 
                     <Link to="/profile">
-                        <Button variant="ghost" size="icon" className="rounded-full">
+                        <Button variant="ghost" size="icon" className="rounded-full" aria-label="View Profile">
                             {user?.avatar ? (
                                 <img src={user.avatar} alt="Avatar" className="h-8 w-8 rounded-full object-cover border border-cool-gray-20" />
                             ) : (
@@ -44,7 +44,7 @@ export function Navbar() {
                         </Button>
                     </Link>
 
-                    <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+                    <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout" aria-label="Logout">
                         <LogOut className="h-5 w-5" />
                     </Button>
                 </div>
