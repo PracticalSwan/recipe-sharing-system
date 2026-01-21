@@ -91,6 +91,7 @@ export function Search() {
                         className="h-10 rounded-md border border-cool-gray-30 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90"
                         value={filters.category}
                         onChange={(e) => handleFilterChange('category', e.target.value)}
+                        aria-label="Filter by category"
                     >
                         <option value="All">All Categories</option>
                         <option value="Italian">Italian</option>
@@ -103,6 +104,7 @@ export function Search() {
                         className="h-10 rounded-md border border-cool-gray-30 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90"
                         value={filters.difficulty}
                         onChange={(e) => handleFilterChange('difficulty', e.target.value)}
+                        aria-label="Filter by difficulty"
                     >
                         <option value="All">All Difficulties</option>
                         <option value="Easy">Easy</option>
@@ -114,6 +116,7 @@ export function Search() {
                         className="h-10 rounded-md border border-cool-gray-30 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90"
                         value={filters.sort}
                         onChange={(e) => handleFilterChange('sort', e.target.value)}
+                        aria-label="Sort by"
                     >
                         <option value="newest">Newest First</option>
                         <option value="rating">Most Popular</option>

@@ -54,8 +54,9 @@ export function RecipeCard({ recipe, compact = false, onFavoriteToggle }) {
                     {/* Like Heart Overlay */}
                     <button
                         onClick={handleLikeClick}
-                        className="absolute top-1.5 left-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white transition-colors"
+                        className="absolute top-1.5 left-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white transition-colors focus:ring-2 focus:ring-red-500 outline-none"
                         title={isLiked ? 'Unlike' : 'Like'}
+                        aria-label={isLiked ? 'Unlike recipe' : 'Like recipe'}
                     >
                         <Heart
                             className={`h-3.5 w-3.5 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-cool-gray-60 hover:text-red-400'}`}
@@ -78,8 +79,9 @@ export function RecipeCard({ recipe, compact = false, onFavoriteToggle }) {
                         </h3>
                         <button
                             onClick={handleSaveClick}
-                            className="p-1 rounded-md hover:bg-cool-gray-10 transition-colors shrink-0"
+                            className="p-1 rounded-md hover:bg-cool-gray-10 transition-colors shrink-0 focus:ring-2 focus:ring-cool-gray-90 outline-none"
                             title={isFavorited ? 'Unsave' : 'Save'}
+                            aria-label={isFavorited ? 'Unsave recipe' : 'Save recipe'}
                         >
                             <Bookmark className={cn("h-4 w-4", isFavorited ? "fill-cool-gray-90 text-cool-gray-90" : "text-cool-gray-30")} />
                         </button>

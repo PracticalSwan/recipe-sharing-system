@@ -230,7 +230,7 @@ export function CreateRecipe() {
     return (
         <div className="max-w-3xl mx-auto space-y-8">
             <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10">
+                <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10" aria-label="Go back">
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div>
@@ -322,7 +322,7 @@ export function CreateRecipe() {
                                     <Input placeholder="Qty" value={ing.quantity} onChange={(e) => updateIngredient(i, 'quantity', e.target.value)} className="flex w-24" />
                                     <Input placeholder="Unit" value={ing.unit} onChange={(e) => updateIngredient(i, 'unit', e.target.value)} className="flex w-24" />
                                     {ingredients.length > 1 && (
-                                        <Button type="button" size="icon" variant="ghost" onClick={() => removeIngredient(i)} className="text-red-500 hover:text-red-600">
+                                        <Button type="button" size="icon" variant="ghost" onClick={() => removeIngredient(i)} className="text-red-500 hover:text-red-600" aria-label={`Remove ingredient ${i + 1}`}>
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     )}
@@ -353,7 +353,7 @@ export function CreateRecipe() {
                                         onChange={(e) => updateInstruction(i, e.target.value)}
                                     />
                                     {instructions.length > 1 && (
-                                        <Button type="button" size="icon" variant="ghost" onClick={() => removeInstruction(i)} className="text-red-500 hover:text-red-600 mt-1">
+                                        <Button type="button" size="icon" variant="ghost" onClick={() => removeInstruction(i)} className="text-red-500 hover:text-red-600 mt-1" aria-label={`Remove step ${i + 1}`}>
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     )}
