@@ -11,7 +11,7 @@ import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit } from 'lucide-rea
 export function RecipeDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, canInteract, isPending, isAdmin } = useAuth();
     const [recipe, setRecipe] = useState(null);
     const [author, setAuthor] = useState(null);
     const [reviews, setReviews] = useState([]);
@@ -30,6 +30,11 @@ export function RecipeDetail() {
             navigate('/');
             return;
         }
+        if (found.status !== 'published' && !isAdmin) {
+            navigate('/');
+            return;
+        }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setRecipe(found);
 
         const users = storage.getUsers();
@@ -39,25 +44,31 @@ export function RecipeDetail() {
 
         // Record view (only once per user)
         if (user) {
-            const newViewCount = storage.recordView(user.id, id);
+            const newViewCount = storage.recordView({ viewerId: user.id, recipeId: id, viewerType: 'user' });
             setViewCount(newViewCount);
             setIsLiked(storage.hasUserLiked(user.id, id));
             setIsFavorited(storage.hasUserFavorited(user.id, id));
+            window.dispatchEvent(new CustomEvent('statsUpdated'));
+            window.dispatchEvent(new CustomEvent('recipeUpdated'));
         } else {
-            setViewCount(found.viewedBy?.length || 0);
+            const guestId = storage.getOrCreateGuestId();
+            const newViewCount = storage.recordView({ viewerId: guestId, recipeId: id, viewerType: 'guest' });
+            setViewCount(newViewCount);
+            window.dispatchEvent(new CustomEvent('statsUpdated'));
+            window.dispatchEvent(new CustomEvent('recipeUpdated'));
         }
         setLikeCount(found.likedBy?.length || 0);
-    }, [id, navigate, user]);
+    }, [id, navigate, user, isAdmin]);
 
     const handleToggleLike = () => {
-        if (!user) return;
+        if (!user || !canInteract) return;
         const result = storage.toggleLike(user.id, id);
         setIsLiked(result.liked);
         setLikeCount(result.count);
     };
 
     const handleToggleFavorite = () => {
-        if (!user) return;
+        if (!user || !canInteract) return;
         const nowFavorited = storage.toggleFavorite(user.id, id);
         setIsFavorited(nowFavorited);
         window.dispatchEvent(new CustomEvent('favoriteToggled'));
@@ -65,6 +76,7 @@ export function RecipeDetail() {
 
     const handleSubmitReview = (e) => {
         e.preventDefault();
+        if (!canInteract) return;
         if (!newComment.trim()) return;
 
         storage.addReview({
@@ -131,9 +143,18 @@ export function RecipeDetail() {
 
                     <div className="flex items-center gap-4 text-sm text-cool-gray-60">
                         <Link to={`/users/${author?.id}`} className="flex items-center gap-2 group">
-                            <img src={author?.avatar || 'https://via.placeholder.com/32'} className="h-7 w-7 rounded-full" alt="" />
+                            <img src={author?.avatar || 'https://via.placeholder.com/32'} className="h-7 w-7 rounded-full" alt={author?.username || 'Author'} />
                             <span className="font-medium text-cool-gray-90 group-hover:underline">{author?.username || 'Unknown'}</span>
                         </Link>
+                        {/* Rating Display */}
+                        <div className="flex items-center gap-1 text-yellow-400">
+                             <div className="flex">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <span key={star} className={reviews.length > 0 && Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length) >= star ? 'text-yellow-400' : 'text-cool-gray-30'}>★</span>
+                                ))}
+                            </div>
+                            <span className="text-cool-gray-60">({reviews.length} reviews)</span>
+                        </div>
                         <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>{recipe.prepTime + recipe.cookTime} min</span>
@@ -151,6 +172,8 @@ export function RecipeDetail() {
                             size="sm"
                             onClick={handleToggleLike}
                             className="gap-1.5"
+                            disabled={!canInteract}
+                            aria-pressed={isLiked}
                             aria-label={isLiked ? 'Unlike recipe' : 'Like recipe'}
                         >
                             <Heart className={`h-4 w-4 ${isLiked ? 'fill-white' : ''}`} />
@@ -161,6 +184,8 @@ export function RecipeDetail() {
                             size="sm"
                             onClick={handleToggleFavorite}
                             className="gap-1.5"
+                            disabled={!canInteract}
+                            aria-pressed={isFavorited}
                             aria-label={isFavorited ? 'Unsave recipe' : 'Save recipe'}
                         >
                             <Bookmark className={`h-4 w-4 ${isFavorited ? 'fill-white' : ''}`} />
@@ -206,7 +231,7 @@ export function RecipeDetail() {
                     <CardContent className="p-5">
                         <h3 className="text-lg font-bold mb-3">Ingredients</h3>
                         <ul className="space-y-2">
-                            {recipe.ingredients.map((ing, i) => (
+                            {(recipe.ingredients || []).map((ing, i) => (
                                 <li key={i} className="flex justify-between items-center text-sm border-b border-cool-gray-10 pb-1.5 last:border-0">
                                     <span className="font-medium text-cool-gray-90">{ing.name}</span>
                                     <span className="text-cool-gray-60">{ing.quantity} {ing.unit}</span>
@@ -220,7 +245,7 @@ export function RecipeDetail() {
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold">Instructions</h3>
                     <div className="space-y-3">
-                        {recipe.instructions.map((step, i) => (
+                        {(recipe.instructions || []).map((step, i) => (
                             <div key={i} className="flex gap-3">
                                 <div className="flex-none flex items-center justify-center w-7 h-7 rounded-full bg-cool-gray-20 text-cool-gray-90 font-bold text-xs">
                                     {i + 1}
@@ -236,6 +261,12 @@ export function RecipeDetail() {
             <div className="pt-6 border-t border-cool-gray-20">
                 <h3 className="text-xl font-bold mb-4">Reviews ({reviews.length})</h3>
 
+                {isPending && (
+                    <div className="mb-4 rounded-lg border border-cool-gray-20 bg-cool-gray-10 p-3 text-sm text-cool-gray-60">
+                        Your account is pending approval. You can browse recipes as a guest, but you can’t like, save, or submit reviews yet.
+                    </div>
+                )}
+
                 {/* Comment Form */}
                 <div className="mb-6 flex gap-3">
                     <img src={user?.avatar} className="h-9 w-9 rounded-full" alt="" />
@@ -246,6 +277,7 @@ export function RecipeDetail() {
                             rows={2}
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
+                            disabled={!canInteract}
                         />
                         <div className="flex justify-between items-center">
                             <div className="flex gap-0.5" role="group" aria-label="Rating">
@@ -254,14 +286,16 @@ export function RecipeDetail() {
                                         key={star}
                                         type="button"
                                         onClick={() => setRating(star)}
-                                        className={`text-lg cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded-sm ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                                        className={`text-lg ${canInteract ? 'cursor-pointer' : 'cursor-not-allowed'} ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
                                         aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                                        aria-pressed={rating >= star}
+                                        disabled={!canInteract}
                                     >
                                         ★
                                     </button>
                                 ))}
                             </div>
-                            <Button type="submit" size="sm" disabled={!newComment.trim()}>Post</Button>
+                            <Button type="submit" size="sm" disabled={!newComment.trim() || !canInteract}>Post</Button>
                         </div>
                     </form>
                 </div>
@@ -274,8 +308,10 @@ export function RecipeDetail() {
                             <div className="flex-1 space-y-0.5">
                                 <div className="flex items-center gap-2">
                                     <Link to={`/users/${review.userId}`} className="font-semibold text-cool-gray-90 text-sm hover:underline">{review.username}</Link>
-                                    <div className="flex text-yellow-500 text-xs">
-                                        {'★'.repeat(review.rating)}
+                                    <div className="flex text-xs">
+                                        {[1, 2, 3, 4, 5].map(star => (
+                                            <span key={star} className={review.rating >= star ? 'text-yellow-500' : 'text-cool-gray-30'}>★</span>
+                                        ))}
                                     </div>
                                     <span className="text-[10px] text-cool-gray-30">{new Date(review.createdAt).toLocaleDateString()}</span>
                                     {/* Delete button - only visible to review author */}

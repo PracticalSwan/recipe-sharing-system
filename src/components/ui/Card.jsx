@@ -1,10 +1,9 @@
-import { twMerge } from 'tailwind-merge';
-import { clsx } from 'clsx';
+import { cn } from '../../lib/utils';
 
 export function Card({ className, children, ...props }) {
     return (
         <div
-            className={twMerge(clsx("rounded-xl border border-cool-gray-20 bg-white text-cool-gray-90 shadow-sm", className))}
+            className={cn("rounded-xl border border-cool-gray-20 bg-white text-cool-gray-90 shadow-sm", className)}
             {...props}
         >
             {children}
@@ -14,7 +13,7 @@ export function Card({ className, children, ...props }) {
 
 export function CardHeader({ className, children, ...props }) {
     return (
-        <div className={twMerge(clsx("flex flex-col space-y-1.5 p-6", className))} {...props}>
+        <div className={cn("flex flex-col space-y-1.5 p-6", className)} {...props}>
             {children}
         </div>
     );
@@ -22,7 +21,7 @@ export function CardHeader({ className, children, ...props }) {
 
 export function CardTitle({ className, children, ...props }) {
     return (
-        <div className={twMerge(clsx("font-semibold leading-none tracking-tight", className))} {...props}>
+        <div className={cn("font-semibold leading-none tracking-tight", className)} {...props}>
             {children}
         </div>
     );
@@ -30,7 +29,7 @@ export function CardTitle({ className, children, ...props }) {
 
 export function CardContent({ className, children, ...props }) {
     return (
-        <div className={twMerge(clsx("p-6 pt-0", className))} {...props}>
+        <div className={cn("p-6 pt-0", className)} {...props}>
             {children}
         </div>
     );
@@ -38,7 +37,7 @@ export function CardContent({ className, children, ...props }) {
 
 export function CardFooter({ className, children, ...props }) {
     return (
-        <div className={twMerge(clsx("flex items-center p-6 pt-0", className))} {...props}>
+        <div className={cn("flex items-center p-6 pt-0", className)} {...props}>
             {children}
         </div>
     );

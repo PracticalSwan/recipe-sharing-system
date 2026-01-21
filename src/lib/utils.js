@@ -4,3 +4,19 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs) {
     return twMerge(clsx(inputs))
 }
+
+export const RECIPE_CATEGORIES = [
+    'Breakfast',
+    'Lunch',
+    'Dinner',
+    'Dessert',
+    'Italian',
+    'Asian',
+    'Health'
+]
+
+export const RECIPE_DIFFICULTIES = [
+    'Easy',
+    'Medium',
+    'Hard'
+]

@@ -58,7 +58,7 @@ export function Signup() {
             });
 
             navigate('/');
-        } catch (err) {
+        } catch {
             setError('Failed to create account');
         } finally {
             setIsLoading(false);

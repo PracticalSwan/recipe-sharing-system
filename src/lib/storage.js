@@ -5,9 +5,10 @@ const STORAGE_KEYS = {
     USERS: 'cookhub_users',
     RECIPES: 'cookhub_recipes',
     CURRENT_USER: 'cookhub_current_user',
+    GUEST_ID: 'cookhub_guest_id',
     REVIEWS: 'cookhub_reviews',
-    STATS: 'cookhub_stats',
-    DAILY_STATS: 'cookhub_daily_stats'
+    DAILY_STATS: 'cookhub_daily_stats',
+    ACTIVITY: 'cookhub_activity'
 };
 
 // Helper to get today's date string (YYYY-MM-DD)
@@ -36,10 +37,49 @@ const SEED_DATA = {
             role: 'admin',
             status: 'active',
             joinedDate: new Date().toISOString(),
+            lastActive: new Date().toISOString(),
             avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
             bio: 'System Administrator',
             location: 'Server Room',
             cookingLevel: 'Professional',
+            favorites: [],
+            viewedRecipes: []
+        },
+        {
+            id: 'admin-2',
+            username: 'Olivia Admin',
+            firstName: 'Olivia',
+            lastName: 'Nguyen',
+            email: 'olivia@cookhub.com',
+            password: 'admin',
+            birthday: '1986-04-12',
+            role: 'admin',
+            status: 'active',
+            joinedDate: new Date('2025-09-01').toISOString(),
+            lastActive: new Date(Date.now() - 7200000).toISOString(),
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=olivia-admin',
+            bio: 'Content moderation lead.',
+            location: 'Boston',
+            cookingLevel: 'Advanced',
+            favorites: [],
+            viewedRecipes: []
+        },
+        {
+            id: 'admin-3',
+            username: 'Marcus Admin',
+            firstName: 'Marcus',
+            lastName: 'Lee',
+            email: 'marcus@cookhub.com',
+            password: 'admin',
+            birthday: '1983-11-22',
+            role: 'admin',
+            status: 'active',
+            joinedDate: new Date('2025-10-05').toISOString(),
+            lastActive: new Date(Date.now() - 5400000).toISOString(),
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=marcus-admin',
+            bio: 'Operations admin.',
+            location: 'Seattle',
+            cookingLevel: 'Intermediate',
             favorites: [],
             viewedRecipes: []
         },
@@ -54,6 +94,7 @@ const SEED_DATA = {
             role: 'user',
             status: 'active',
             joinedDate: new Date('2025-06-15').toISOString(),
+            lastActive: new Date(Date.now() - 3600000).toISOString(),
             avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=john',
             bio: 'Love cooking italian food!',
             location: 'New York',
@@ -70,8 +111,9 @@ const SEED_DATA = {
             password: 'maria123',
             birthday: '1988-03-20',
             role: 'user',
-            status: 'active',
+            status: 'inactive',
             joinedDate: new Date('2025-03-20').toISOString(),
+            lastActive: new Date(Date.now() - 86400000 * 7).toISOString(),
             avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=maria',
             bio: 'Professional chef specializing in Mediterranean cuisine.',
             location: 'Los Angeles',
@@ -88,14 +130,15 @@ const SEED_DATA = {
             password: 'tom123',
             birthday: '1992-08-01',
             role: 'user',
-            status: 'active',
+            status: 'suspended',
             joinedDate: new Date('2025-08-01').toISOString(),
+            lastActive: new Date(Date.now() - 86400000 * 30).toISOString(),
             avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=tom',
             bio: 'Passionate about baking and desserts!',
             location: 'Chicago',
             cookingLevel: 'Intermediate',
             favorites: ['recipe-1', 'recipe-5'],
-            viewedRecipes: ['recipe-1', 'recipe-5', 'recipe-6']
+            viewedRecipes: ['recipe-1', 'recipe-5']
         },
         {
             id: 'user-4',
@@ -106,14 +149,110 @@ const SEED_DATA = {
             password: 'amy123',
             birthday: '1998-11-10',
             role: 'user',
-            status: 'active',
+            status: 'pending',
             joinedDate: new Date('2025-11-10').toISOString(),
+            lastActive: null,
             avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=amy',
-            bio: 'Home cook exploring healthy recipes.',
-            location: 'Seattle',
+            bio: 'New to the platform.',
+            location: 'Denver',
             cookingLevel: 'Beginner',
-            favorites: ['recipe-4', 'recipe-6'],
-            viewedRecipes: ['recipe-3', 'recipe-4', 'recipe-6']
+            favorites: [],
+            viewedRecipes: []
+        },
+        {
+            id: 'user-5',
+            username: 'Kevin Tran',
+            firstName: 'Kevin',
+            lastName: 'Tran',
+            email: 'kevin@cookhub.com',
+            password: 'kevin123',
+            birthday: '1996-02-18',
+            role: 'user',
+            status: 'pending',
+            joinedDate: new Date('2026-01-20').toISOString(),
+            lastActive: null,
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=kevin',
+            bio: 'Here to learn quick meals.',
+            location: 'Austin',
+            cookingLevel: 'Beginner',
+            favorites: [],
+            viewedRecipes: []
+        },
+        {
+            id: 'user-6',
+            username: 'Sarah Kim',
+            firstName: 'Sarah',
+            lastName: 'Kim',
+            email: 'sarah@cookhub.com',
+            password: 'sarah123',
+            birthday: '1991-07-09',
+            role: 'user',
+            status: 'active',
+            joinedDate: new Date('2025-12-28').toISOString(),
+            lastActive: new Date(Date.now() - 1800000).toISOString(),
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
+            bio: 'Healthy meal prep enthusiast.',
+            location: 'San Diego',
+            cookingLevel: 'Intermediate',
+            favorites: ['recipe-1', 'recipe-3'],
+            viewedRecipes: ['recipe-1', 'recipe-3', 'recipe-8']
+        },
+        {
+            id: 'user-7',
+            username: 'Daniel Rivera',
+            firstName: 'Daniel',
+            lastName: 'Rivera',
+            email: 'daniel@cookhub.com',
+            password: 'daniel123',
+            birthday: '1989-05-30',
+            role: 'user',
+            status: 'active',
+            joinedDate: new Date('2025-12-05').toISOString(),
+            lastActive: new Date(Date.now() - 4000000).toISOString(),
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=daniel',
+            bio: 'Street food lover.',
+            location: 'Miami',
+            cookingLevel: 'Advanced',
+            favorites: ['recipe-5'],
+            viewedRecipes: ['recipe-5', 'recipe-7']
+        },
+        {
+            id: 'user-8',
+            username: 'Lina Patel',
+            firstName: 'Lina',
+            lastName: 'Patel',
+            email: 'lina@cookhub.com',
+            password: 'lina123',
+            birthday: '2000-09-14',
+            role: 'user',
+            status: 'inactive',
+            joinedDate: new Date('2025-11-01').toISOString(),
+            lastActive: new Date(Date.now() - 86400000 * 10).toISOString(),
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lina',
+            bio: 'Baking beginner.',
+            location: 'Portland',
+            cookingLevel: 'Beginner',
+            favorites: [],
+            viewedRecipes: ['recipe-2']
+        },
+        {
+            id: 'user-9',
+            username: 'Omar Hassan',
+            firstName: 'Omar',
+            lastName: 'Hassan',
+            email: 'omar@cookhub.com',
+            password: 'omar123',
+            birthday: '1993-03-03',
+            role: 'user',
+            status: 'pending',
+            joinedDate: new Date('2026-01-21').toISOString(),
+            lastActive: null,
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=omar',
+            bio: 'Trying new cuisines.',
+            location: 'Phoenix',
+            cookingLevel: 'Beginner',
+            favorites: [],
+            viewedRecipes: []
         }
     ],
     recipes: [
@@ -138,8 +277,7 @@ const SEED_DATA = {
             status: 'published',
             createdAt: new Date('2025-12-01').toISOString(),
             likedBy: ['user-2', 'user-3'],
-            viewedBy: ['user-1', 'user-2', 'user-3', 'user-4'],
-            tags: ['pasta', 'dinner', 'italian']
+            viewedBy: ['user-1', 'user-2', 'user-3']
         },
         {
             id: 'recipe-2',
@@ -162,8 +300,7 @@ const SEED_DATA = {
             status: 'pending',
             createdAt: new Date('2026-01-15').toISOString(),
             likedBy: [],
-            viewedBy: [],
-            tags: ['breakfast']
+            viewedBy: []
         },
         {
             id: 'recipe-3',
@@ -186,8 +323,7 @@ const SEED_DATA = {
             status: 'published',
             createdAt: new Date('2025-11-20').toISOString(),
             likedBy: ['user-1'],
-            viewedBy: ['user-1', 'user-4'],
-            tags: ['asian', 'dinner', 'spicy']
+            viewedBy: ['user-1']
         },
         {
             id: 'recipe-4',
@@ -209,9 +345,8 @@ const SEED_DATA = {
             authorId: 'user-2',
             status: 'published',
             createdAt: new Date('2025-10-15').toISOString(),
-            likedBy: ['user-4'],
-            viewedBy: ['user-2', 'user-4'],
-            tags: ['breakfast', 'healthy']
+            likedBy: [],
+            viewedBy: ['user-2']
         },
         {
             id: 'recipe-5',
@@ -234,32 +369,7 @@ const SEED_DATA = {
             status: 'published',
             createdAt: new Date('2025-09-05').toISOString(),
             likedBy: ['user-3'],
-            viewedBy: ['user-3'],
-            tags: ['dessert', 'chocolate']
-        },
-        {
-            id: 'recipe-6',
-            title: 'Quinoa Buddha Bowl',
-            description: 'Nutritious and colorful bowl packed with quinoa, roasted veggies, and tahini dressing.',
-            category: 'Health',
-            prepTime: 15,
-            cookTime: 30,
-            servings: 2,
-            difficulty: 'Easy',
-            ingredients: [
-                { name: 'Quinoa', quantity: '150', unit: 'g' },
-                { name: 'Sweet potato', quantity: '1', unit: 'large' },
-                { name: 'Chickpeas', quantity: '200', unit: 'g' },
-                { name: 'Tahini', quantity: '3', unit: 'tbsp' }
-            ],
-            instructions: ['Cook quinoa according to package', 'Roast diced sweet potato and chickpeas', 'Prepare tahini dressing', 'Assemble bowl with all ingredients', 'Drizzle with dressing'],
-            images: ['https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800'],
-            authorId: 'user-4',
-            status: 'published',
-            createdAt: new Date('2025-12-20').toISOString(),
-            likedBy: ['user-4'],
-            viewedBy: ['user-3', 'user-4'],
-            tags: ['healthy', 'lunch', 'vegan']
+            viewedBy: ['user-3']
         },
         {
             id: 'recipe-7',
@@ -282,8 +392,7 @@ const SEED_DATA = {
             status: 'published',
             createdAt: new Date('2025-08-10').toISOString(),
             likedBy: ['user-1', 'user-2', 'user-3'],
-            viewedBy: ['user-1', 'user-2', 'user-3', 'user-4'],
-            tags: ['dinner', 'american']
+            viewedBy: ['user-1', 'user-2', 'user-3']
         },
         {
             id: 'recipe-8',
@@ -305,9 +414,146 @@ const SEED_DATA = {
             authorId: 'user-2',
             status: 'published',
             createdAt: new Date('2025-07-25').toISOString(),
-            likedBy: ['user-2', 'user-4'],
-            viewedBy: ['user-2', 'user-4'],
-            tags: ['dessert', 'asian', 'thai']
+            likedBy: ['user-2'],
+            viewedBy: ['user-2']
+        },
+        {
+            id: 'recipe-9',
+            title: 'Lemon Garlic Salmon',
+            description: 'Oven-baked salmon with lemon, garlic, and fresh herbs.',
+            category: 'Dinner',
+            prepTime: 10,
+            cookTime: 18,
+            servings: 2,
+            difficulty: 'Easy',
+            ingredients: [
+                { name: 'Salmon fillets', quantity: '2', unit: '' },
+                { name: 'Lemon', quantity: '1', unit: '' },
+                { name: 'Garlic', quantity: '3', unit: 'cloves' },
+                { name: 'Olive oil', quantity: '2', unit: 'tbsp' }
+            ],
+            instructions: ['Preheat oven to 200°C', 'Season salmon with garlic, lemon, and oil', 'Bake for 15-18 minutes', 'Serve with herbs'],
+            images: ['https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=800'],
+            authorId: 'user-6',
+            status: 'published',
+            createdAt: new Date('2026-01-05').toISOString(),
+            likedBy: ['user-1'],
+            viewedBy: ['user-1', 'user-6']
+        },
+        {
+            id: 'recipe-10',
+            title: 'Chickpea Salad Wrap',
+            description: 'Fresh and crunchy chickpea salad wrapped in a tortilla.',
+            category: 'Lunch',
+            prepTime: 12,
+            cookTime: 0,
+            servings: 2,
+            difficulty: 'Easy',
+            ingredients: [
+                { name: 'Chickpeas', quantity: '200', unit: 'g' },
+                { name: 'Greek yogurt', quantity: '3', unit: 'tbsp' },
+                { name: 'Celery', quantity: '2', unit: 'stalks' },
+                { name: 'Tortillas', quantity: '2', unit: '' }
+            ],
+            instructions: ['Mash chickpeas lightly', 'Mix with yogurt and chopped celery', 'Wrap in tortilla and serve'],
+            images: ['https://images.unsplash.com/photo-1523986371872-9d3ba2e2f642?auto=format&fit=crop&q=80&w=800'],
+            authorId: 'user-7',
+            status: 'published',
+            createdAt: new Date('2025-12-12').toISOString(),
+            likedBy: ['user-2', 'user-6'],
+            viewedBy: ['user-2', 'user-6', 'user-7']
+        },
+        {
+            id: 'recipe-11',
+            title: 'Blueberry Overnight Oats',
+            description: 'No-cook breakfast with oats, yogurt, and blueberries.',
+            category: 'Breakfast',
+            prepTime: 8,
+            cookTime: 0,
+            servings: 1,
+            difficulty: 'Easy',
+            ingredients: [
+                { name: 'Rolled oats', quantity: '50', unit: 'g' },
+                { name: 'Greek yogurt', quantity: '120', unit: 'ml' },
+                { name: 'Blueberries', quantity: '80', unit: 'g' },
+                { name: 'Honey', quantity: '1', unit: 'tsp' }
+            ],
+            instructions: ['Mix oats and yogurt', 'Top with blueberries', 'Chill overnight', 'Drizzle honey before serving'],
+            images: ['https://images.unsplash.com/photo-1502741126161-b048400dcca2?auto=format&fit=crop&q=80&w=800'],
+            authorId: 'user-6',
+            status: 'pending',
+            createdAt: new Date('2026-01-18').toISOString(),
+            likedBy: [],
+            viewedBy: []
+        },
+        {
+            id: 'recipe-12',
+            title: 'Spicy Tofu Stir-Fry',
+            description: 'Quick stir-fry with tofu, bell peppers, and spicy sauce.',
+            category: 'Asian',
+            prepTime: 15,
+            cookTime: 10,
+            servings: 3,
+            difficulty: 'Medium',
+            ingredients: [
+                { name: 'Tofu', quantity: '400', unit: 'g' },
+                { name: 'Bell peppers', quantity: '2', unit: '' },
+                { name: 'Soy sauce', quantity: '2', unit: 'tbsp' },
+                { name: 'Chili sauce', quantity: '1', unit: 'tbsp' }
+            ],
+            instructions: ['Press and cube tofu', 'Stir-fry tofu until golden', 'Add peppers and sauce', 'Serve hot'],
+            images: ['https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&q=80&w=800'],
+            authorId: 'user-7',
+            status: 'rejected',
+            createdAt: new Date('2025-11-22').toISOString(),
+            likedBy: [],
+            viewedBy: ['user-7']
+        },
+        {
+            id: 'recipe-13',
+            title: 'Tomato Basil Soup',
+            description: 'Creamy tomato soup with fresh basil and croutons.',
+            category: 'Dinner',
+            prepTime: 10,
+            cookTime: 25,
+            servings: 4,
+            difficulty: 'Easy',
+            ingredients: [
+                { name: 'Tomatoes', quantity: '800', unit: 'g' },
+                { name: 'Onion', quantity: '1', unit: '' },
+                { name: 'Cream', quantity: '100', unit: 'ml' },
+                { name: 'Basil', quantity: '1', unit: 'bunch' }
+            ],
+            instructions: ['Saute onion', 'Add tomatoes and simmer', 'Blend and add cream', 'Garnish with basil'],
+            images: ['https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?auto=format&fit=crop&q=80&w=800'],
+            authorId: 'user-1',
+            status: 'published',
+            createdAt: new Date('2025-10-30').toISOString(),
+            likedBy: ['user-3'],
+            viewedBy: ['user-1', 'user-3', 'user-6']
+        },
+        {
+            id: 'recipe-14',
+            title: 'Crispy Fish Tacos',
+            description: 'Crispy fish with slaw and lime crema in warm tortillas.',
+            category: 'Dinner',
+            prepTime: 20,
+            cookTime: 15,
+            servings: 3,
+            difficulty: 'Medium',
+            ingredients: [
+                { name: 'White fish', quantity: '400', unit: 'g' },
+                { name: 'Tortillas', quantity: '6', unit: '' },
+                { name: 'Cabbage', quantity: '150', unit: 'g' },
+                { name: 'Lime', quantity: '1', unit: '' }
+            ],
+            instructions: ['Season and fry fish', 'Prepare slaw', 'Assemble tacos', 'Serve with lime crema'],
+            images: ['https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800'],
+            authorId: 'user-7',
+            status: 'published',
+            createdAt: new Date('2026-01-10').toISOString(),
+            likedBy: ['user-2', 'user-6'],
+            viewedBy: ['user-2', 'user-6', 'user-7']
         }
     ]
 };
@@ -350,22 +596,59 @@ export const storage = {
         localStorage.setItem(STORAGE_KEYS.RECIPES, JSON.stringify(recipes));
     },
 
+    deleteUser: (userId) => {
+        const users = storage.getUsers();
+        const filtered = users.filter(u => u.id !== userId);
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(filtered));
+    },
+
     login: (email, password) => {
         const users = storage.getUsers();
         const user = users.find(u => u.email === email && u.password === password);
         if (user) {
-            if (user.status !== 'active') throw new Error('Account is not active.');
+            if (user.status === 'suspended') throw new Error('Account is suspended.');
+            if (user.status === 'inactive') throw new Error('Account is inactive.');
+            storage.recordActiveUser(user.id);
             user.lastActive = new Date().toISOString();
             storage.saveUser(user);
-            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+            storage.setCurrentUser(user);
             return user;
         }
         throw new Error('Invalid credentials');
     },
 
-    getCurrentUser: () => JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER)),
+    getCurrentUser: () => JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER) || 'null'),
 
-    logout: () => localStorage.removeItem(STORAGE_KEYS.CURRENT_USER),
+    setCurrentUser: (user) => {
+        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    },
+
+    getOrCreateGuestId: () => {
+        const existing = localStorage.getItem(STORAGE_KEYS.GUEST_ID);
+        if (existing) return existing;
+        const guestId = `guest-${generateId()}`;
+        localStorage.setItem(STORAGE_KEYS.GUEST_ID, guestId);
+        return guestId;
+    },
+
+    updateLastActive: (userId, timestamp = new Date().toISOString()) => {
+        if (!userId) return;
+        const users = storage.getUsers();
+        const user = users.find(u => u.id === userId);
+        if (!user) return;
+        const updatedUser = { ...user, lastActive: timestamp };
+        storage.saveUser(updatedUser);
+
+        const currentUser = storage.getCurrentUser();
+        if (currentUser?.id === userId) {
+            storage.setCurrentUser(updatedUser);
+        }
+    },
+
+    logout: (userId) => {
+        storage.updateLastActive(userId);
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    },
 
     getReviews: (recipeId) => {
         const reviews = JSON.parse(localStorage.getItem(STORAGE_KEYS.REVIEWS) || '[]');
@@ -373,9 +656,21 @@ export const storage = {
         return reviews;
     },
 
+    getAverageRating: (recipeId) => {
+        const reviews = storage.getReviews(recipeId);
+        if (!reviews.length) return 0;
+        return reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length;
+    },
+
     addReview: (review) => {
         const reviews = storage.getReviews();
-        reviews.push({ ...review, id: `review-${Date.now()}`, createdAt: new Date().toISOString() });
+        const existingIndex = reviews.findIndex(r => r.recipeId === review.recipeId && r.userId === review.userId);
+        const nextReview = { ...review, id: `review-${Date.now()}`, createdAt: new Date().toISOString() };
+        if (existingIndex >= 0) {
+            reviews[existingIndex] = { ...reviews[existingIndex], ...nextReview };
+        } else {
+            reviews.push(nextReview);
+        }
         localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
     },
 
@@ -396,7 +691,7 @@ export const storage = {
         // Also update current user session
         const currentUser = storage.getCurrentUser();
         if (currentUser?.id === userId) {
-            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+            storage.setCurrentUser(user);
         }
         return user.favorites.includes(recipeId);
     },
@@ -418,16 +713,45 @@ export const storage = {
         return { liked: recipe.likedBy.includes(userId), count: recipe.likedBy.length };
     },
 
-    // Record view: add user to recipe's viewedBy if not already present
-    recordView: (userId, recipeId) => {
+    // Record view: add viewer to recipe's viewedBy if not already present
+    recordView: (viewerIdOrOptions, recipeIdMaybe) => {
+        let viewerId = null;
+        let recipeId = null;
+        let viewerType = 'user';
+
+        if (typeof viewerIdOrOptions === 'object' && viewerIdOrOptions !== null) {
+            viewerId = viewerIdOrOptions.viewerId;
+            recipeId = viewerIdOrOptions.recipeId;
+            viewerType = viewerIdOrOptions.viewerType || 'user';
+        } else {
+            viewerId = viewerIdOrOptions;
+            recipeId = recipeIdMaybe;
+        }
+
+        if (!viewerId || !recipeId) return 0;
+
         const recipes = storage.getRecipes();
         const recipe = recipes.find(r => r.id === recipeId);
         if (!recipe) return 0;
 
+        const viewerKey = viewerType === 'guest' ? `guest:${viewerId}` : viewerId;
         if (!recipe.viewedBy) recipe.viewedBy = [];
-        if (!recipe.viewedBy.includes(userId)) {
-            recipe.viewedBy.push(userId);
+        if (!recipe.viewedBy.includes(viewerKey)) {
+            recipe.viewedBy.push(viewerKey);
             storage.saveRecipe(recipe);
+        }
+        const allStats = storage.getDailyStats();
+        const today = getTodayKey();
+        if (!allStats[today]) {
+            allStats[today] = { newUsers: [], newContributors: [], activeUsers: [], views: [] };
+        }
+        if (!allStats[today].views) {
+            allStats[today].views = [];
+        }
+        const alreadyViewedToday = allStats[today].views.some(v => v.viewerKey === viewerKey && v.recipeId === recipeId);
+        if (!alreadyViewedToday) {
+            allStats[today].views.push({ viewerKey, viewerType, recipeId, viewedAt: new Date().toISOString() });
+            localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(allStats));
         }
         return recipe.viewedBy.length;
     },
@@ -467,6 +791,12 @@ export const storage = {
         // Also clean up any reviews for this recipe
         const reviews = storage.getReviews().filter(r => r.recipeId !== recipeId);
         localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
+        // Remove deleted recipe from user favorites
+        const users = storage.getUsers().map(user => ({
+            ...user,
+            favorites: (user.favorites || []).filter(id => id !== recipeId)
+        }));
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     },
 
     // Delete a review by ID
@@ -488,6 +818,7 @@ export const storage = {
         localStorage.removeItem(STORAGE_KEYS.REVIEWS);
         localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
         localStorage.removeItem(STORAGE_KEYS.DAILY_STATS);
+        localStorage.removeItem(STORAGE_KEYS.ACTIVITY);
         storage.initialize();
     },
 
@@ -496,20 +827,13 @@ export const storage = {
         return JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || '{}');
     },
 
-    // Get today's stats
-    getTodayStats: () => {
-        const allStats = storage.getDailyStats();
-        const today = getTodayKey();
-        return allStats[today] || { newUsers: [], newContributors: [], activeUsers: [] };
-    },
-
     // Record a new user registration
     recordNewUser: (userId, role = 'user') => {
         const allStats = storage.getDailyStats();
         const today = getTodayKey();
         
         if (!allStats[today]) {
-            allStats[today] = { newUsers: [], newContributors: [], activeUsers: [] };
+            allStats[today] = { newUsers: [], newContributors: [], activeUsers: [], views: [] };
         }
         
         if (!allStats[today].newUsers.includes(userId)) {
@@ -530,7 +854,7 @@ export const storage = {
         const today = getTodayKey();
         
         if (!allStats[today]) {
-            allStats[today] = { newUsers: [], newContributors: [], activeUsers: [] };
+            allStats[today] = { newUsers: [], newContributors: [], activeUsers: [], views: [] };
         }
         
         if (!allStats[today].activeUsers.includes(userId)) {
@@ -563,9 +887,30 @@ export const storage = {
 
     // Get daily views (recipes viewed today - sum of all recipe viewedBy where view was today)
     getDailyViews: () => {
-        const recipes = storage.getRecipes();
-        // For simplicity, return total unique views across all recipes
-        // In a real app, you'd track view timestamps
-        return recipes.reduce((total, r) => total + (r.viewedBy?.length || 0), 0);
+        const allStats = storage.getDailyStats();
+        const today = getTodayKey();
+        const todayStats = allStats[today];
+        return todayStats?.views?.length || 0;
+    },
+
+    // Activity log helpers
+    addActivity: (activity) => {
+        const entries = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVITY) || '[]');
+        const entry = {
+            id: `activity-${Date.now()}-${generateId()}`,
+            time: new Date().toISOString(),
+            ...activity
+        };
+        entries.unshift(entry);
+        localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(entries.slice(0, 200)));
+        return entry;
+    },
+
+    getRecentActivity: (limit = 5) => {
+        const entries = JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVITY) || '[]');
+        return entries
+            .filter(activity => activity.time)
+            .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+            .slice(0, Math.max(1, limit));
     }
 };

@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { LogOut, User, PlusCircle, Search } from 'lucide-react';
 
 export function Navbar() {
-    const { user, logout } = useAuth();
+    const { user, logout, canInteract } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -22,17 +22,21 @@ export function Navbar() {
                     </Link>
                     <div className="hidden md:flex items-center gap-4">
                         <Link to="/" className="text-sm font-medium text-cool-gray-60 hover:text-cool-gray-90">Discover</Link>
-                        <Link to="/recipes/my-recipes" className="text-sm font-medium text-cool-gray-60 hover:text-cool-gray-90">My Recipes</Link>
+                        {canInteract && (
+                            <Link to="/recipes/my-recipes" className="text-sm font-medium text-cool-gray-60 hover:text-cool-gray-90">My Recipes</Link>
+                        )}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <Link to="/recipes/create">
-                        <Button size="sm" variant="primary" className="gap-2">
-                            <PlusCircle className="h-4 w-4" />
-                            <span>Create</span>
-                        </Button>
-                    </Link>
+                    {canInteract && (
+                        <Link to="/recipes/create">
+                            <Button size="sm" variant="primary" className="gap-2">
+                                <PlusCircle className="h-4 w-4" />
+                                <span>Create</span>
+                            </Button>
+                        </Link>
+                    )}
 
                     <Link to="/profile">
                         <Button variant="ghost" size="icon" className="rounded-full" aria-label="View Profile">
