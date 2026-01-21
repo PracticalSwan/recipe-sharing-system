@@ -9,8 +9,8 @@ A collaborative web application that enables users to share, discover, and inter
 - [System Architecture](#️-system-architecture)
 - [User Roles & Functions](#-user-roles--functions)
   - [Admin Dashboard](#admin-dashboard)
-  - [Contributor Module](#contributor-module)
-  - [User Module](#user-module)
+  - [User (Contributor) Module](#user-contributor-module)
+  - [User (Guest) Module](#user-guest-module)
 - [Installation & Setup](#-installation--setup)
 - [Available Scripts](#-available-scripts)
 - [Project Structure](#-project-structure)
@@ -22,9 +22,15 @@ A collaborative web application that enables users to share, discover, and inter
 ## 🎯 Overview
 
 The Recipe Sharing System is built to facilitate a community-driven platform where:
-- **Users** discover and interact with recipes through browsing, searching, and rating
-- **Contributors** create and manage recipes, which undergo admin approval before publication
-- **Admins** oversee the platform with analytics, user management, and content moderation
+- **Guests (Pending Users)** - New registrations start with pending status; can browse and search recipes while awaiting admin approval
+- **Contributors (Active Users)** - Approved users with full platform access; create and manage recipes, interact with content through likes/favorites/reviews
+- **Admins** - Oversee the platform with user activation, recipe approval workflows, analytics, and content moderation
+
+The system features a **comprehensive approval workflow** where:
+1. New users register → Account created with "Pending" status
+2. Admin reviews and activates user accounts
+3. Contributors submit recipes → Admin approves before publication
+4. Activity tracking and analytics provide insights into platform engagement
 
 The system uses a **client-side storage approach** with localStorage, making it lightweight and suitable for demonstration and development purposes.
 
@@ -44,27 +50,33 @@ The system uses a **client-side storage approach** with localStorage, making it 
 - ✅ Last active timestamp tracking (updated on logout/browser close)
 - ✅ Daily Active Users (DAU) tracking with session heartbeat
 - ✅ Admin activity logging (user/recipe management actions)
-- ✅ Data integrity enforcement (cascade cleanup on deletes)
 
 ## 🏗️ System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Recipe Sharing System                     │
-├─────────────────────────────────────────────────────────────┤
-│  Authentication & Authorization                             │
-│  ├── Login / Registration (Shared)                           │
-│  └── Role-based Access Control (Admin, Contributor, User)   │
-├─────────────────────────────────────────────────────────────┤
-│  Admin Module          Contributor Module    User Module     │
-│  ├── Dashboard         ├── Profile Mgmt      ├── Home/Browse │
-│  ├── User Mgmt         ├── Create Recipe     ├── Search      │
-│  ├── Recipe Mgmt       ├── My Recipes        ├── Recipe View │
-│  └── Analytics         └── Edit/Delete       ├── Favorites   │
-│                                               └── Reviews     │
-├─────────────────────────────────────────────────────────────┤
-│  Local Storage (User Accounts, Recipes, Reviews & Ratings)  │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        Recipe Sharing System                                 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Authentication & Authorization (Login Required)                             │
+│  ├── Registration → Initial Status: Pending                                  │
+│  └── Role-based Access Control (Admin, Contributor, Guest)                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Admin Module             Contributor Module         Guest Module (Pending)  │
+│  ├── Dashboard            ├── Full Platform Access   ├── Browse Recipes      │
+│  ├── User Management      ├── Create Recipe          ├── Search & Filter     │
+│  ├── Recipe Approval      ├── My Recipes             ├── View Recipe Details │
+│  ├── Analytics & Stats    ├── Profile Management     ├── View Reviews        │
+│  └── Activity Logs        ├── Favorites              └── Awaits Admin        │
+│                           ├── Reviews & Ratings          Approval for        │
+│                           └── Likes & Engagement         Full Access         │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Data Layer: Local Storage                                                   │
+│  ├── User Accounts (credentials, profiles, roles, status)                    │
+│  ├── Recipes (content, status, metadata)                                     │
+│  ├── Reviews & Ratings (one per user per recipe)                             │
+│  ├── Daily Stats (views, active users, new users)                            │
+│  └── Activity Logs (admin actions, user management)                          │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 👥 User Roles & Functions
@@ -121,9 +133,9 @@ The system uses a **client-side storage approach** with localStorage, making it 
 
 ---
 
-### Contributor Module
+### User (Contributor) Module
 
-**Access:** Registration + Login as a Contributor
+**Access:** Registration + Login as a Contributor (full feature access)
 
 #### 1. **Authentication**
 - **Registration:** Create account with:
@@ -163,11 +175,43 @@ Submit new recipes with comprehensive details:
 - **Delete recipes:** Remove recipes from the system
 - Track approval status of each recipe (Pending, Approved, Rejected)
 
+#### 5. **Discover & Browse Recipes**
+- View all approved recipes from the community
+- See recipe details including images, descriptions, ingredients, and instructions
+- Explore recipes from various contributors
+
+#### 6. **Search & Filter**
+- Keyword search across recipe titles and descriptions
+- Real-time search results
+- Filter by category/tags, difficulty level, and cooking time
+- Sort by newest recipes, highest ratings, or difficulty level
+
+#### 7. **Saved Recipes (Favorites)**
+- Save recipes to your personal collection
+- View all saved recipes in one place
+- Remove recipes from your saved list
+- Quick access to favorite recipes for future reference
+
+#### 8. **Reviews & Ratings**
+- **Rate recipes** on a 1-5 star scale
+- **Write reviews:** Submit detailed text reviews with your thoughts (one review per recipe)
+- **Update reviews:** Edit your existing review on a recipe
+- **View community ratings:** See average ratings and other user reviews
+- **Delete your reviews:** Remove your own reviews anytime
+- Contribute to recipe ratings that help the community discover great recipes
+
+#### 9. **Engagement Features**
+- **Like recipes:** Show appreciation for recipes you enjoy
+- **View counts:** Track how many people viewed recipes
+- **Recipe views:** See which recipes are most popular
+
 ---
 
-### User Module
+### User (Guest) Module
 
-**Access:** Registration + Login as a User
+**Access:** Registration + Login as a Guest (Pending Status)
+
+**Status:** New users register as guests with Pending status and await admin approval to become Active
 
 #### 1. **Authentication**
 - **Registration:** Create account with:
@@ -175,24 +219,16 @@ Submit new recipes with comprehensive details:
   - Email address
   - Birthday
   - Password (with confirmation)
+- **Initial Status:** Account created as "Pending" - awaiting admin activation
 - **Login:** Email and password authentication
 - **Logout:** Secure session termination
 
-#### 2. **Profile Management**
-Edit and manage your user profile with:
-- Full name
-- Bio/About section
-- Avatar image
-- Location
-- Email address
-- Cooking skill level
-
-#### 3. **Discover & Browse Recipes**
+#### 2. **Discover & Browse Recipes**
 - View all approved recipes from the community
 - See recipe details including images, descriptions, ingredients, and instructions
 - Explore recipes from various contributors
 
-#### 4. **Search & Filter**
+#### 3. **Search & Filter**
 **Search Functionality:**
 - Keyword search across recipe titles and descriptions
 - Real-time search results
@@ -207,19 +243,12 @@ Edit and manage your user profile with:
 - Sort by highest ratings
 - Sort by difficulty level
 
-#### 5. **Saved Recipes (Favorites)**
-- Save recipes to your personal collection
-- View all saved recipes in one place
-- Remove recipes from your saved list
-- Quick access to favorite recipes for future reference
+#### 4. **View Reviews & Ratings**
+- **View ratings:** See average ratings and other user reviews
+- **View community feedback:** Read detailed reviews from other users
+- Browse recipe feedback to inform your cooking decisions
 
-#### 6. **Reviews & Ratings**
-- **Rate recipes** on a 1-5 star scale
-- **Write reviews:** Submit detailed text reviews with your thoughts (one review per recipe)
-- **Update reviews:** Edit your existing review on a recipe
-- **View community ratings:** See average ratings and other user reviews
-- **Delete your reviews:** Remove your own reviews anytime
-- Contribute to recipe ratings that help the community discover great recipes
+**Note:** Guests cannot write reviews, rate recipes, like recipes, create recipes, save favorites, or edit their profile until their account is approved by an admin and status changes from "Pending" to "Active"
 
 ---
 
@@ -339,6 +368,7 @@ recipe-sharing-system/
 
 ### Utilities
 - **Clsx** (v2.1.1) - Conditional className utility
+- **date-fns** (v4.1.0) - Modern JavaScript date utility library for formatting and manipulation
 
 ## 💾 Data Storage
 
@@ -354,13 +384,32 @@ The application uses **browser localStorage** for data persistence:
 
 ### Initial Data
 The application comes with **comprehensive seed data** including:
-- Multiple admin accounts for testing admin workflows
-- Sample user accounts with various roles and statuses (active, inactive, pending)
-- Diverse sample recipes across different categories and difficulty levels
-- Pre-filled reviews and ratings for demonstration
-- Activity logs for admin dashboard
 
-This allows you to immediately explore all features without creating accounts or recipes from scratch.
+**User Accounts:**
+- 3 Admin accounts with different activity levels
+- 7 User accounts spanning all statuses (Active, Inactive, Pending)
+- Mix of Contributors and regular Users
+- Pre-configured profiles with avatars, bios, and cooking levels
+
+**Recipe Content:**
+- 10+ diverse recipes across multiple categories (Breakfast, Lunch, Dinner, Dessert, Snack)
+- Varying difficulty levels (Easy, Medium, Hard)
+- Different approval statuses (Published, Pending, Rejected) for testing workflows
+- Complete recipe data including ingredients, instructions, prep/cook times, servings
+- Recipe metadata: views, likes, favorites
+
+**Engagement Data:**
+- Pre-filled reviews and ratings from multiple users
+- Sample favorites/bookmarks for user accounts
+- View counts and like counts on recipes
+- Historical daily stats for analytics dashboard
+
+**Admin Data:**
+- Recent activity log entries showing user management and recipe approvals
+- Daily statistics for testing dashboard metrics
+- Sample data spanning multiple days for trend analysis
+
+This rich seed data allows you to immediately explore all features without creating accounts or recipes from scratch.
 
 ### Test Credentials
 
