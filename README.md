@@ -444,18 +444,6 @@ import { storage } from './src/lib/storage';
 storage.resetData();
 ```
 
----
-
-## 🔒 Security Considerations
-
-- Passwords are stored in localStorage (for development only - use proper authentication in production)
-- Consider implementing a backend API with secure token-based authentication for production
-- Implement HTTPS for all communications
-- Add proper input validation and sanitization
-- Use secure cookie handling for session management
-
----
-
 ## 📧 Support
 
 For issues, questions, or contributions, please contact the development team or submit an issue through the project repository.
