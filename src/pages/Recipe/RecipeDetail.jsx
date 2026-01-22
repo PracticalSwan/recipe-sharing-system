@@ -6,7 +6,8 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
-import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit } from 'lucide-react';
+import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit, Check } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 export function RecipeDetail() {
     const { id } = useParams();
@@ -22,6 +23,14 @@ export function RecipeDetail() {
     const [likeCount, setLikeCount] = useState(0);
     const [viewCount, setViewCount] = useState(0);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [checkedIngredients, setCheckedIngredients] = useState({});
+
+    const toggleIngredient = (index) => {
+        setCheckedIngredients(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }));
+    };
 
     useEffect(() => {
         const recipes = storage.getRecipes();
@@ -229,15 +238,47 @@ export function RecipeDetail() {
                 {/* Ingredients */}
                 <Card>
                     <CardContent className="p-5">
-                        <h3 className="text-lg font-bold mb-3">Ingredients</h3>
+                        <div className="flex justify-between items-center mb-3">
+                            <h3 className="text-lg font-bold">Ingredients</h3>
+                            {Object.values(checkedIngredients).some(Boolean) && (
+                                <button
+                                    onClick={() => setCheckedIngredients({})}
+                                    className="text-[10px] text-cool-gray-40 hover:text-cool-gray-90 underline"
+                                >
+                                    Reset
+                                </button>
+                            )}
+                        </div>
                         <ul className="space-y-2">
                             {(recipe.ingredients || []).map((ing, i) => (
-                                <li key={i} className="flex justify-between items-center text-sm border-b border-cool-gray-10 pb-1.5 last:border-0">
-                                    <span className="font-medium text-cool-gray-90">{ing.name}</span>
-                                    <span className="text-cool-gray-60">{ing.quantity} {ing.unit}</span>
+                                <li
+                                    key={i}
+                                    className={cn(
+                                        "flex justify-between items-center text-sm border-b border-cool-gray-10 pb-1.5 last:border-0 cursor-pointer group/ing",
+                                        checkedIngredients[i] && "opacity-60"
+                                    )}
+                                    onClick={() => toggleIngredient(i)}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <div className={cn(
+                                            "flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                                            checkedIngredients[i] ? "bg-cool-gray-90 border-cool-gray-90" : "border-cool-gray-30 group-hover/ing:border-cool-gray-60"
+                                        )}>
+                                            {checkedIngredients[i] && <Check className="h-2.5 w-2.5 text-white" />}
+                                        </div>
+                                        <span className={cn(
+                                            "font-medium transition-all",
+                                            checkedIngredients[i] ? "line-through text-cool-gray-40" : "text-cool-gray-90"
+                                        )}>{ing.name}</span>
+                                    </div>
+                                    <span className={cn(
+                                        "text-cool-gray-60 text-xs transition-all",
+                                        checkedIngredients[i] ? "line-through opacity-50" : ""
+                                    )}>{ing.quantity} {ing.unit}</span>
                                 </li>
                             ))}
                         </ul>
+                        <p className="mt-4 text-[10px] text-cool-gray-40 italic">Tip: Click an ingredient to check it off while cooking.</p>
                     </CardContent>
                 </Card>
 

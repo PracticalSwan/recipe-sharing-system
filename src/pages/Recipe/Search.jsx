@@ -87,14 +87,23 @@ export function Search() {
     return (
         <div className="space-y-6 animate-page-in">
             <div className="flex flex-col gap-4 bg-white p-6 rounded-xl border border-cool-gray-20 shadow-sm">
-                <div className="relative">
+                <div className="relative group">
                     <SearchIcon className="absolute left-3 top-3.5 h-5 w-5 text-cool-gray-60" />
                     <Input
                         placeholder="Search recipes..."
-                        className="pl-10 text-lg py-6"
+                        className="pl-10 pr-10 text-lg py-6"
                         value={filters.keyword}
                         onChange={(e) => handleFilterChange('keyword', e.target.value)}
                     />
+                    {filters.keyword && (
+                        <button
+                            onClick={() => handleFilterChange('keyword', '')}
+                            className="absolute right-3 top-3.5 p-1 rounded-md text-cool-gray-40 hover:text-cool-gray-90 hover:bg-cool-gray-10 transition-colors"
+                            aria-label="Clear keyword"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                    )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">

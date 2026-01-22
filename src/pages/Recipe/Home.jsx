@@ -3,7 +3,7 @@ import { storage } from '../../lib/storage';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function Home() {
@@ -50,10 +50,20 @@ export function Home() {
                         <Search className="absolute left-3 top-3 h-5 w-5 text-cool-gray-60" />
                         <Input
                             placeholder="Search for recipes, ingredients, or chefs..."
-                            className="pl-10 h-11 text-cool-gray-90"
+                            className="pl-10 pr-10 h-11 text-cool-gray-90"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-2.5 p-1 rounded-md text-cool-gray-40 hover:text-cool-gray-90 hover:bg-white/10 transition-colors"
+                                aria-label="Clear search"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        )}
                     </form>
                 </div>
             </section>
