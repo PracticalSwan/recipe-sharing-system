@@ -44,6 +44,7 @@ The system uses a **client-side storage approach** with localStorage, making it 
 - ✅ User profile management
 - ✅ Recipe ratings and reviews (one review per user per recipe)
 - ✅ Favorites/saved recipes functionality
+ - ✅ Interactive ingredient checklist to mark off ingredients while cooking
 - ✅ Admin dashboard with site analytics and metrics
 - ✅ User and recipe management tools for admins
 - ✅ Activity tracking system with real-time updates
@@ -177,7 +178,7 @@ Submit new recipes with comprehensive details:
 
 #### 5. **Discover & Browse Recipes**
 - View all approved recipes from the community
-- See recipe details including images, descriptions, ingredients, and instructions
+ - See recipe details including images, descriptions, ingredients (with interactive checklist), and instructions
 - Explore recipes from various contributors
 
 #### 6. **Search & Filter**
