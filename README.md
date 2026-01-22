@@ -188,9 +188,14 @@ Submit new recipes with comprehensive details:
 
 #### 6. **Search & Filter**
 - Keyword search across recipe titles and descriptions
-- Real-time search results
+- Real-time search results with URL persistence
+- **Search History:** Automatic logging of your search queries with timestamps
+  - View your recent searches
+  - Clear search history with one click
 - Filter by category/tags, difficulty level, and cooking time
-- Sort by newest recipes, highest ratings, or difficulty level
+- **Reset Filters:** Quickly reset all filters to default values
+- Sort by newest recipes, highest ratings (Most Popular - default), or difficulty level
+- **Smart Filter Persistence:** Filters remain active when changing search keywords
 
 #### 7. **Saved Recipes (Favorites)**
 - Save recipes to your personal collection
@@ -238,17 +243,25 @@ Submit new recipes with comprehensive details:
 #### 3. **Search & Filter**
 **Search Functionality:**
 - Keyword search across recipe titles and descriptions
-- Real-time search results
+- Real-time search results with URL persistence
+- **Search History:** Automatic logging of your search queries with timestamps
+  - View your recent searches
+  - Clear search history with one click
 
 **Filtering Options:**
 - Filter by recipe category/tags
 - Filter by difficulty level
 - Filter by cooking time
+- **Reset Filters:** Quickly reset all filters to default values
 
 **Sorting Options:**
 - Sort by newest recipes
-- Sort by highest ratings
+- Sort by highest ratings (Most Popular - default)
 - Sort by difficulty level
+
+**Smart Features:**
+- Filters persist when changing search keywords
+- URL-based state persistence for shareable search results
 
 #### 4. **View Reviews & Ratings**
 - **View ratings:** See average ratings and other user reviews
@@ -310,6 +323,16 @@ Submit new recipes with comprehensive details:
 
 ```
 recipe-sharing-system/
+├── mermaid-diagrams/       # Mermaid diagram files (.mmd)
+│   ├── application-flowchart.mmd
+│   ├── data-flow-diagram.mmd
+│   ├── er-diagram.mmd
+│   └── er-diagram-conceptual.mmd
+├── python_diagrams/        # Graphviz Python diagram generators
+│   ├── flowchart_graphviz.py
+│   ├── data_flow_graphviz.py
+│   ├── er_recipe_conceptual_graphviz.py
+│   └── er_recipe_logical_graphviz.py
 ├── src/
 │   ├── components/           # Reusable UI components
 │   │   ├── layout/          # Navigation & layout components
@@ -391,8 +414,9 @@ The application uses **browser localStorage** for data persistence:
 2. **Recipes** - All submitted recipes with their metadata
 3. **Reviews & Ratings** - User feedback on recipes (enforces one per user per recipe)
 4. **Session Data** - Current logged-in user information
-5. **Daily Stats** - Page views, active users per day
-6. **Activity Logs** - Admin action history (user management, recipe approvals)
+5. **Search History** - User search queries with timestamps (query-only, no filters)
+6. **Daily Stats** - Page views, active users per day
+7. **Activity Logs** - Admin action history (user management, recipe approvals)
 
 ### Initial Data
 The application comes with **comprehensive seed data** including:
