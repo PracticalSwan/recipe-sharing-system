@@ -253,11 +253,20 @@ export function RecipeDetail() {
                             {(recipe.ingredients || []).map((ing, i) => (
                                 <li
                                     key={i}
+                                    role="checkbox"
+                                    aria-checked={!!checkedIngredients[i]}
+                                    tabIndex="0"
                                     className={cn(
-                                        "flex justify-between items-center text-sm border-b border-cool-gray-10 pb-1.5 last:border-0 cursor-pointer group/ing",
+                                        "flex justify-between items-center text-sm border-b border-cool-gray-10 pb-1.5 last:border-0 cursor-pointer group/ing outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-2 rounded-sm",
                                         checkedIngredients[i] && "opacity-60"
                                     )}
                                     onClick={() => toggleIngredient(i)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === ' ' || e.key === 'Enter') {
+                                            e.preventDefault();
+                                            toggleIngredient(i);
+                                        }
+                                    }}
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <div className={cn(
