@@ -45,6 +45,23 @@ export function AuthProvider({ children }) {
         };
     }, [user]);
 
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const syncCurrentUser = () => {
+            const current = storage.getCurrentUser();
+            if (current?.id === user.id) {
+                setUser(current);
+            }
+        };
+
+        window.addEventListener('favoriteToggled', syncCurrentUser);
+
+        return () => {
+            window.removeEventListener('favoriteToggled', syncCurrentUser);
+        };
+    }, [user?.id]);
+
     const login = (email, password) => {
         try {
             const loggedUser = storage.login(email, password);

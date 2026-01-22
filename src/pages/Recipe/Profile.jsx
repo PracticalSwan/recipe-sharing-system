@@ -66,8 +66,9 @@ export function Profile() {
 
     const favorites = useMemo(() => {
         if (!profileUser?.favorites?.length) return [];
-        return allRecipes.filter(r => profileUser.favorites.includes(r.id) && r.status === 'published');
-    }, [allRecipes, profileUser]);
+        const favoriteRecipes = allRecipes.filter(r => profileUser.favorites.includes(r.id));
+        return isOwnProfile ? favoriteRecipes : favoriteRecipes.filter(r => r.status === 'published');
+    }, [allRecipes, profileUser, isOwnProfile]);
 
     const handleDeleteRecipe = (recipeId) => {
         setDeleteRecipeId(recipeId);
