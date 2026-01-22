@@ -243,7 +243,7 @@ export function RecipeDetail() {
                             {Object.values(checkedIngredients).some(Boolean) && (
                                 <button
                                     onClick={() => setCheckedIngredients({})}
-                                    className="text-[10px] text-cool-gray-40 hover:text-cool-gray-90 underline"
+                                    className="text-[13px] text-cool-gray-40 hover:text-cool-gray-90 underline"
                                 >
                                     Reset
                                 </button>
