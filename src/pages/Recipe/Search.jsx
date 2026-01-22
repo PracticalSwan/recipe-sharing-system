@@ -10,6 +10,9 @@ import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
 export function Search() {
     const [searchParams, setSearchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
+    const urlCategory = searchParams.get('category') || 'All';
+    const urlDifficulty = searchParams.get('difficulty') || 'All';
+    const urlSort = searchParams.get('sort') || 'rating';
 
     // Helper to get current user ID (including guest)
     const getCurrentUserId = () => {
@@ -21,9 +24,9 @@ export function Search() {
 
     const [filters, setFilters] = useState({
         keyword: query,
-        category: 'All',
-        difficulty: 'All',
-        sort: 'newest'
+        category: urlCategory,
+        difficulty: urlDifficulty,
+        sort: urlSort
     });
     
     const [searchHistory, setSearchHistory] = useState(() => {
@@ -33,22 +36,45 @@ export function Search() {
     const [debouncedKeyword, setDebouncedKeyword] = useState(query);
 
     const hasMountedRef = useRef(false);
+    const lastLoggedKeywordRef = useRef('');
 
     // Debounce keyword input so history is only saved after user finishes typing
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedKeyword(filters.keyword);
-        }, 1000);
+        }, 1500);
         return () => clearTimeout(timer);
     }, [filters.keyword]);
 
     useEffect(() => {
-        // Sync filters with URL query initially
-        if (query) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setFilters(prev => ({ ...prev, keyword: query }));
+        // Sync filters with URL params (back/forward/refresh)
+        const nextFilters = {
+            keyword: query,
+            category: urlCategory,
+            difficulty: urlDifficulty,
+            sort: urlSort
+        };
+
+        // Update filters from URL when URL params change
+        // This effect intentionally only depends on URL-derived values
+        // to avoid over-triggering when local `filters` changes.
+        setTimeout(() => setFilters(nextFilters), 0);
+    }, [query, urlCategory, urlDifficulty, urlSort]);
+
+    useEffect(() => {
+        // Persist filters to URL so back/refresh restores state
+        const nextParams = {};
+        if (filters.keyword) nextParams.q = filters.keyword;
+        if (filters.category !== 'All') nextParams.category = filters.category;
+        if (filters.difficulty !== 'All') nextParams.difficulty = filters.difficulty;
+        if (filters.sort !== 'rating') nextParams.sort = filters.sort;
+
+        const current = searchParams.toString();
+        const next = new URLSearchParams(nextParams).toString();
+        if (current !== next) {
+            setSearchParams(nextParams, { replace: true });
         }
-    }, [query]);
+    }, [filters.keyword, filters.category, filters.difficulty, filters.sort, searchParams, setSearchParams]);
 
     useEffect(() => {
         const refreshRecipes = () => {
@@ -69,21 +95,14 @@ export function Search() {
             return;
         }
 
-        const hasActiveFilters = Boolean(debouncedKeyword?.trim()) ||
-            filters.category !== 'All' ||
-            filters.difficulty !== 'All' ||
-            filters.sort !== 'newest';
-
-        if (!hasActiveFilters) return;
+        const trimmedKeyword = (debouncedKeyword || '').trim();
+        if (!trimmedKeyword) return;
+        if (lastLoggedKeywordRef.current === trimmedKeyword) return;
 
         storage.addSearchHistory({
-            query: debouncedKeyword,
-            filters: {
-                category: filters.category,
-                difficulty: filters.difficulty,
-                sort: filters.sort
-            }
+            query: trimmedKeyword
         });
+        lastLoggedKeywordRef.current = trimmedKeyword;
         
         // Refresh local history state
         setTimeout(() => {
@@ -92,7 +111,7 @@ export function Search() {
                 setSearchHistory(storage.getSearchHistory(userId).slice(0, 5));
             }
         }, 0);
-    }, [debouncedKeyword, filters.category, filters.difficulty, filters.sort]);
+    }, [debouncedKeyword]);
 
     const filteredRecipes = useMemo(() => {
         let result = [...recipes];
@@ -128,9 +147,24 @@ export function Search() {
         setFilters(prev => ({ ...prev, [key]: value }));
     };
 
-    const clearFilters = () => {
-        setFilters({ keyword: '', category: 'All', difficulty: 'All', sort: 'newest' });
-        setSearchParams({});
+    const resetFilters = () => {
+        setFilters(prev => ({
+            ...prev,
+            category: 'All',
+            difficulty: 'All',
+            sort: 'rating'
+        }));
+    };
+
+    const clearHistory = () => {
+        const userId = getCurrentUserId();
+        if (userId && storage.clearSearchHistory) {
+            storage.clearSearchHistory(userId);
+        } else if (storage.clearSearchHistory) {
+            // fallback: clear for current guest
+            storage.clearSearchHistory();
+        }
+        setSearchHistory([]);
     };
 
     return (
@@ -147,7 +181,7 @@ export function Search() {
                     {filters.keyword && (
                         <button
                             onClick={() => handleFilterChange('keyword', '')}
-                            className="absolute right-3 top-3.5 p-1 rounded-md text-cool-gray-40 hover:text-cool-gray-90 hover:bg-cool-gray-10 transition-colors"
+                            className="absolute right-3 top-3 p-1 rounded-md text-cool-gray-40 hover:text-cool-gray-90 hover:bg-cool-gray-10 transition-colors"
                             aria-label="Clear keyword"
                         >
                             <X className="h-5 w-5" />
@@ -168,15 +202,15 @@ export function Search() {
                                 onClick={() => {
                                     setFilters({
                                         keyword: item.query || '',
-                                        category: item.filters?.category || 'All',
-                                        difficulty: item.filters?.difficulty || 'All',
-                                        sort: item.filters?.sort || 'newest'
+                                        category: 'All',
+                                        difficulty: 'All',
+                                        sort: 'rating'
                                     });
                                 }}
                                 className="px-3 py-1 bg-cool-gray-10 hover:bg-cool-gray-20 text-cool-gray-70 text-xs rounded-full transition-colors truncate max-w-[200px]"
-                                title={item.query ? `Search: ${item.query}` : 'Apply Filters'}
+                                title={item.query ? `Search: ${item.query}` : 'Search'}
                             >
-                                {item.query || (item.filters?.category !== 'All' ? item.filters.category : 'Filtered View')}
+                                {item.query}
                             </button>
                         ))}
                     </div>
@@ -214,13 +248,17 @@ export function Search() {
                         onChange={(e) => handleFilterChange('sort', e.target.value)}
                         aria-label="Sort by"
                     >
-                        <option value="newest">Newest First</option>
                         <option value="rating">Most Popular</option>
+                        <option value="newest">Newest First</option>
                         <option value="difficulty-asc">Difficulty (Low to High)</option>
                     </select>
 
-                    <Button variant="ghost" onClick={clearFilters} className="ml-auto text-cool-gray-60">
-                        <X className="mr-2 h-4 w-4" /> Clear
+                    <Button variant="ghost" onClick={resetFilters} className="text-cool-gray-60 text-[14px]">
+                        Reset filters
+                    </Button>
+
+                    <Button variant="ghost" onClick={clearHistory} className="ml-auto text-cool-gray-60 text-[14px]">
+                        <X className="mr-2 h-5 w-5" /> Clear History
                     </Button>
                 </div>
             </div>

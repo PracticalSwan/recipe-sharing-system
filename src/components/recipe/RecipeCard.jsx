@@ -154,14 +154,14 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                     </div>
                 </CardContent>
 
-                <CardFooter className="px-2.5 pb-2.5 pt-0 flex justify-between text-[10px] text-cool-gray-60">
-                    <div className="flex items-center gap-0.5">
-                        <Eye className="h-2.5 w-2.5" />
-                        <span>{viewCount}</span>
+                <CardFooter className="px-2.5 pb-2.5 pt-0 flex items-center justify-between text-[10px] text-cool-gray-60">
+                    <div className="inline-flex items-center gap-1 leading-none">
+                        <Eye className="h-3 w-2.5" />
+                        <span className="leading-none">{viewCount}</span>
                     </div>
-                    <div className="flex items-center gap-0.5">
-                        <Heart className="h-2.5 w-2.5" />
-                        <span>{likeCount}</span>
+                    <div className="inline-flex items-center gap-0.5 leading-none">
+                        <Heart className="h-3 w-2.5" />
+                        <span className="leading-none">{likeCount}</span>
                     </div>
                 </CardFooter>
             </Card>

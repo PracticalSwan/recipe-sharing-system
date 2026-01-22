@@ -663,10 +663,23 @@ export const storage = {
         return history;
     },
 
-    addSearchHistory: ({ userId, query, filters }) => {
+    // Remove all search history entries for a user (guest or user)
+    clearSearchHistory: (userId) => {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.SEARCH_HISTORY) || '[]');
+        let resolvedUserId = userId;
+        if (!resolvedUserId) {
+            const currentUser = storage.getCurrentUser();
+            resolvedUserId = currentUser?.id || `guest:${storage.getOrCreateGuestId()}`;
+        }
+        const filtered = history.filter(h => h.userId !== resolvedUserId);
+        localStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(filtered));
+        return filtered;
+    },
+
+    addSearchHistory: ({ userId, query }) => {
         const trimmedQuery = (query || '').trim();
-        // Don't save empty searches with no filters
-        if (!trimmedQuery && (!filters || Object.values(filters).every(v => v === 'All' || v === 'newest'))) {
+        // Don't save empty searches
+        if (!trimmedQuery) {
             return null;
         }
 
@@ -678,32 +691,21 @@ export const storage = {
             resolvedUserId = currentUser?.id || `guest:${storage.getOrCreateGuestId()}`;
         }
 
-        const normalizeFilters = (input = {}) => {
-            const keys = Object.keys(input).sort();
-            return JSON.stringify(keys.reduce((acc, key) => {
-                acc[key] = input[key];
-                return acc;
-            }, {}));
-        };
-
         const record = {
             id: `search-${Date.now()}`,
             userId: resolvedUserId,
             query: trimmedQuery,
-            filters: filters || {},
             createdAt: new Date().toISOString()
         };
 
         // Add to beginning
         history.unshift(record);
         
-        // Remove duplicates (same query + filters by same user) - keep newest
+        // Remove duplicates (same query by same user) - keep newest
         const uniqueHistory = history.filter((item, index, self) => {
-            const itemFilters = normalizeFilters(item.filters || {});
             return index === self.findIndex((t) => (
                 t.query === item.query &&
-                t.userId === item.userId &&
-                normalizeFilters(t.filters || {}) === itemFilters
+                t.userId === item.userId
             ));
         });
 
