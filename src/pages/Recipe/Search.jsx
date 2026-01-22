@@ -1,15 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { storage } from '../../lib/storage';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { Search as SearchIcon, X } from 'lucide-react';
+import { Search as SearchIcon, X, Clock } from 'lucide-react';
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
 
 export function Search() {
     const [searchParams, setSearchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
+
+    // Helper to get current user ID (including guest)
+    const getCurrentUserId = () => {
+        const user = storage.getCurrentUser();
+        return user?.id || (storage.getOrCreateGuestId ? `guest:${storage.getOrCreateGuestId()}` : null);
+    };
 
     const [recipes, setRecipes] = useState(() => storage.getRecipes().filter(r => r.status === 'published'));
 
@@ -19,6 +25,22 @@ export function Search() {
         difficulty: 'All',
         sort: 'newest'
     });
+    
+    const [searchHistory, setSearchHistory] = useState(() => {
+        const userId = getCurrentUserId();
+        return userId ? storage.getSearchHistory(userId).slice(0, 5) : [];
+    });
+    const [debouncedKeyword, setDebouncedKeyword] = useState(query);
+
+    const hasMountedRef = useRef(false);
+
+    // Debounce keyword input so history is only saved after user finishes typing
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedKeyword(filters.keyword);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [filters.keyword]);
 
     useEffect(() => {
         // Sync filters with URL query initially
@@ -41,17 +63,44 @@ export function Search() {
         };
     }, []);
 
+    useEffect(() => {
+        if (!hasMountedRef.current) {
+            hasMountedRef.current = true;
+            return;
+        }
+
+        const hasActiveFilters = Boolean(debouncedKeyword?.trim()) ||
+            filters.category !== 'All' ||
+            filters.difficulty !== 'All' ||
+            filters.sort !== 'newest';
+
+        if (!hasActiveFilters) return;
+
+        storage.addSearchHistory({
+            query: debouncedKeyword,
+            filters: {
+                category: filters.category,
+                difficulty: filters.difficulty,
+                sort: filters.sort
+            }
+        });
+        
+        // Refresh local history state
+        setTimeout(() => {
+            const userId = getCurrentUserId();
+            if (userId) {
+                setSearchHistory(storage.getSearchHistory(userId).slice(0, 5));
+            }
+        }, 0);
+    }, [debouncedKeyword, filters.category, filters.difficulty, filters.sort]);
+
     const filteredRecipes = useMemo(() => {
         let result = [...recipes];
 
-        // Keyword
+        // Keyword (title only)
         if (filters.keyword) {
             const lower = filters.keyword.toLowerCase();
-            result = result.filter(r =>
-                r.title.toLowerCase().includes(lower) ||
-                r.description.toLowerCase().includes(lower) ||
-                (r.ingredients || []).some(i => i.name.toLowerCase().includes(lower))
-            );
+            result = result.filter(r => r.title.toLowerCase().includes(lower));
         }
 
         // Category
@@ -105,6 +154,33 @@ export function Search() {
                         </button>
                     )}
                 </div>
+
+                {/* Search History UI */}
+                {searchHistory.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 px-1">
+                        <span className="flex items-center text-xs font-medium text-cool-gray-50 mr-1">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Recent:
+                        </span>
+                        {searchHistory.map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => {
+                                    setFilters({
+                                        keyword: item.query || '',
+                                        category: item.filters?.category || 'All',
+                                        difficulty: item.filters?.difficulty || 'All',
+                                        sort: item.filters?.sort || 'newest'
+                                    });
+                                }}
+                                className="px-3 py-1 bg-cool-gray-10 hover:bg-cool-gray-20 text-cool-gray-70 text-xs rounded-full transition-colors truncate max-w-[200px]"
+                                title={item.query ? `Search: ${item.query}` : 'Apply Filters'}
+                            >
+                                {item.query || (item.filters?.category !== 'All' ? item.filters.category : 'Filtered View')}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 <div className="flex flex-wrap items-center gap-4">
                     <select

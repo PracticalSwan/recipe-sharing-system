@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
     CURRENT_USER: 'cookhub_current_user',
     GUEST_ID: 'cookhub_guest_id',
     REVIEWS: 'cookhub_reviews',
+    SEARCH_HISTORY: 'cookhub_search_history',
     DAILY_STATS: 'cookhub_daily_stats',
     ACTIVITY: 'cookhub_activity'
 };
@@ -654,6 +655,68 @@ export const storage = {
         const reviews = JSON.parse(localStorage.getItem(STORAGE_KEYS.REVIEWS) || '[]');
         if (recipeId) return reviews.filter(r => r.recipeId === recipeId);
         return reviews;
+    },
+
+    getSearchHistory: (userId) => {
+        const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.SEARCH_HISTORY) || '[]');
+        if (userId) return history.filter(h => h.userId === userId);
+        return history;
+    },
+
+    addSearchHistory: ({ userId, query, filters }) => {
+        const trimmedQuery = (query || '').trim();
+        // Don't save empty searches with no filters
+        if (!trimmedQuery && (!filters || Object.values(filters).every(v => v === 'All' || v === 'newest'))) {
+            return null;
+        }
+
+        const history = storage.getSearchHistory();
+        let resolvedUserId = userId;
+
+        if (!resolvedUserId) {
+            const currentUser = storage.getCurrentUser();
+            resolvedUserId = currentUser?.id || `guest:${storage.getOrCreateGuestId()}`;
+        }
+
+        const normalizeFilters = (input = {}) => {
+            const keys = Object.keys(input).sort();
+            return JSON.stringify(keys.reduce((acc, key) => {
+                acc[key] = input[key];
+                return acc;
+            }, {}));
+        };
+
+        const record = {
+            id: `search-${Date.now()}`,
+            userId: resolvedUserId,
+            query: trimmedQuery,
+            filters: filters || {},
+            createdAt: new Date().toISOString()
+        };
+
+        // Add to beginning
+        history.unshift(record);
+        
+        // Remove duplicates (same query + filters by same user) - keep newest
+        const uniqueHistory = history.filter((item, index, self) => {
+            const itemFilters = normalizeFilters(item.filters || {});
+            return index === self.findIndex((t) => (
+                t.query === item.query &&
+                t.userId === item.userId &&
+                normalizeFilters(t.filters || {}) === itemFilters
+            ));
+        });
+
+        // Limit to 10 items per user (do not affect other users' history)
+        let userCount = 0;
+        const limitedHistory = uniqueHistory.filter(item => {
+            if (item.userId !== resolvedUserId) return true;
+            userCount += 1;
+            return userCount <= 10;
+        });
+
+        localStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(limitedHistory));
+        return record;
     },
 
     getAverageRating: (recipeId) => {
