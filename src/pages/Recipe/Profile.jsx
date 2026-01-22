@@ -151,7 +151,9 @@ export function Profile() {
                                     key={i}
                                     type="button"
                                     onClick={() => handleAvatarSelect(avatar)}
-                                    className={`relative h-12 w-12 rounded-full overflow-hidden border-2 transition-all hover:scale-105 cursor-pointer ${editForm.avatar === avatar ? 'border-cool-gray-90 ring-2 ring-cool-gray-90/20' : 'border-cool-gray-20 hover:border-cool-gray-40'}`}
+                                    className={`relative h-12 w-12 rounded-full overflow-hidden border-2 transition-all hover:scale-105 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-2 ${editForm.avatar === avatar ? 'border-cool-gray-90 ring-2 ring-cool-gray-90/20' : 'border-cool-gray-20 hover:border-cool-gray-40'}`}
+                                    aria-label={`Select avatar ${i + 1}`}
+                                    aria-pressed={editForm.avatar === avatar}
                                 >
                                     <img src={avatar} alt={`Avatar ${i + 1}`} className="h-full w-full object-cover" />
                                     {editForm.avatar === avatar && (
