@@ -4,21 +4,21 @@ A collaborative web application that enables users to share, discover, and inter
 
 ## 📋 Table of Contents
 
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [System Architecture](#️-system-architecture)
-- [User Roles & Functions](#-user-roles--functions)
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+- [User Roles & Functions](#user-roles-functions)
   - [Admin Dashboard](#admin-dashboard)
   - [User (Contributor) Module](#user-contributor-module)
   - [User (Guest) Module](#user-guest-module)
-- [Installation & Setup](#-installation--setup)
-- [Available Scripts](#-available-scripts)
-- [Project Structure](#-project-structure)
-- [Technologies Used](#️-technologies-used)
-- [Data Storage](#-data-storage)
-- [Security Considerations](#-security-considerations)
-- [Support](#-support)
+- [Installation & Setup](#installation-setup)
+- [Available Scripts](#available-scripts)
+- [Project Structure](#project-structure)
+- [Technologies Used](#technologies-used)
+- [Data Storage](#data-storage)
+- [Support](#support)
 
+<a id="overview"></a>
 ## 🎯 Overview
 
 The Recipe Sharing System is built to facilitate a community-driven platform where:
@@ -34,6 +34,7 @@ The system features a **comprehensive approval workflow** where:
 
 The system uses a **client-side storage approach** with localStorage, making it lightweight and suitable for demonstration and development purposes.
 
+<a id="key-features"></a>
 ## ✨ Key Features
 
 ### Core Functionality
@@ -52,6 +53,7 @@ The system uses a **client-side storage approach** with localStorage, making it 
 - ✅ Daily Active Users (DAU) tracking with session heartbeat
 - ✅ Admin activity logging (user/recipe management actions)
 
+<a id="system-architecture"></a>
 ## 🏗️ System Architecture
 
 ```
@@ -80,8 +82,10 @@ The system uses a **client-side storage approach** with localStorage, making it 
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
+<a id="user-roles-functions"></a>
 ## 👥 User Roles & Functions
 
+<a id="admin-dashboard"></a>
 ### Admin Dashboard
 
 **Access:** Login with admin credentials (`admin@example.com` / `password`)
@@ -134,6 +138,7 @@ The system uses a **client-side storage approach** with localStorage, making it 
 
 ---
 
+<a id="user-contributor-module"></a>
 ### User (Contributor) Module
 
 **Access:** Registration + Login as a Contributor (full feature access)
@@ -208,6 +213,7 @@ Submit new recipes with comprehensive details:
 
 ---
 
+<a id="user-guest-module"></a>
 ### User (Guest) Module
 
 **Access:** Registration + Login as a Guest (Pending Status)
@@ -253,6 +259,7 @@ Submit new recipes with comprehensive details:
 
 ---
 
+<a id="installation-setup"></a>
 ##  Installation & Setup
 
 ### Prerequisites
@@ -288,6 +295,7 @@ Submit new recipes with comprehensive details:
    npm run preview
    ```
 
+<a id="available-scripts"></a>
 ## 📦 Available Scripts
 
 | Script | Purpose |
@@ -297,6 +305,7 @@ Submit new recipes with comprehensive details:
 | `npm run preview` | Preview the production build locally |
 | `npm run lint` | Run ESLint to check code quality |
 
+<a id="project-structure"></a>
 ## 📁 Project Structure
 
 ```
@@ -349,6 +358,7 @@ recipe-sharing-system/
 └── README.md               # This file
 ```
 
+<a id="technologies-used"></a>
 ## 🛠️ Technologies Used
 
 ### Frontend Framework
@@ -371,6 +381,7 @@ recipe-sharing-system/
 - **Clsx** (v2.1.1) - Conditional className utility
 - **date-fns** (v4.1.0) - Modern JavaScript date utility library for formatting and manipulation
 
+<a id="data-storage"></a>
 ## 💾 Data Storage
 
 The application uses **browser localStorage** for data persistence:
@@ -445,6 +456,7 @@ import { storage } from './src/lib/storage';
 storage.resetData();
 ```
 
+<a id="support"></a>
 ## 📧 Support
 
 For issues, questions, or contributions, please contact the development team or submit an issue through the project repository.
