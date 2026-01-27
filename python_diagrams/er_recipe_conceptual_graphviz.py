@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def build_er_recipe_conceptual() -> Digraph:
-    g = Digraph("ERDRecipeConceptual", format="png")
+    g = Digraph("ERDRecipeConceptual", format="svg")
     g.attr(rankdir="TB", splines="polyline", nodesep="1", ranksep="2", overlap="false")
     g.attr("node", fontname="Arial")
     g.attr("edge", fontname="Arial")
@@ -16,8 +16,7 @@ def build_er_recipe_conceptual() -> Digraph:
     def relationship(node_id: str, label: str) -> None:
         g.node(node_id, label, shape="diamond")
 
-    def attribute(node_id: str, label: str) -> None:
-        g.node(node_id, label, shape="ellipse")
+
 
     # Entities (aligned to implemented storage)
     for ent in [
@@ -110,23 +109,7 @@ def build_er_recipe_conceptual() -> Digraph:
     g.edge("GUEST", "rel_starts", xlabel="1")
     g.edge("rel_starts", "SESSION", xlabel="N")
 
-    # Stats Dashboard Attributes (Admin-only access)
-    # Recent Activity records only Admin actions
-    stats = [
-        "Total Users",
-        "New Users Today",
-        "Total Contributors",
-        "New Contributors Today",
-        "Published Recipes",
-        "Pending Recipes",
-        "Daily Views",
-        "Daily Active Users",
-        "Recent Activity",
-    ]
-    for i, stat in enumerate(stats):
-        attr_id = f"stat_{i}"
-        attribute(attr_id, stat)
-        g.edge("STATS_DASHBOARD", attr_id)
+
 
     # Stats Dashboard Retrieval Connections
     g.edge("STATS_DASHBOARD", "rel_retrieves_user", xlabel="1")

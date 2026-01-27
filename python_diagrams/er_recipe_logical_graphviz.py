@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def build_er_recipe_logical() -> Digraph:
-    g = Digraph("ERDRecipeLogical", format="png")
+    g = Digraph("ERDRecipeLogical", format="svg")
     g.attr(rankdir="TB", splines="polyline", nodesep="1", ranksep="2", overlap="false")
     g.attr("node", fontname="Arial")
     g.attr("edge", fontname="Arial")
