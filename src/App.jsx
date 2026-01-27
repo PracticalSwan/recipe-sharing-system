@@ -19,7 +19,7 @@ import { AdminRecipes } from './pages/Admin/AdminRecipes';
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <Routes>
           {/* Auth Routes */}
           <Route element={<AuthLayout />}>

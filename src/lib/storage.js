@@ -608,9 +608,10 @@ export const storage = {
         const user = users.find(u => u.email === email && u.password === password);
         if (user) {
             if (user.status === 'suspended') throw new Error('Account is suspended.');
-            if (user.status === 'inactive') throw new Error('Account is inactive.');
+            // Allow inactive users to login and become active
             storage.recordActiveUser(user.id);
             user.lastActive = new Date().toISOString();
+            user.status = 'active';
             storage.saveUser(user);
             storage.setCurrentUser(user);
             return user;
@@ -647,7 +648,16 @@ export const storage = {
     },
 
     logout: (userId) => {
-        storage.updateLastActive(userId);
+        // Set user to inactive on logout
+        if (userId) {
+            const users = storage.getUsers();
+            const user = users.find(u => u.id === userId);
+            if (user) {
+                user.status = 'inactive';
+                user.lastActive = new Date().toISOString(); // Update one last time
+                storage.saveUser(user);
+            }
+        }
         localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     },
 
@@ -700,7 +710,7 @@ export const storage = {
 
         // Add to beginning
         history.unshift(record);
-        
+
         // Remove duplicates (same query by same user) - keep newest
         const uniqueHistory = history.filter((item, index, self) => {
             return index === self.findIndex((t) => (
@@ -896,20 +906,20 @@ export const storage = {
     recordNewUser: (userId, role = 'user') => {
         const allStats = storage.getDailyStats();
         const today = getTodayKey();
-        
+
         if (!allStats[today]) {
             allStats[today] = { newUsers: [], newContributors: [], activeUsers: [], views: [] };
         }
-        
+
         if (!allStats[today].newUsers.includes(userId)) {
             allStats[today].newUsers.push(userId);
         }
-        
+
         // If user is a contributor (non-admin role that can create recipes)
         if (role === 'user' && !allStats[today].newContributors.includes(userId)) {
             allStats[today].newContributors.push(userId);
         }
-        
+
         localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(allStats));
     },
 
@@ -917,15 +927,15 @@ export const storage = {
     recordActiveUser: (userId) => {
         const allStats = storage.getDailyStats();
         const today = getTodayKey();
-        
+
         if (!allStats[today]) {
             allStats[today] = { newUsers: [], newContributors: [], activeUsers: [], views: [] };
         }
-        
+
         if (!allStats[today].activeUsers.includes(userId)) {
             allStats[today].activeUsers.push(userId);
         }
-        
+
         localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(allStats));
     },
 

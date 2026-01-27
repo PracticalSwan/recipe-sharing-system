@@ -28,18 +28,29 @@ export function AuthProvider({ children }) {
         if (!user?.id) return;
 
         const handleExit = () => {
+            // No strict need to set inactive here, let timeout or logout handle it
+            // ensuring lastActive is up to date on exit
             storage.updateLastActive(user.id);
         };
 
         const handleDailyActive = () => storage.recordActiveUser(user.id);
         handleDailyActive();
-        const interval = setInterval(handleDailyActive, 60 * 60 * 1000);
+
+        // Initial heartbeat
+        storage.updateLastActive(user.id);
+
+        const dailyInterval = setInterval(handleDailyActive, 60 * 60 * 1000);
+        // Heartbeat every minute
+        const heartbeatInterval = setInterval(() => {
+            storage.updateLastActive(user.id);
+        }, 60 * 1000);
 
         window.addEventListener('beforeunload', handleExit);
         window.addEventListener('pagehide', handleExit);
 
         return () => {
-            clearInterval(interval);
+            clearInterval(dailyInterval);
+            clearInterval(heartbeatInterval);
             window.removeEventListener('beforeunload', handleExit);
             window.removeEventListener('pagehide', handleExit);
         };

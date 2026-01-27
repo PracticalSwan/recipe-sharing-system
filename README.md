@@ -507,20 +507,22 @@ This rich seed data allows you to immediately explore all features without creat
 **Admin Accounts:**
 | Email | Password | Name |
 |-------|----------|------|
-| `admin@cookhub.com` | `admin` | Admin (Primary) |
-| `sarah.admin@cookhub.com` | `sarah123` | Sarah Chen |
-| `mike.admin@cookhub.com` | `mike123` | Mike Johnson |
+| `admin@cookhub.com` | `admin` | Admin User |
+| `olivia@cookhub.com` | `admin` | Olivia Admin |
+| `marcus@cookhub.com` | `admin` | Marcus Admin |
 
 **Sample User Accounts:**
 | Email | Password | Name | Role | Status |
 |-------|----------|------|------|--------|
-| `user@cookhub.com` | `user` | John Doe | User | Active |
-| `maria@cookhub.com` | `maria123` | Maria Garcia | User | Active |
-| `tom@cookhub.com` | `tom123` | Tom Baker | User | Active |
+| `user@cookhub.com` | `user` | John Doe | User | Active/Inactive |
+| `maria@cookhub.com` | `maria123` | Maria Garcia | User | Active/Inactive |
+| `tom@cookhub.com` | `tom123` | Tom Baker | User | Suspended |
 | `amy@cookhub.com` | `amy123` | Amy Wilson | User | Pending |
-| `bob@cookhub.com` | `bob123` | Bob Smith | User | Inactive |
-| `lisa@cookhub.com` | `lisa123` | Lisa Chen | Contributor | Active |
-| `david@cookhub.com` | `david123` | David Kim | Contributor | Active |
+| `kevin@cookhub.com` | `kevin123` | Kevin Tran | User | Pending |
+| `sarah@cookhub.com` | `sarah123` | Sarah Kim | User | Active/Inactive |
+| `daniel@cookhub.com` | `daniel123` | Daniel Rivera | User | Active/Inactive |
+| `lina@cookhub.com` | `lina123` | Lina Patel | User | Active/Inactive |
+| `omar@cookhub.com` | `omar123` | Omar Hassan | User | Pending |
 
 ### Resetting Data
 
@@ -533,6 +535,8 @@ Or use the storage utility:
 ```javascript
 import { storage } from './src/lib/storage';
 storage.resetData();
+```
+Or manually delete in the browser console -> Application -> Local storage
 ```
 
 <a id="support"></a>

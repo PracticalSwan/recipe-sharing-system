@@ -44,6 +44,7 @@ export function UserList() {
     const getDisplayStatus = (user) => {
         if (user.status === 'suspended') return 'suspended';
         if (user.status === 'pending') return 'pending';
+        if (user.status === 'inactive') return 'inactive';
         return isUserOnline(user) ? 'active' : 'inactive';
     };
 
