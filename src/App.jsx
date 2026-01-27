@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AuthLayout } from './layouts/AuthLayout';
 import { RootLayout } from './layouts/RootLayout';
@@ -19,7 +19,7 @@ import { AdminRecipes } from './pages/Admin/AdminRecipes';
 function App() {
   return (
     <AuthProvider>
-      <Router basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+      <Router>
         <Routes>
           {/* Auth Routes */}
           <Route element={<AuthLayout />}>
