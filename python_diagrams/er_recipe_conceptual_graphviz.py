@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def build_er_recipe_conceptual() -> Digraph:
-    g = Digraph("ERDRecipeConceptual", format="png")
+    g = Digraph("ERDRecipeConceptual", format="svg")
     g.attr(rankdir="TB", splines="polyline", nodesep="1", ranksep="2", overlap="false")
     g.attr("node", fontname="Arial")
     g.attr("edge", fontname="Arial")
@@ -49,6 +49,8 @@ def build_er_recipe_conceptual() -> Digraph:
     relationship("rel_starts", "starts")
     relationship("rel_tracks_users", "tracks users")
     relationship("rel_tracks_recipes", "tracks recipes")
+    # Activity Log relationships
+    relationship("rel_generates", "generates")
 
     # Connections with cardinalities
     g.edge("CONTRIBUTOR", "rel_creates", xlabel="1")
@@ -68,7 +70,6 @@ def build_er_recipe_conceptual() -> Digraph:
 
     g.edge("ADMIN", "rel_manages", xlabel="1")
     g.edge("rel_manages", "USER", xlabel="N")
-
 
     g.edge("ADMIN", "rel_views_stats", xlabel="1")
     g.edge("rel_views_stats", "DAILY_STAT", xlabel="M")
@@ -95,7 +96,6 @@ def build_er_recipe_conceptual() -> Digraph:
     g.edge("GUEST", "rel_searches", xlabel="1")
     g.edge("rel_searches", "SEARCH_HISTORY", xlabel="N")
 
-
     g.edge("CONTRIBUTOR", "rel_starts", xlabel="1")
     g.edge("rel_starts", "SESSION", xlabel="N")
     g.edge("GUEST", "rel_starts", xlabel="1")
@@ -107,6 +107,10 @@ def build_er_recipe_conceptual() -> Digraph:
 
     g.edge("DAILY_STAT", "rel_tracks_recipes", xlabel="1")
     g.edge("rel_tracks_recipes", "RECIPE", xlabel="M")
+
+    # Activity Log relationships - Admin actions (user management, recipe moderation) generate activity logs
+    g.edge("ADMIN", "rel_generates", xlabel="1")
+    g.edge("rel_generates", "ACTIVITY_LOG", xlabel="N")
 
     # Rank ordering (top-down): USER -> is a relations -> subtypes -> other entities
     with g.subgraph(name="rank_top") as s:
@@ -127,7 +131,14 @@ def build_er_recipe_conceptual() -> Digraph:
 
     with g.subgraph(name="rank_bottom") as s:
         s.attr(rank="max")
-        for n in ["RECIPE", "REVIEW", "SEARCH_HISTORY", "ACTIVITY_LOG", "SESSION", "DAILY_STAT"]:
+        for n in [
+            "RECIPE",
+            "REVIEW",
+            "SEARCH_HISTORY",
+            "ACTIVITY_LOG",
+            "SESSION",
+            "DAILY_STAT",
+        ]:
             s.node(n)
 
     # Invisible chaining edges to reinforce vertical order for splines="polyline"

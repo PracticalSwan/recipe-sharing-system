@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def build_er_recipe_logical() -> Digraph:
-    g = Digraph("ERDRecipeLogical", format="png")
+    g = Digraph("ERDRecipeLogical", format="svg")
     g.attr(rankdir="TB", splines="polyline", nodesep="1", ranksep="2", overlap="false")
     g.attr("node", fontname="Arial")
     g.attr("edge", fontname="Arial")
@@ -67,6 +67,8 @@ def build_er_recipe_logical() -> Digraph:
     relationship("rel_starts", "starts")
     relationship("rel_tracks_users", "tracks users")
     relationship("rel_tracks_recipes", "tracks recipes")
+    # Activity Log relationships
+    relationship("rel_generates", "generates")
 
     # Rank ordering (top-down): USER -> is a relations -> subtypes -> other entities
     with g.subgraph(name="rank_top") as s:
@@ -87,7 +89,14 @@ def build_er_recipe_logical() -> Digraph:
 
     with g.subgraph(name="rank_bottom") as s:
         s.attr(rank="max")
-        for n in ["RECIPE", "REVIEW", "SEARCH_HISTORY", "ACTIVITY_LOG", "SESSION", "DAILY_STAT"]:
+        for n in [
+            "RECIPE",
+            "REVIEW",
+            "SEARCH_HISTORY",
+            "ACTIVITY_LOG",
+            "SESSION",
+            "DAILY_STAT",
+        ]:
             s.node(n)
 
     # Invisible chaining edges to reinforce vertical order for splines="polyline"
@@ -121,7 +130,6 @@ def build_er_recipe_logical() -> Digraph:
 
     g.edge("ADMIN", "rel_manages", xlabel="1")
     g.edge("rel_manages", "USER", xlabel="N")
-
 
     g.edge("ADMIN", "rel_views_stats", xlabel="1")
     g.edge("rel_views_stats", "DAILY_STAT", xlabel="M")
@@ -179,6 +187,9 @@ def build_er_recipe_logical() -> Digraph:
     g.edge("DAILY_VIEW", "rel_daily_view_recipe", xlabel="N")
     g.edge("rel_daily_view_recipe", "RECIPE", xlabel="1")
 
+    # Activity Log relationships - Admin actions (user management, recipe moderation) generate activity logs
+    g.edge("ADMIN", "rel_generates", xlabel="1")
+    g.edge("rel_generates", "ACTIVITY_LOG", xlabel="N")
 
     # Attributes (from implemented storage)
     for node_id, attrs in {
@@ -232,6 +243,7 @@ def build_er_recipe_logical() -> Digraph:
         ],
         "ACTIVITY_LOG": [
             "activity_id (PK)",
+            "admin_id (FK)",
             "time",
             "type",
             "text",
