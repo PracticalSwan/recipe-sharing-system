@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def build_er_recipe_logical() -> Digraph:
-    g = Digraph("ERDRecipeLogical", format="svg")
+    g = Digraph("ERDRecipeLogical", format="png")
     g.attr(rankdir="TB", splines="polyline", nodesep="1", ranksep="2", overlap="false")
     g.attr("node", fontname="Arial")
     g.attr("edge", fontname="Arial")
@@ -20,6 +20,8 @@ def build_er_recipe_logical() -> Digraph:
         g.node(node_id, label, shape="ellipse")
 
     # Entities (aligned to implemented storage)
+    # Removed: ACTIVITY_LOG, DAILY_STAT, DAILY_ACTIVE_USER, DAILY_NEW_USER, DAILY_VIEW
+    # Added: STATS_DASHBOARD
     for ent in [
         "USER",
         "ADMIN",
@@ -28,15 +30,11 @@ def build_er_recipe_logical() -> Digraph:
         "RECIPE",
         "REVIEW",
         "SEARCH_HISTORY",
-        "ACTIVITY_LOG",
         "SESSION",
-        "DAILY_STAT",
-        "DAILY_ACTIVE_USER",
-        "DAILY_NEW_USER",
-        "DAILY_VIEW",
         "LIKE",
         "FAVORITE",
         "VIEW",
+        "STATS_DASHBOARD",
     ]:
         entity(ent)
 
@@ -48,7 +46,7 @@ def build_er_recipe_logical() -> Digraph:
     # Admin-specific relationships
     relationship("rel_moderates", "moderates")
     relationship("rel_manages", "manages")
-    relationship("rel_views_stats", "views stats")
+    relationship("rel_accesses_dashboard", "accesses")
     relationship("rel_user_favorites", "favorites")
     relationship("rel_favorite_recipe", "favorited recipe")
     relationship("rel_user_likes", "likes")
@@ -58,17 +56,14 @@ def build_er_recipe_logical() -> Digraph:
     relationship("rel_receives", "receives")
     relationship("rel_writes", "writes")
     relationship("rel_searches", "searches")
-    relationship("rel_daily_active", "daily active")
-    relationship("rel_daily_new", "daily new")
-    relationship("rel_daily_views", "daily views")
-    relationship("rel_active_user", "active user")
-    relationship("rel_new_user", "new user")
-    relationship("rel_daily_view_recipe", "daily view recipe")
     relationship("rel_starts", "starts")
-    relationship("rel_tracks_users", "tracks users")
-    relationship("rel_tracks_recipes", "tracks recipes")
-    # Activity Log relationships
-    relationship("rel_generates", "generates")
+
+    # Stats Dashboard Retrieval relationships
+    relationship("rel_retrieves_user", "retrieves user data")
+    relationship("rel_retrieves_recipe", "retrieves recipe data")
+    relationship("rel_retrieves_session", "retrieves session data")
+    relationship("rel_retrieves_view", "retrieves view data")
+    relationship("rel_tracks_activity", "tracks activity")
 
     # Rank ordering (top-down): USER -> is a relations -> subtypes -> other entities
     with g.subgraph(name="rank_top") as s:
@@ -93,9 +88,8 @@ def build_er_recipe_logical() -> Digraph:
             "RECIPE",
             "REVIEW",
             "SEARCH_HISTORY",
-            "ACTIVITY_LOG",
             "SESSION",
-            "DAILY_STAT",
+            "STATS_DASHBOARD",
         ]:
             s.node(n)
 
@@ -131,8 +125,8 @@ def build_er_recipe_logical() -> Digraph:
     g.edge("ADMIN", "rel_manages", xlabel="1")
     g.edge("rel_manages", "USER", xlabel="N")
 
-    g.edge("ADMIN", "rel_views_stats", xlabel="1")
-    g.edge("rel_views_stats", "DAILY_STAT", xlabel="M")
+    g.edge("ADMIN", "rel_accesses_dashboard", xlabel="1")
+    g.edge("rel_accesses_dashboard", "STATS_DASHBOARD", xlabel="1")
 
     g.edge("CONTRIBUTOR", "rel_user_favorites", xlabel="1")
     g.edge("rel_user_favorites", "FAVORITE", xlabel="N")
@@ -165,31 +159,6 @@ def build_er_recipe_logical() -> Digraph:
     g.edge("rel_starts", "SESSION", xlabel="N")
     g.edge("GUEST", "rel_starts", xlabel="1")
     g.edge("rel_starts", "SESSION", xlabel="N")
-
-    g.edge("DAILY_STAT", "rel_daily_active", xlabel="1")
-    g.edge("rel_daily_active", "DAILY_ACTIVE_USER", xlabel="N")
-    g.edge("DAILY_STAT", "rel_daily_new", xlabel="1")
-    g.edge("rel_daily_new", "DAILY_NEW_USER", xlabel="N")
-    g.edge("DAILY_STAT", "rel_daily_views", xlabel="1")
-    g.edge("rel_daily_views", "DAILY_VIEW", xlabel="N")
-
-    g.edge("USER", "rel_active_user", xlabel="1")
-    g.edge("rel_active_user", "DAILY_ACTIVE_USER", xlabel="N")
-    g.edge("USER", "rel_new_user", xlabel="1")
-    g.edge("rel_new_user", "DAILY_NEW_USER", xlabel="N")
-
-    g.edge("DAILY_STAT", "rel_tracks_users", xlabel="1")
-    g.edge("rel_tracks_users", "USER", xlabel="M")
-
-    g.edge("DAILY_STAT", "rel_tracks_recipes", xlabel="1")
-    g.edge("rel_tracks_recipes", "RECIPE", xlabel="M")
-
-    g.edge("DAILY_VIEW", "rel_daily_view_recipe", xlabel="N")
-    g.edge("rel_daily_view_recipe", "RECIPE", xlabel="1")
-
-    # Activity Log relationships - Admin actions (user management, recipe moderation) generate activity logs
-    g.edge("ADMIN", "rel_generates", xlabel="1")
-    g.edge("rel_generates", "ACTIVITY_LOG", xlabel="N")
 
     # Attributes (from implemented storage)
     for node_id, attrs in {
@@ -241,39 +210,11 @@ def build_er_recipe_logical() -> Digraph:
             "query",
             "created_at",
         ],
-        "ACTIVITY_LOG": [
-            "activity_id (PK)",
-            "admin_id (FK)",
-            "time",
-            "type",
-            "text",
-        ],
         "SESSION": [
             "session_id (PK)",
             "user_id (FK)",
             "started_at",
             "last_seen",
-        ],
-        "DAILY_STAT": [
-            "date_key (PK)",
-        ],
-        "DAILY_ACTIVE_USER": [
-            "active_id (PK)",
-            "date_key (FK)",
-            "user_id (FK)",
-        ],
-        "DAILY_NEW_USER": [
-            "new_id (PK)",
-            "date_key (FK)",
-            "user_id (FK)",
-        ],
-        "DAILY_VIEW": [
-            "daily_view_id (PK)",
-            "date_key (FK)",
-            "viewer_key",
-            "viewer_type",
-            "recipe_id (FK)",
-            "viewed_at",
         ],
         "LIKE": [
             "like_id (PK)",
@@ -294,11 +235,38 @@ def build_er_recipe_logical() -> Digraph:
             "recipe_id (FK)",
             "viewed_at",
         ],
+        "STATS_DASHBOARD": [
+            "Total Users",
+            "New Users Today",
+            "Total Contributors",
+            "New Contributors Today",
+            "Published Recipes",
+            "Pending Recipes",
+            "Daily Views",
+            "Daily Active Users",
+            "Recent Activity",
+        ],
     }.items():
         for idx, attr in enumerate(attrs, start=1):
             attr_id = f"{node_id}_attr_{idx}"
             attribute(attr_id, attr)
             g.edge(node_id, attr_id)
+
+    # Stats Dashboard Retrieval Connections
+    g.edge("STATS_DASHBOARD", "rel_retrieves_user", xlabel="1")
+    g.edge("rel_retrieves_user", "USER", xlabel="N")
+
+    g.edge("STATS_DASHBOARD", "rel_retrieves_recipe", xlabel="1")
+    g.edge("rel_retrieves_recipe", "RECIPE", xlabel="N")
+
+    g.edge("STATS_DASHBOARD", "rel_retrieves_session", xlabel="1")
+    g.edge("rel_retrieves_session", "SESSION", xlabel="N")
+
+    g.edge("STATS_DASHBOARD", "rel_retrieves_view", xlabel="1")
+    g.edge("rel_retrieves_view", "VIEW", xlabel="N")
+
+    g.edge("STATS_DASHBOARD", "rel_tracks_activity", xlabel="1")
+    g.edge("rel_tracks_activity", "ADMIN", xlabel="N")
 
     # Composite multivalued ingredients attribute
     ingredient_attr = "RECIPE_attr_ingredients"

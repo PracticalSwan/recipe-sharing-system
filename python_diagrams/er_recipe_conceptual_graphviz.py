@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def build_er_recipe_conceptual() -> Digraph:
-    g = Digraph("ERDRecipeConceptual", format="svg")
+    g = Digraph("ERDRecipeConceptual", format="png")
     g.attr(rankdir="TB", splines="polyline", nodesep="1", ranksep="2", overlap="false")
     g.attr("node", fontname="Arial")
     g.attr("edge", fontname="Arial")
@@ -16,6 +16,9 @@ def build_er_recipe_conceptual() -> Digraph:
     def relationship(node_id: str, label: str) -> None:
         g.node(node_id, label, shape="diamond")
 
+    def attribute(node_id: str, label: str) -> None:
+        g.node(node_id, label, shape="ellipse")
+
     # Entities (aligned to implemented storage)
     for ent in [
         "USER",
@@ -25,9 +28,9 @@ def build_er_recipe_conceptual() -> Digraph:
         "RECIPE",
         "REVIEW",
         "SEARCH_HISTORY",
-        "ACTIVITY_LOG",
         "SESSION",
-        "DAILY_STAT",
+        "VIEW",
+        "STATS_DASHBOARD",
     ]:
         entity(ent)
 
@@ -39,18 +42,22 @@ def build_er_recipe_conceptual() -> Digraph:
     # Admin-specific relationships
     relationship("rel_moderates", "moderates")
     relationship("rel_manages", "manages")
-    relationship("rel_views_stats", "views stats")
+    relationship("rel_accesses_dashboard", "accesses")
     relationship("rel_favorites", "favorites")
     relationship("rel_likes", "likes")
     relationship("rel_views", "views")
+    relationship("rel_view_recipe", "viewed recipe")
     relationship("rel_receives", "receives")
     relationship("rel_writes", "writes")
     relationship("rel_searches", "searches")
     relationship("rel_starts", "starts")
-    relationship("rel_tracks_users", "tracks users")
-    relationship("rel_tracks_recipes", "tracks recipes")
-    # Activity Log relationships
-    relationship("rel_generates", "generates")
+
+    # Stats Dashboard Retrieval relationships
+    relationship("rel_retrieves_user", "retrieves user data")
+    relationship("rel_retrieves_recipe", "retrieves recipe data")
+    relationship("rel_retrieves_session", "retrieves session data")
+    relationship("rel_retrieves_view", "retrieves view data")
+    relationship("rel_tracks_activity", "tracks activity")
 
     # Connections with cardinalities
     g.edge("CONTRIBUTOR", "rel_creates", xlabel="1")
@@ -71,8 +78,8 @@ def build_er_recipe_conceptual() -> Digraph:
     g.edge("ADMIN", "rel_manages", xlabel="1")
     g.edge("rel_manages", "USER", xlabel="N")
 
-    g.edge("ADMIN", "rel_views_stats", xlabel="1")
-    g.edge("rel_views_stats", "DAILY_STAT", xlabel="M")
+    g.edge("ADMIN", "rel_accesses_dashboard", xlabel="1")
+    g.edge("rel_accesses_dashboard", "STATS_DASHBOARD", xlabel="1")
 
     g.edge("CONTRIBUTOR", "rel_favorites", xlabel="M")
     g.edge("rel_favorites", "RECIPE", xlabel="M")
@@ -81,9 +88,11 @@ def build_er_recipe_conceptual() -> Digraph:
     g.edge("rel_likes", "RECIPE", xlabel="M")
 
     g.edge("CONTRIBUTOR", "rel_views", xlabel="M")
-    g.edge("rel_views", "RECIPE", xlabel="M")
+    g.edge("rel_views", "VIEW", xlabel="N")
     g.edge("GUEST", "rel_views", xlabel="M")
-    g.edge("rel_views", "RECIPE", xlabel="M")
+    g.edge("rel_views", "VIEW", xlabel="N")
+    g.edge("VIEW", "rel_view_recipe", xlabel="N")
+    g.edge("rel_view_recipe", "RECIPE", xlabel="1")
 
     g.edge("RECIPE", "rel_receives", xlabel="1")
     g.edge("rel_receives", "REVIEW", xlabel="N")
@@ -101,16 +110,39 @@ def build_er_recipe_conceptual() -> Digraph:
     g.edge("GUEST", "rel_starts", xlabel="1")
     g.edge("rel_starts", "SESSION", xlabel="N")
 
-    g.edge("DAILY_STAT", "rel_tracks_users", xlabel="1")
-    g.edge("rel_tracks_users", "CONTRIBUTOR", xlabel="M")
-    g.edge("rel_tracks_users", "GUEST", xlabel="M")
+    # Stats Dashboard Attributes (Admin-only access)
+    # Recent Activity records only Admin actions
+    stats = [
+        "Total Users",
+        "New Users Today",
+        "Total Contributors",
+        "New Contributors Today",
+        "Published Recipes",
+        "Pending Recipes",
+        "Daily Views",
+        "Daily Active Users",
+        "Recent Activity",
+    ]
+    for i, stat in enumerate(stats):
+        attr_id = f"stat_{i}"
+        attribute(attr_id, stat)
+        g.edge("STATS_DASHBOARD", attr_id)
 
-    g.edge("DAILY_STAT", "rel_tracks_recipes", xlabel="1")
-    g.edge("rel_tracks_recipes", "RECIPE", xlabel="M")
+    # Stats Dashboard Retrieval Connections
+    g.edge("STATS_DASHBOARD", "rel_retrieves_user", xlabel="1")
+    g.edge("rel_retrieves_user", "USER", xlabel="N")
 
-    # Activity Log relationships - Admin actions (user management, recipe moderation) generate activity logs
-    g.edge("ADMIN", "rel_generates", xlabel="1")
-    g.edge("rel_generates", "ACTIVITY_LOG", xlabel="N")
+    g.edge("STATS_DASHBOARD", "rel_retrieves_recipe", xlabel="1")
+    g.edge("rel_retrieves_recipe", "RECIPE", xlabel="N")
+
+    g.edge("STATS_DASHBOARD", "rel_retrieves_session", xlabel="1")
+    g.edge("rel_retrieves_session", "SESSION", xlabel="N")
+
+    g.edge("STATS_DASHBOARD", "rel_retrieves_view", xlabel="1")
+    g.edge("rel_retrieves_view", "VIEW", xlabel="N")
+
+    g.edge("STATS_DASHBOARD", "rel_tracks_activity", xlabel="1")
+    g.edge("rel_tracks_activity", "ADMIN", xlabel="N")
 
     # Rank ordering (top-down): USER -> is a relations -> subtypes -> other entities
     with g.subgraph(name="rank_top") as s:
@@ -135,9 +167,9 @@ def build_er_recipe_conceptual() -> Digraph:
             "RECIPE",
             "REVIEW",
             "SEARCH_HISTORY",
-            "ACTIVITY_LOG",
             "SESSION",
-            "DAILY_STAT",
+            "VIEW",
+            "STATS_DASHBOARD",
         ]:
             s.node(n)
 
