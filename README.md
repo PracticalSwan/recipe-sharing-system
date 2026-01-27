@@ -537,7 +537,6 @@ import { storage } from './src/lib/storage';
 storage.resetData();
 ```
 Or manually delete in the browser console -> Application -> Local storage
-```
 
 <a id="support"></a>
 ## 📧 Support
