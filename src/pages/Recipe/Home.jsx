@@ -58,7 +58,7 @@ export function Home() {
                             <button
                                 type="button"
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-3 top-2.5 p-1 rounded-md text-cool-gray-40 hover:text-cool-gray-90 hover:bg-white/10 transition-colors"
+                                className="absolute right-3 top-2.5 p-1 rounded-md text-cool-gray-40 hover:text-cool-gray-90 hover:bg-white/10 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1"
                                 aria-label="Clear search"
                             >
                                 <X className="h-5 w-5" />

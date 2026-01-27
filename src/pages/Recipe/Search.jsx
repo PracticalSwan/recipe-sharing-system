@@ -181,7 +181,7 @@ export function Search() {
                     {filters.keyword && (
                         <button
                             onClick={() => handleFilterChange('keyword', '')}
-                            className="absolute right-3 top-3 p-1 rounded-md text-cool-gray-40 hover:text-cool-gray-90 hover:bg-cool-gray-10 transition-colors"
+                            className="absolute right-3 top-3 p-1 rounded-md text-cool-gray-40 hover:text-cool-gray-90 hover:bg-cool-gray-10 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1"
                             aria-label="Clear keyword"
                         >
                             <X className="h-5 w-5" />
@@ -207,7 +207,7 @@ export function Search() {
                                         sort: 'rating'
                                     });
                                 }}
-                                className="px-3 py-1 bg-cool-gray-10 hover:bg-cool-gray-20 text-cool-gray-70 text-xs rounded-full transition-colors truncate max-w-[200px]"
+                                className="px-3 py-1 bg-cool-gray-10 hover:bg-cool-gray-20 text-cool-gray-70 text-xs rounded-full transition-colors truncate max-w-[200px] outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1"
                                 title={item.query ? `Search: ${item.query}` : 'Search'}
                             >
                                 {item.query}
