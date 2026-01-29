@@ -85,7 +85,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                     {/* Like Heart Overlay */}
                     <button
                         onClick={handleLikeClick}
-                        className={`absolute top-1.5 left-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-colors ${canInteract ? 'hover:bg-white' : 'opacity-60 cursor-not-allowed'}`}
+                        className={`absolute top-1.5 left-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1 ${canInteract ? 'hover:bg-white' : 'opacity-60 cursor-not-allowed'}`}
                         title={canInteract ? (isLiked ? 'Unlike' : 'Like') : 'Pending accounts cannot like recipes'}
                         aria-label={isLiked ? 'Unlike recipe' : 'Like recipe'}
                         aria-pressed={isLiked}
@@ -115,7 +115,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                         </h3>
                         <button
                             onClick={handleSaveClick}
-                            className={`p-1 rounded-md transition-colors shrink-0 ${canInteract ? 'hover:bg-cool-gray-10' : 'opacity-60 cursor-not-allowed'}`}
+                            className={`p-1 rounded-md transition-colors shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1 ${canInteract ? 'hover:bg-cool-gray-10' : 'opacity-60 cursor-not-allowed'}`}
                             title={canInteract ? (isFavorited ? 'Unsave' : 'Save') : 'Pending accounts cannot save recipes'}
                             aria-label={isFavorited ? 'Unsave recipe' : 'Save recipe'}
                             aria-pressed={isFavorited}

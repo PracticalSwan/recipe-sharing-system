@@ -336,7 +336,7 @@ export function RecipeDetail() {
                                         key={star}
                                         type="button"
                                         onClick={() => setRating(star)}
-                                        className={`text-lg ${canInteract ? 'cursor-pointer' : 'cursor-not-allowed'} ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                                        className={`text-lg transition-transform focus-visible:scale-125 outline-none ${canInteract ? 'cursor-pointer' : 'cursor-not-allowed'} ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
                                         aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                                         aria-pressed={rating >= star}
                                         disabled={!canInteract}

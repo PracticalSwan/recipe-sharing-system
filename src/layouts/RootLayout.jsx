@@ -21,8 +21,14 @@ export function RootLayout() {
 
     return (
         <div className="min-h-screen bg-cool-gray-10 pb-20">
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-cool-gray-90 focus:text-white focus:rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-cool-gray-90"
+            >
+                Skip to content
+            </a>
             <Navbar />
-            <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <main id="main-content" className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 <Outlet />
             </main>
         </div>
