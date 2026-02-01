@@ -125,6 +125,10 @@ export function RecipeDetail() {
 
     const isOwner = user && recipe?.authorId === user.id;
 
+    const avgRating = reviews.length > 0
+        ? Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length)
+        : 0;
+
     if (!recipe) return <div className="p-10 text-center">Loading...</div>;
 
     return (
@@ -156,13 +160,17 @@ export function RecipeDetail() {
                             <span className="font-medium text-cool-gray-90 group-hover:underline">{author?.username || 'Unknown'}</span>
                         </Link>
                         {/* Rating Display */}
-                        <div className="flex items-center gap-1 text-yellow-400">
+                        <div
+                            className="flex items-center gap-1 text-yellow-400"
+                            role="img"
+                            aria-label={`Rating: ${avgRating} out of 5 stars`}
+                        >
                              <div className="flex">
                                 {[1, 2, 3, 4, 5].map(star => (
-                                    <span key={star} className={reviews.length > 0 && Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length) >= star ? 'text-yellow-400' : 'text-cool-gray-30'}>★</span>
+                                    <span key={star} aria-hidden="true" className={avgRating >= star ? 'text-yellow-400' : 'text-cool-gray-30'}>★</span>
                                 ))}
                             </div>
-                            <span className="text-cool-gray-60">({reviews.length} reviews)</span>
+                            <span className="text-cool-gray-60">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
@@ -344,7 +352,7 @@ export function RecipeDetail() {
                                         key={star}
                                         type="button"
                                         onClick={() => setRating(star)}
-                                        className={`text-lg transition-transform focus-visible:scale-125 outline-none ${canInteract ? 'cursor-pointer' : 'cursor-not-allowed'} ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                                        className={`text-lg transition-all focus-visible:scale-110 focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1 rounded-sm outline-none ${canInteract ? 'cursor-pointer' : 'cursor-not-allowed'} ${rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
                                         aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                                         aria-pressed={rating >= star}
                                         disabled={!canInteract}
@@ -366,9 +374,13 @@ export function RecipeDetail() {
                             <div className="flex-1 space-y-0.5">
                                 <div className="flex items-center gap-2">
                                     <Link to={`/users/${review.userId}`} className="font-semibold text-cool-gray-90 text-sm hover:underline">{review.username}</Link>
-                                    <div className="flex text-xs">
+                                    <div
+                                        className="flex text-xs"
+                                        role="img"
+                                        aria-label={`Rating: ${review.rating} out of 5 stars`}
+                                    >
                                         {[1, 2, 3, 4, 5].map(star => (
-                                            <span key={star} className={review.rating >= star ? 'text-yellow-500' : 'text-cool-gray-30'}>★</span>
+                                            <span key={star} aria-hidden="true" className={review.rating >= star ? 'text-yellow-500' : 'text-cool-gray-30'}>★</span>
                                         ))}
                                     </div>
                                     <span className="text-[10px] text-cool-gray-30">{new Date(review.createdAt).toLocaleDateString()}</span>
