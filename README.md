@@ -46,7 +46,7 @@ The system uses a **client-side storage approach** with localStorage, making it 
 - ✅ User profile management
 - ✅ Recipe ratings and reviews (one review per user per recipe)
 - ✅ Favorites/saved recipes functionality
- - ✅ Interactive ingredient checklist to mark off ingredients while cooking
+- ✅ Interactive ingredient checklist to mark off ingredients while cooking
 - ✅ Admin dashboard with site analytics and metrics
 - ✅ User and recipe management tools for admins
 - ✅ Activity tracking system with real-time updates
@@ -124,7 +124,7 @@ The system uses a **client-side storage approach** with localStorage, making it 
 - **Recipe Approval Workflow:**
   - View all recipes (Pending, Approved, Rejected)
   - Approve pending recipes to make them visible to users (logs admin action)
-  - Reject recipes with optional feedback (logs admin action)
+  - Reject recipes (logs admin action)
   - Delete any recipe from the system with modal confirmation (auto-removes from all user favorites)
   - Preview complete recipe details (ingredients, instructions, contributor info)
 
