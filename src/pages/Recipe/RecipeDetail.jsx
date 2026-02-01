@@ -23,6 +23,7 @@ export function RecipeDetail() {
     const [likeCount, setLikeCount] = useState(0);
     const [viewCount, setViewCount] = useState(0);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [deleteReviewId, setDeleteReviewId] = useState(null);
     const [checkedIngredients, setCheckedIngredients] = useState({});
 
     const toggleIngredient = (index) => {
@@ -102,10 +103,14 @@ export function RecipeDetail() {
     };
 
     const handleDeleteReview = (reviewId) => {
-        if (window.confirm('Are you sure you want to delete your review?')) {
-            storage.deleteReview(reviewId);
-            setReviews(storage.getReviews(id));
-        }
+        setDeleteReviewId(reviewId);
+    };
+
+    const confirmDeleteReview = () => {
+        if (!deleteReviewId) return;
+        storage.deleteReview(deleteReviewId);
+        setReviews(storage.getReviews(id));
+        setDeleteReviewId(null);
     };
 
     const handleEditRecipe = () => {
@@ -416,6 +421,21 @@ export function RecipeDetail() {
                     <div className="flex justify-end gap-3">
                         <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button>
                         <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={confirmDeleteRecipe}>Delete Recipe</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Delete Review Confirmation Modal */}
+            <Modal
+                isOpen={!!deleteReviewId}
+                onClose={() => setDeleteReviewId(null)}
+                title="Delete Review"
+            >
+                <div className="space-y-4">
+                    <p className="text-cool-gray-60">Are you sure you want to delete your review? This action cannot be undone.</p>
+                    <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setDeleteReviewId(null)}>Cancel</Button>
+                        <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={confirmDeleteReview}>Delete Review</Button>
                     </div>
                 </div>
             </Modal>
