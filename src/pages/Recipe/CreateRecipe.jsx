@@ -11,7 +11,7 @@ import { Plus, Trash2, UploadCloud, ArrowLeft } from 'lucide-react';
 export function CreateRecipe() {
     const navigate = useNavigate();
     const { id } = useParams(); // If id exists, we're in edit mode
-    const { user, canInteract } = useAuth();
+    const { user, canInteract, isPending, isSuspended } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const isEditMode = Boolean(id);
 
@@ -231,8 +231,10 @@ export function CreateRecipe() {
         return (
             <div className="max-w-2xl mx-auto space-y-4 animate-page-in">
                 <h1 className="text-2xl font-bold text-cool-gray-90">Guest Mode</h1>
-                <p className="text-cool-gray-60">
-                    Your account is pending approval. You can browse recipes as a guest, but you can’t create or edit recipes yet.
+                <p className={isSuspended ? "text-red-600" : "text-cool-gray-60"}>
+                    {isSuspended
+                        ? "Your account is suspended. You can browse recipes, but you can’t create or edit recipes."
+                        : "Your account is pending approval. You can browse recipes as a guest, but you can’t create or edit recipes yet."}
                 </p>
                 <Button variant="outline" onClick={() => navigate('/')}>Back to Discover</Button>
             </div>

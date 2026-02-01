@@ -12,7 +12,7 @@ import { cn } from '../../lib/utils';
 export function RecipeDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user, canInteract, isPending, isAdmin } = useAuth();
+    const { user, canInteract, isPending, isSuspended, isAdmin } = useAuth();
     const [recipe, setRecipe] = useState(null);
     const [author, setAuthor] = useState(null);
     const [reviews, setReviews] = useState([]);
@@ -311,9 +311,17 @@ export function RecipeDetail() {
             <div className="pt-6 border-t border-cool-gray-20">
                 <h3 className="text-xl font-bold mb-4">Reviews ({reviews.length})</h3>
 
-                {isPending && (
-                    <div className="mb-4 rounded-lg border border-cool-gray-20 bg-cool-gray-10 p-3 text-sm text-cool-gray-60">
-                        Your account is pending approval. You can browse recipes as a guest, but you can’t like, save, or submit reviews yet.
+                {(isPending || isSuspended) && (
+                    <div
+                        className={
+                            isSuspended
+                                ? "mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+                                : "mb-4 rounded-lg border border-cool-gray-20 bg-cool-gray-10 p-3 text-sm text-cool-gray-60"
+                        }
+                    >
+                        {isSuspended
+                            ? "Your account is suspended. You can browse recipes, but you can’t like, save, or submit reviews."
+                            : "Your account is pending approval. You can browse recipes as a guest, but you can’t like, save, or submit reviews yet."}
                     </div>
                 )}
 

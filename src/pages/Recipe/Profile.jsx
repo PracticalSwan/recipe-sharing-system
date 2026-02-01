@@ -13,7 +13,7 @@ import { MapPin, Calendar, Settings, Check, Edit, Trash2 } from 'lucide-react';
 export function Profile() {
     const { userId } = useParams();
     const navigate = useNavigate();
-    const { user: currentUser, updateProfile, canInteract, isPending } = useAuth();
+    const { user: currentUser, updateProfile, canInteract, isPending, isSuspended } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const defaultTab = searchParams.get('tab') || 'recipes';
 
@@ -133,9 +133,17 @@ export function Profile() {
                 </div>
             </div>
 
-            {isOwnProfile && isPending && (
-                <div className="rounded-lg border border-cool-gray-20 bg-cool-gray-10 p-4 text-sm text-cool-gray-60">
-                    Your account is pending approval. You can browse recipes as a guest, but you can’t update your profile yet.
+            {isOwnProfile && (isPending || isSuspended) && (
+                <div
+                    className={
+                        isSuspended
+                            ? "rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600"
+                            : "rounded-lg border border-cool-gray-20 bg-cool-gray-10 p-4 text-sm text-cool-gray-60"
+                    }
+                >
+                    {isSuspended
+                        ? "Your account is suspended. You can browse recipes, but you can’t update your profile or interact with content."
+                        : "Your account is pending approval. You can browse recipes as a guest, but you can’t update your profile yet."}
                 </div>
             )}
 

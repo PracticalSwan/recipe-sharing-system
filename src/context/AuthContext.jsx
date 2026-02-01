@@ -121,6 +121,7 @@ export function AuthProvider({ children }) {
 
     const isAdmin = user?.role === 'admin';
     const isPending = user?.status === 'pending';
+    const isSuspended = user?.status === 'suspended';
     const canInteract = Boolean(user && user.status === 'active' && !isAdmin);
 
     const value = {
@@ -128,6 +129,7 @@ export function AuthProvider({ children }) {
         loading,
         isAdmin,
         isPending,
+        isSuspended,
         canInteract,
         login,
         logout,
