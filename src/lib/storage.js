@@ -607,11 +607,12 @@ export const storage = {
         const users = storage.getUsers();
         const user = users.find(u => u.email === email && u.password === password);
         if (user) {
-            if (user.status === 'suspended') throw new Error('Account is suspended.');
-            // Allow inactive users to login and become active
+            // Only toggle active/inactive users; keep pending/suspended users as-is
             storage.recordActiveUser(user.id);
             user.lastActive = new Date().toISOString();
-            user.status = 'active';
+            if (user.status === 'active' || user.status === 'inactive') {
+                user.status = 'active';
+            }
             storage.saveUser(user);
             storage.setCurrentUser(user);
             return user;
@@ -648,12 +649,14 @@ export const storage = {
     },
 
     logout: (userId) => {
-        // Set user to inactive on logout
+        // Set user to inactive on logout (only if currently active/inactive)
         if (userId) {
             const users = storage.getUsers();
             const user = users.find(u => u.id === userId);
             if (user) {
-                user.status = 'inactive';
+                if (user.status === 'active' || user.status === 'inactive') {
+                    user.status = 'inactive';
+                }
                 user.lastActive = new Date().toISOString(); // Update one last time
                 storage.saveUser(user);
             }
