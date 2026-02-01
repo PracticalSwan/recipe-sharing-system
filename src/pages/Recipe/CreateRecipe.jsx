@@ -19,7 +19,7 @@ export function CreateRecipe() {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        category: 'Breakfast',
+        categories: ['Breakfast'],
         prepTime: 15,
         cookTime: 15,
         servings: 2,
@@ -31,6 +31,7 @@ export function CreateRecipe() {
     const [instructions, setInstructions] = useState(['']);
     const [originalRecipe, setOriginalRecipe] = useState(null);
     const [errors, setErrors] = useState({});
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
     // Load recipe data if in edit mode
     useEffect(() => {
@@ -44,10 +45,15 @@ export function CreateRecipe() {
                     return;
                 }
                 setOriginalRecipe(recipe);
+                const nextCategories = Array.isArray(recipe.categories)
+                    ? recipe.categories
+                    : recipe.category
+                        ? [recipe.category]
+                        : ['Breakfast'];
                 setFormData({
                     title: recipe.title || '',
                     description: recipe.description || '',
-                    category: recipe.category || 'Breakfast',
+                    categories: nextCategories.length ? nextCategories : ['Breakfast'],
                     prepTime: recipe.prepTime || 15,
                     cookTime: recipe.cookTime || 15,
                     servings: recipe.servings || 2,
@@ -64,6 +70,19 @@ export function CreateRecipe() {
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
+    };
+
+    const toggleCategory = (category) => {
+        setFormData(prev => {
+            const current = prev.categories || [];
+            const exists = current.includes(category);
+            const next = exists
+                ? current.filter(c => c !== category)
+                : current.length < 3
+                    ? [...current, category]
+                    : current;
+            return { ...prev, categories: next };
+        });
     };
 
     // Ingredients Logic
@@ -104,6 +123,14 @@ export function CreateRecipe() {
             newErrors.description = 'Description must be at least 10 characters';
         } else if (formData.description.trim().length > 500) {
             newErrors.description = 'Description must be less than 500 characters';
+        }
+
+        // Categories validation: 1-3 selections
+        const selectedCategories = formData.categories || [];
+        if (selectedCategories.length < 1) {
+            newErrors.categories = 'Select at least 1 category';
+        } else if (selectedCategories.length > 3) {
+            newErrors.categories = 'Select up to 3 categories';
         }
 
         // Prep time validation: 1-1440 minutes (max 24 hours)
@@ -285,10 +312,58 @@ export function CreateRecipe() {
 
                         <div className="grid sm:grid-cols-2 gap-2">
                             <div>
-                                <label className="text-sm font-medium text-cool-gray-60 mb-1 block">Category</label>
-                                <select id="category" className="w-full h-10 rounded-md border border-cool-gray-30 px-3 bg-white" value={formData.category} onChange={handleChange}>
-                                    {RECIPE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                                <label className="text-sm font-medium text-cool-gray-60 mb-1 block">Categories (1–3)</label>
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        className={`w-full h-10 rounded-md border px-3 bg-white flex items-center justify-between text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90 ${errors.categories ? 'border-red-400' : 'border-cool-gray-30'}`}
+                                        onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                                    >
+                                        <span className="text-left">
+                                            {(formData.categories || []).length > 0
+                                                ? (formData.categories || []).join(', ')
+                                                : 'Select categories...'}
+                                        </span>
+                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    {showCategoryDropdown && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-10"
+                                                onClick={() => setShowCategoryDropdown(false)}
+                                            />
+                                            <div className="absolute z-20 mt-1 w-full rounded-md border border-cool-gray-30 bg-white shadow-lg max-h-64 overflow-auto">
+                                                <div className="p-2 space-y-1">
+                                                    {RECIPE_CATEGORIES.map(c => {
+                                                        const checked = (formData.categories || []).includes(c);
+                                                        const limitReached = (formData.categories || []).length >= 3 && !checked;
+                                                        return (
+                                                            <label
+                                                                key={c}
+                                                                className={`flex items-center gap-2 px-2 py-1.5 rounded hover:bg-cool-gray-10 cursor-pointer text-sm ${limitReached ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="h-4 w-4 rounded"
+                                                                    checked={checked}
+                                                                    disabled={limitReached}
+                                                                    onChange={() => toggleCategory(c)}
+                                                                />
+                                                                <span>{c}</span>
+                                                            </label>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="flex justify-between">
+                                    {errors.categories && <p className="text-red-500 text-xs mt-1">{errors.categories}</p>}
+                                    <span className="text-xs text-cool-gray-40 mt-1 ml-auto">{(formData.categories || []).length}/3 selected</span>
+                                </div>
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-cool-gray-60 mb-1 block">Difficulty</label>

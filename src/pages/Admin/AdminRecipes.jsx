@@ -6,6 +6,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
 import { Modal } from '../../components/ui/Modal';
 import { Eye, Check, X, Trash2 } from 'lucide-react';
+import { normalizeCategories } from '../../lib/utils';
 
 const RecipeTable = ({ statusFilter, recipes, getAuthorName, handlePreview, updateStatus, handleDelete }) => {
     const filtered = recipes.filter(r => r.status === statusFilter);
@@ -43,7 +44,7 @@ const RecipeTable = ({ statusFilter, recipes, getAuthorName, handlePreview, upda
                             </TableCell>
                             <TableCell className="font-medium">{recipe.title}</TableCell>
                             <TableCell>{getAuthorName(recipe.authorId)}</TableCell>
-                            <TableCell>{recipe.category}</TableCell>
+                            <TableCell>{normalizeCategories(recipe.categories ?? recipe.category).join(', ') || '-'}</TableCell>
                             <TableCell>
                                 <Badge variant={recipe.status === 'published' ? 'success' : recipe.status === 'rejected' ? 'error' : 'warning'}>
                                     {recipe.status}
@@ -135,7 +136,8 @@ export function AdminRecipes() {
     };
 
     const handlePreview = (recipe) => {
-        setSelectedRecipe(recipe);
+        const latest = storage.getRecipeById(recipe.id) || recipe;
+        setSelectedRecipe(latest);
         setIsPreviewOpen(true);
     };
 
@@ -191,10 +193,23 @@ export function AdminRecipes() {
                 title={selectedRecipe?.title || 'Recipe Preview'}
                 className="max-w-3xl"
             >
-                {selectedRecipe && (
+                {selectedRecipe ? (
                     <div className="space-y-4 max-h-[70vh] overflow-auto">
                         <img src={selectedRecipe.images?.[0]} alt="" className="w-full h-48 object-cover rounded-lg" />
                         <p className="text-cool-gray-60">{selectedRecipe.description}</p>
+
+                        <div className="flex flex-wrap gap-2 text-xs text-cool-gray-70">
+                            {normalizeCategories(selectedRecipe.categories ?? selectedRecipe.category).map((category) => (
+                                <Badge key={category} variant="outline" className="uppercase tracking-wider">
+                                    {category}
+                                </Badge>
+                            ))}
+                            {selectedRecipe.difficulty && (
+                                <Badge variant="outline" className="capitalize">
+                                    {selectedRecipe.difficulty}
+                                </Badge>
+                            )}
+                        </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -222,6 +237,8 @@ export function AdminRecipes() {
                             </div>
                         )}
                     </div>
+                ) : (
+                    <div className="py-6 text-center text-cool-gray-60">No recipe selected.</div>
                 )}
             </Modal>
 

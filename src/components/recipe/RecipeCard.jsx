@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { storage } from '../../lib/storage';
 import { useAuth } from '../../context/AuthContext';
-import { cn } from '../../lib/utils';
+import { cn, normalizeCategories } from '../../lib/utils';
 
 export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
     const { user, canInteract } = useAuth();
@@ -17,6 +17,8 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
     // Calculate rating
     const reviews = storage.getReviews(recipe.id) || [];
     const averageRating = Math.round(storage.getAverageRating(recipe.id));
+
+    const categories = normalizeCategories(recipe.categories ?? recipe.category);
 
     // Fetch author name from storage
     const author = storage.getUsers().find(u => u.id === recipe.authorId);
@@ -102,7 +104,18 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
 
                 <CardContent className="p-2.5 flex-1">
                     <div className="mb-1.5 flex items-center justify-between">
-                        <Badge variant="outline" className="text-[8px] uppercase tracking-wider px-1.5 py-0.5">{recipe.category}</Badge>
+                        <div className="flex items-center gap-1 flex-wrap">
+                            {categories.slice(0, 2).map((category) => (
+                                <Badge key={category} variant="outline" className="text-[8px] uppercase tracking-wider px-1.5 py-0.5">
+                                    {category}
+                                </Badge>
+                            ))}
+                            {categories.length > 2 && (
+                                <Badge variant="outline" className="text-[8px] uppercase tracking-wider px-1.5 py-0.5">
+                                    +{categories.length - 2}
+                                </Badge>
+                            )}
+                        </div>
                         <div className="flex items-center gap-0.5 text-[10px] text-cool-gray-60">
                             <Clock className="h-2.5 w-2.5" />
                             <span>{recipe.prepTime + recipe.cookTime}m</span>
@@ -149,13 +162,16 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
 
                     <div className="flex items-center gap-1.5 text-[10px] text-cool-gray-60">
                         <User className="h-2.5 w-2.5" />
-                        <Link
-                            to={`/users/${recipe.authorId}`}
-                            className="truncate hover:text-cool-gray-90 hover:underline"
-                            onClick={(e) => e.stopPropagation()}
+                        <span
+                            className="truncate hover:text-cool-gray-90 hover:underline cursor-pointer"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                window.location.hash = `/users/${recipe.authorId}`;
+                            }}
                         >
                             {authorName}
-                        </Link>
+                        </span>
                     </div>
                 </CardContent>
 

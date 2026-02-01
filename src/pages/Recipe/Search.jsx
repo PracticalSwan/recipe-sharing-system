@@ -5,7 +5,7 @@ import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Search as SearchIcon, X, Clock } from 'lucide-react';
-import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
+import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES, normalizeCategories } from '../../lib/utils';
 
 export function Search() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -24,10 +24,11 @@ export function Search() {
 
     const [filters, setFilters] = useState({
         keyword: query,
-        category: urlCategory,
+        category: urlCategory === 'All' ? [] : urlCategory.split(','),
         difficulty: urlDifficulty,
         sort: urlSort
     });
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     
     const [searchHistory, setSearchHistory] = useState(() => {
         const userId = getCurrentUserId();
@@ -50,7 +51,7 @@ export function Search() {
         // Sync filters with URL params (back/forward/refresh)
         const nextFilters = {
             keyword: query,
-            category: urlCategory,
+            category: urlCategory === 'All' ? [] : urlCategory.split(',').filter(Boolean),
             difficulty: urlDifficulty,
             sort: urlSort
         };
@@ -65,7 +66,9 @@ export function Search() {
         // Persist filters to URL so back/refresh restores state
         const nextParams = {};
         if (filters.keyword) nextParams.q = filters.keyword;
-        if (filters.category !== 'All') nextParams.category = filters.category;
+        if (Array.isArray(filters.category) && filters.category.length > 0) {
+            nextParams.category = filters.category.join(',');
+        }
         if (filters.difficulty !== 'All') nextParams.difficulty = filters.difficulty;
         if (filters.sort !== 'rating') nextParams.sort = filters.sort;
 
@@ -122,9 +125,12 @@ export function Search() {
             result = result.filter(r => r.title.toLowerCase().includes(lower));
         }
 
-        // Category
-        if (filters.category !== 'All') {
-            result = result.filter(r => r.category === filters.category);
+        // Category - match recipes that have ANY of the selected categories
+        if (Array.isArray(filters.category) && filters.category.length > 0) {
+            result = result.filter(r => {
+                const recipeCategories = normalizeCategories(r.categories ?? r.category);
+                return filters.category.some(cat => recipeCategories.includes(cat));
+            });
         }
 
         // Difficulty
@@ -147,13 +153,25 @@ export function Search() {
         setFilters(prev => ({ ...prev, [key]: value }));
     };
 
+    const toggleCategory = (category) => {
+        setFilters(prev => {
+            const current = Array.isArray(prev.category) ? prev.category : [];
+            const exists = current.includes(category);
+            const next = exists
+                ? current.filter(c => c !== category)
+                : [...current, category];
+            return { ...prev, category: next };
+        });
+    };
+
     const resetFilters = () => {
         setFilters(prev => ({
             ...prev,
-            category: 'All',
+            category: [],
             difficulty: 'All',
             sort: 'rating'
         }));
+        setShowCategoryDropdown(false);
     };
 
     const clearHistory = () => {
@@ -202,7 +220,7 @@ export function Search() {
                                 onClick={() => {
                                     setFilters({
                                         keyword: item.query || '',
-                                        category: 'All',
+                                        category: [],
                                         difficulty: 'All',
                                         sort: 'rating'
                                     });
@@ -217,17 +235,53 @@ export function Search() {
                 )}
 
                 <div className="flex flex-wrap items-center gap-4">
-                    <select
-                        className="h-10 rounded-md border border-cool-gray-30 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90"
-                        value={filters.category}
-                        onChange={(e) => handleFilterChange('category', e.target.value)}
-                        aria-label="Filter by category"
-                    >
-                        <option value="All">All Categories</option>
-                        {RECIPE_CATEGORIES.map(category => (
-                            <option key={category} value={category}>{category}</option>
-                        ))}
-                    </select>
+                    {/* Multi-select Category Dropdown */}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            className="h-10 rounded-md border border-cool-gray-30 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90 flex items-center gap-2 min-w-[160px]"
+                            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                            aria-label="Filter by category"
+                        >
+                            <span className="flex-1 text-left">
+                                {Array.isArray(filters.category) && filters.category.length > 0
+                                    ? `${filters.category.length} ${filters.category.length === 1 ? 'Category' : 'Categories'}`
+                                    : 'All Categories'}
+                            </span>
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        {showCategoryDropdown && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-10"
+                                    onClick={() => setShowCategoryDropdown(false)}
+                                />
+                                <div className="absolute z-20 mt-1 w-56 rounded-md border border-cool-gray-30 bg-white shadow-lg max-h-64 overflow-auto">
+                                    <div className="p-2 space-y-1">
+                                        {RECIPE_CATEGORIES.map(category => {
+                                            const isSelected = Array.isArray(filters.category) && filters.category.includes(category);
+                                            return (
+                                                <label
+                                                    key={category}
+                                                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-cool-gray-10 cursor-pointer text-sm"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        className="h-4 w-4 rounded"
+                                                        checked={isSelected}
+                                                        onChange={() => toggleCategory(category)}
+                                                    />
+                                                    <span>{category}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
 
                     <select
                         className="h-10 rounded-md border border-cool-gray-30 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90"

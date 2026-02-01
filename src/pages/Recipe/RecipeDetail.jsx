@@ -7,7 +7,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit, Check } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn, normalizeCategories } from '../../lib/utils';
 
 export function RecipeDetail() {
     const { id } = useParams();
@@ -136,6 +136,8 @@ export function RecipeDetail() {
 
     if (!recipe) return <div className="p-10 text-center">Loading...</div>;
 
+    const categories = normalizeCategories(recipe.categories ?? recipe.category);
+
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-page-in">
             <Button variant="ghost" className="mb-2 pl-0 hover:bg-transparent hover:text-cool-gray-90" onClick={() => navigate(-1)}>
@@ -152,7 +154,11 @@ export function RecipeDetail() {
                 {/* Info */}
                 <div className="flex-1 space-y-3">
                     <div className="flex justify-between items-start">
-                        <Badge>{recipe.category}</Badge>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {categories.map((category) => (
+                                <Badge key={category}>{category}</Badge>
+                            ))}
+                        </div>
                         <span className="text-sm text-cool-gray-60 shrink-0">
                             {new Date(recipe.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                         </span>
@@ -181,6 +187,11 @@ export function RecipeDetail() {
                             <Clock className="h-4 w-4" />
                             <span>{recipe.prepTime + recipe.cookTime} min</span>
                         </div>
+                        {recipe.difficulty && (
+                            <Badge variant="outline" className="capitalize text-cool-gray-70">
+                                {recipe.difficulty}
+                            </Badge>
+                        )}
                     </div>
 
                     <p className="text-sm text-cool-gray-60 leading-relaxed line-clamp-3">

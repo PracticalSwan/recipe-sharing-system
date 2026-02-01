@@ -167,7 +167,7 @@ Submit new recipes with comprehensive details:
 - **Recipe Image:** Upload or link recipe photo
 - **Title:** Recipe name
 - **Description:** Detailed overview of the dish
-- **Category:** Recipe type/tag (e.g., Breakfast, Dinner, Dessert)
+- **Categories:** Select 1–3 recipe tags (e.g., Breakfast, Dinner, Dessert)
 - **Duration:** Prep time and cook time
 - **Servings:** Number of people the recipe serves
 - **Difficulty:** Easy, Medium, or Hard
@@ -193,7 +193,7 @@ Submit new recipes with comprehensive details:
 - **Search History:** Automatic logging of your search queries with timestamps
   - View your recent searches
   - Clear search history with one click
-- Filter by category/tags and difficulty level
+- Filter by category/tags and difficulty level (category filter matches any selected tag)
 - **Reset Filters:** Quickly reset all filters to default values
 - Sort by newest recipes, most liked recipes (Most Popular - default), or difficulty level
 - **Smart Filter Persistence:** Filters remain active when changing search keywords

@@ -20,3 +20,9 @@ export const RECIPE_DIFFICULTIES = [
     'Medium',
     'Hard'
 ]
+
+export const normalizeCategories = (value) => {
+    if (Array.isArray(value)) return value.filter(Boolean)
+    if (typeof value === 'string' && value.trim()) return [value]
+    return []
+}
