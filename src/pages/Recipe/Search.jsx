@@ -135,7 +135,7 @@ export function Search() {
         // Sort
         result.sort((a, b) => {
             if (filters.sort === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
-            if (filters.sort === 'rating') return storage.getAverageRating(b.id) - storage.getAverageRating(a.id);
+            if (filters.sort === 'rating') return storage.getLikeCount(b.id) - storage.getLikeCount(a.id);
             if (filters.sort === 'difficulty-asc') return ['Easy', 'Medium', 'Hard'].indexOf(a.difficulty) - ['Easy', 'Medium', 'Hard'].indexOf(b.difficulty);
             return 0;
         });

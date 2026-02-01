@@ -188,14 +188,14 @@ Submit new recipes with comprehensive details:
 - Explore recipes from various contributors
 
 #### 6. **Search & Filter**
-- Keyword search across recipe titles and descriptions
+- Keyword search across recipe titles
 - Real-time search results with URL persistence
 - **Search History:** Automatic logging of your search queries with timestamps
   - View your recent searches
   - Clear search history with one click
-- Filter by category/tags, difficulty level, and cooking time
+- Filter by category/tags and difficulty level
 - **Reset Filters:** Quickly reset all filters to default values
-- Sort by newest recipes, highest ratings (Most Popular - default), or difficulty level
+- Sort by newest recipes, most liked recipes (Most Popular - default), or difficulty level
 - **Smart Filter Persistence:** Filters remain active when changing search keywords
 
 #### 7. **Saved Recipes (Favorites)**
@@ -243,7 +243,7 @@ Submit new recipes with comprehensive details:
 
 #### 3. **Search & Filter**
 **Search Functionality:**
-- Keyword search across recipe titles and descriptions
+- Keyword search across recipe titles
 - Real-time search results with URL persistence
 - **Search History:** Automatic logging of your search queries with timestamps
   - View your recent searches
@@ -252,12 +252,11 @@ Submit new recipes with comprehensive details:
 **Filtering Options:**
 - Filter by recipe category/tags
 - Filter by difficulty level
-- Filter by cooking time
 - **Reset Filters:** Quickly reset all filters to default values
 
 **Sorting Options:**
 - Sort by newest recipes
-- Sort by highest ratings (Most Popular - default)
+- Sort by most liked recipes (Most Popular - default)
 - Sort by difficulty level
 
 **Smart Features:**

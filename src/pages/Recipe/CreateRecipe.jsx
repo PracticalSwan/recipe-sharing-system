@@ -14,6 +14,7 @@ export function CreateRecipe() {
     const { user, canInteract, isPending, isSuspended } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const isEditMode = Boolean(id);
+    const isBlocked = isSuspended || isPending;
 
     const [formData, setFormData] = useState({
         title: '',
@@ -33,7 +34,7 @@ export function CreateRecipe() {
 
     // Load recipe data if in edit mode
     useEffect(() => {
-        if (!canInteract) return;
+        if (!canInteract || isBlocked) return;
         if (isEditMode) {
             const recipe = storage.getRecipeById(id);
             if (recipe) {
@@ -59,7 +60,7 @@ export function CreateRecipe() {
                 navigate('/profile?tab=recipes');
             }
         }
-    }, [id, isEditMode, user, navigate, canInteract]);
+    }, [id, isEditMode, user, navigate, canInteract, isBlocked]);
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
@@ -227,7 +228,7 @@ export function CreateRecipe() {
         }
     };
 
-    if (!canInteract) {
+    if (!canInteract || isBlocked) {
         return (
             <div className="max-w-2xl mx-auto space-y-4 animate-page-in">
                 <h1 className="text-2xl font-bold text-cool-gray-90">Guest Mode</h1>
