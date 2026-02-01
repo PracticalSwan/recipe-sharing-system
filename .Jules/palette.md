@@ -9,3 +9,7 @@
 ## 2025-05-22 - [Keyboard Navigation and Layout Accessibility]
 **Learning:** Standard layouts often lack a "Skip to Content" link, making keyboard navigation tedious. Additionally, custom interactive elements like rating stars or clear-search buttons often lack clear focus indicators, making them hard to use with a keyboard.
 **Action:** Always include a "Skip to Content" link in main layouts pointing to the main content area. Use Tailwind's `focus-visible` to add distinct rings or transforms to interactive elements that lack default indicators, ensuring a consistent and accessible experience without affecting mouse users' visual design.
+
+## 2025-05-23 - [Accessible Star Ratings and Pluralization]
+**Learning:** Star rating displays are often implemented with raw characters (★) which screen readers announce individually, creating noise. Furthermore, shorthand review counts like "(5)" lack context for assistive technology.
+**Action:** Wrap star groups in a container with `role="img"` and a descriptive, pluralized `aria-label` (e.g., "Rating: 4 out of 5 stars"). Hide individual stars with `aria-hidden="true"`. For counts, use explicit labels like `${count} ${count === 1 ? 'review' : 'reviews'}`.

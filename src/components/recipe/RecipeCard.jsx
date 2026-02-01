@@ -126,16 +126,21 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                     </div>
 
                     {/* Rating Stars - Grey if no reviews */}
-                    <div className="flex items-center gap-0.5 mb-1.5">
+                    <div
+                        className="flex items-center gap-0.5 mb-1.5"
+                        role="img"
+                        aria-label={`Rating: ${averageRating} out of 5 stars`}
+                    >
                         {[1, 2, 3, 4, 5].map((star) => (
                             <span 
                                 key={star} 
+                                aria-hidden="true"
                                 className={`text-[10px] ${averageRating >= star ? 'text-yellow-400' : 'text-cool-gray-30'}`}
                             >
                                 ★
                             </span>
                         ))}
-                        <span className="text-[10px] text-cool-gray-60 ml-1">({reviews.length})</span>
+                        <span className="text-[10px] text-cool-gray-60 ml-1" aria-label={`${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'}`}>({reviews.length})</span>
                     </div>
 
                     <p className="text-[11px] text-cool-gray-60 line-clamp-2 mb-1.5 h-8">
