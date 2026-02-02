@@ -323,6 +323,7 @@ Submit new recipes with comprehensive details:
 
 ```
 recipe-sharing-system/
+├── lucid_diagrams/            # Lucidchart-exported diagrams (PNG/SVG)
 ├── mermaid-diagrams/           # Mermaid diagram files (.mmd)
 │   ├── application_flowchart.mmd
 │   └── data-flow-from-py.mmd
@@ -457,6 +458,10 @@ Visualizes the data model with entities, attributes, and relationships used in l
 3. Generated images are saved in `python_diagrams/out/` directory
 
 These diagrams provide comprehensive documentation for understanding the system's architecture, data structures, and user workflows.
+
+#### Lucid Diagrams
+
+- **Location:** `lucid_diagrams/` — contains exported diagram images (PNG or SVG) created in Lucidchart for quick visual reference and presentation.
 
 <a id="data-storage"></a>
 ## 💾 Data Storage
