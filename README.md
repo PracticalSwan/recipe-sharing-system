@@ -323,17 +323,23 @@ Submit new recipes with comprehensive details:
 
 ```
 recipe-sharing-system/
+├── .serena/                   # Project memories used for development (memory bank)
+├── guides/                    # Documentation and setup guides
+│   ├── database_implementation_logic_explanation.md
+│   └── SETUP_GUIDE_PHPMYADMIN.md
 ├── lucid_diagrams/            # Lucidchart-exported diagrams (PNG/SVG)
-├── mermaid-diagrams/           # Mermaid diagram files (.mmd)
+├── mermaid-diagrams/          # Mermaid diagram files (.mmd)
 │   ├── application_flowchart.mmd
 │   └── data-flow-from-py.mmd
-├── python_diagrams/            # Graphviz Python diagram generators
+├── plan/                      # Future development planning documents
+│   └── upgrade-database-integration-1.md
+├── python_diagrams/           # Graphviz Python diagram generators
 │   ├── data_flow_graphviz.py
 │   ├── er_recipe_conceptual_graphviz.py
 │   ├── er_recipe_logical_graphviz.py
 │   ├── flowchart_graphviz.py
-│   └── out/                    # Generated diagram images
-├── public/                     # Static assets
+│   └── out/                   # Generated diagram images
+├── public/                    # Static assets
 ├── src/
 │   ├── components/           # Reusable UI components
 │   │   ├── layout/          # Navigation & layout components
