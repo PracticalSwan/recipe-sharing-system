@@ -32,6 +32,18 @@ mcp_makenotion_no_notion-update-page({
 })
 ```
 
+### Child Pages
+
+- **CookHub - Complete SQL Scripts Reference**
+  - URL: https://www.notion.so/300e35b852f081c5a148ec7aa1cee4c8
+  - Page ID: 300e35b8-52f0-81c5-a148-ec7aa1cee4c8
+  - Contains: All 14 SQL scripts with execution order, full SQL code for scripts 01-07, summaries for 08-14
+  - Created: 2026-02-07
+
+- **Database Implementation Logic Reference**
+  - URL: https://www.notion.so/2fee35b852f081f3a208f2436961d94f
+  - Contains: Complete database design documentation
+
 ### Task Organization
 
 The implementation plan contains **171 tasks** organized into 6 phases:

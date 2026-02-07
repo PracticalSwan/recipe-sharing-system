@@ -1,6 +1,6 @@
 # CSX3006 Database Project - Implementation Updates
 
-**Last Updated:** February 5, 2026
+**Last Updated:** February 7, 2026
 
 ---
 
@@ -8,7 +8,7 @@
 
 **Course:** CSX3006 Database Systems  
 **Project:** Recipe Sharing System - MySQL Database Integration  
-**Status:** Database Design Complete - Full Documentation Integrated to Notion
+**Status:** Phases 1-3 SQL Scripts Complete - PHP Backend Pending
 
 ---
 
@@ -124,12 +124,14 @@ CREATE TABLE recipe_view (
 
 | Phase | Tasks | Status |
 |-------|-------|--------|
-| Phase 1: Database Design | 21 | Planned |
-| Phase 2: SQL Scripts | 21 | Planned |
-| Phase 3: Advanced SQL | 13 | Planned |
+| Phase 1: Database Design | 21 | ✅ Complete (TASK-004 to TASK-021, 2026-02-07) |
+| Phase 2: SQL Scripts | 22 | ✅ Complete (TASK-021 to TASK-042, 2026-02-07) |
+| Phase 3: Advanced SQL | 13 | ✅ Complete (TASK-043 to TASK-055, 2026-02-07) |
 | Phase 4: PHP Backend | 46 | Planned |
 | Phase 5: Frontend Integration | 56 | Planned |
 | Phase 6: Testing | 13 | Planned |
+
+**Note:** TASK-001 to TASK-003 (ER diagrams, normalization) remain unchecked - not SQL scripts.
 
 ---
 
@@ -231,27 +233,50 @@ CREATE TABLE recipe_view (
 
 ---
 
+## SQL Scripts Created (2026-02-07)
+
+All 14 SQL scripts located in `database/` folder:
+
+| # | File | Purpose |
+|---|------|---------|
+| 01 | `01_create_database.sql` | CREATE DATABASE cookhub with UTF8MB4 |
+| 02 | `02_create_tables.sql` | All 13 tables with FKs, constraints |
+| 03 | `03_create_indexes.sql` | 25+ indexes across all tables |
+| 04 | `04_create_views.sql` | vw_recipe_with_stat, vw_user_dashboard_stat |
+| 05 | `05_seed_users.sql` | 3 admins + 9 users with bcrypt hashes |
+| 06 | `06_seed_recipes.sql` | 13 recipes, 52 ingredients, 56 instructions, 13 images |
+| 07 | `07_seed_reviews.sql` | 25 reviews, 14 likes, 7 favorites |
+| 08 | `08_seed_stats.sql` | 23 recipe views, 30 daily stats, 15 search history, 18 activity logs |
+| 09 | `09_common_queries.sql` | 5 common SELECT queries |
+| 10 | `10_admin_queries.sql` | 5 admin dashboard queries |
+| 11 | `11_analytics_queries.sql` | 6 analytics queries |
+| 12 | `12_stored_procedures.sql` | usp_CreateRecipe, usp_DeleteRecipe, usp_ApproveRecipe, usp_GetRecipeStat, fn_CalculateAvgRating |
+| 13 | `13_triggers.sql` | 6 triggers with @DISABLE_TRIGGERS pattern |
+| 14 | `14_backup_restore.sql` | Backup/restore docs, health check, rebuild sequence |
+
+**Consolidated guide:** `guides/SQL_SCRIPTS.md` - All 14 scripts in one markdown file
+
+**User-to-ID mapping:** admin=1, olivia=2, marcus=3, john=4, maria=5, tom=6, amy=7, kevin=8, sarah=9, daniel=10, lina=11, omar=12
+
+**Safety pattern:** `@DISABLE_TRIGGERS` session variable prevents triggers from firing during seed inserts
+
 ## Next Steps
 
-1. **Implement SQL Scripts**
-   - Create database and tables
-   - Create indexes and views
-   - Create stored procedures and triggers
-   - Seed initial data from localStorage
+1. ~~**Implement SQL Scripts**~~ ✅ DONE (February 7, 2026)
 
-2. **PHP Backend Development**
+2. **PHP Backend Development** (Phase 4)
    - User authentication endpoints
    - Recipe CRUD operations
    - Search and filtering
    - Admin moderation endpoints
 
-3. **Frontend Integration**
+3. **Frontend Integration** (Phase 5)
    - Replace localStorage with API calls
    - Implement authentication flow
    - Add recipe creation/editing
    - Admin dashboard
 
-4. **Testing & Deployment**
+4. **Testing & Deployment** (Phase 6)
    - Unit tests for stored procedures
    - Integration tests for API
    - User acceptance testing
@@ -263,7 +288,9 @@ CREATE TABLE recipe_view (
 
 - **Notion Implementation Plan:** https://www.notion.so/2fde35b852f08152b4ade1f4b1233c38
 - **Notion Database Reference:** https://www.notion.so/2fee35b852f081f3a208f2436961d94f
+- **Notion SQL Scripts Reference:** https://www.notion.so/300e35b852f081c5a148ec7aa1cee4c8
 - **Local Database Guide:** `/guides/database_implementation_logic_explanation.md`
+- **Local SQL Scripts Guide:** `/guides/SQL_SCRIPTS.md`
 
 ---
 
