@@ -2,15 +2,15 @@
 goal: Integrate MySQL Database Backend into Recipe Sharing System
 version: 1.0
 date_created: 2026-02-04
-last_updated: 2026-02-04
+last_updated: 2026-02-07
 owner: CSX3006 Database Systems Course Project
-status: 'Planned'
+status: 'In Progress'
 tags: [database, backend, php, mysql, api, migration, architecture]
 ---
 
 # Introduction
 
-![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
+![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-yellow)
 
 This implementation plan outlines the complete migration of the Recipe Sharing System from a localStorage-based frontend-only application to a full-stack web application with MySQL database backend and PHP RESTful API. The plan maintains all existing frontend functionality while demonstrating comprehensive database design, SQL scripting, and backend development skills required for the CSX3006 Database Systems course.
 
@@ -117,24 +117,24 @@ The migration will transform the current React+Vite application into a three-tie
 | TASK-001 | Create conceptual ER diagram showing entities and relationships | | |
 | TASK-002 | Create logical ER diagram with attributes and cardinalities | | |
 | TASK-003 | Normalize schema to 3NF (identify functional dependencies) | | |
-| TASK-004 | Write `01_create_database.sql` - CREATE DATABASE with charset UTF8MB4 | | |
-| TASK-005 | Write `02_create_tables.sql` - All CREATE TABLE statements with PKs, FKs, constraints | | |
-| TASK-006 | Design `user` table: id (PK INT AUTO_INCREMENT), username (VARCHAR 100), first_name (VARCHAR 50), last_name (VARCHAR 50), email (VARCHAR 100 UNIQUE NOT NULL), password_hash (VARCHAR 255 NOT NULL), birthday (DATE), role (ENUM: 'admin', 'user'), status (ENUM: 'active', 'inactive', 'pending', 'suspended'), joined_date (DATETIME), last_active (DATETIME), avatar_url (TEXT), bio (TEXT), location (VARCHAR 100), cooking_level (VARCHAR 50), created_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), updated_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) | | |
-| TASK-007 | Design `recipe` table: id (PK INT AUTO_INCREMENT), title (VARCHAR 200 NOT NULL), description (TEXT), category (VARCHAR 50), difficulty (ENUM: 'Easy', 'Medium', 'Hard'), prep_time (INT), cook_time (INT), servings (INT), author_id (INT FK→user.id ON DELETE CASCADE), status (ENUM: 'published', 'pending', 'rejected' DEFAULT 'pending'), created_at (TIMESTAMP), updated_at (TIMESTAMP) | | |
-| TASK-008 | Design `ingredient` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), name (VARCHAR 200 NOT NULL), quantity (VARCHAR 50), unit (VARCHAR 50), sort_order (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | | |
-| TASK-009 | Design `instruction` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), step_number (INT NOT NULL), instruction_text (TEXT NOT NULL), created_at (TIMESTAMP), updated_at (TIMESTAMP) | | |
-| TASK-010 | Design `recipe_image` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), image_url (TEXT NOT NULL), display_order (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | | |
-| TASK-011 | Design `review` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), rating (INT CHECK rating BETWEEN 1 AND 5), comment (TEXT), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe (user_id, recipe_id) | | |
-| TASK-012 | Design `favorite` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe_favorite (user_id, recipe_id) | | |
-| TASK-013 | Design `like_record` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe_like (user_id, recipe_id) | | |
-| TASK-014 | Design `recipe_view` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), user_id (INT NOT NULL FK→user.id ON DELETE CASCADE), viewed_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), created_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), updated_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP), INDEX idx_recipe_viewed (recipe_id, viewed_at), INDEX idx_user_viewed (user_id, viewed_at) | | |
-| TASK-015 | Design `search_history` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), query (TEXT NOT NULL), searched_at (TIMESTAMP), created_at (TIMESTAMP), updated_at (TIMESTAMP) | | |
-| TASK-016 | Design `daily_stat` table: id (PK INT AUTO_INCREMENT), stat_date (DATE UNIQUE NOT NULL), page_view_count (INT DEFAULT 0), active_user_count (INT DEFAULT 0), new_user_count (INT DEFAULT 0), recipe_view_count (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | | |
-| TASK-017 | Design `activity_log` table: id (PK INT AUTO_INCREMENT), admin_id (INT FK→user.id ON DELETE SET NULL), action_type (ENUM: 'user_create', 'user_update', 'user_delete', 'recipe_approve', 'recipe_reject', 'recipe_delete'), target_type (VARCHAR 50), target_id (INT), description (TEXT), created_at (TIMESTAMP), updated_at (TIMESTAMP) | | |
-| TASK-018 | Design `session` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), session_token (VARCHAR 255 UNIQUE NOT NULL), expires_at (DATETIME NOT NULL), created_at (TIMESTAMP), updated_at (TIMESTAMP) | | |
-| TASK-019 | Write `03_create_indexes.sql` - CREATE INDEX statements for: user(email), recipe(author_id, status, category), review(recipe_id, user_id), recipe_view(recipe_id, viewed_at), search_history(user_id, searched_at), daily_stat(stat_date), activity_log(admin_id, created_at) | | |
-| TASK-020 | Write `04_create_views.sql` - Create view `vw_recipe_with_stat`: joins recipe with like_count, view_count, avg_rating, author info using aggregation | | |
-| TASK-021 | Write `04_create_views.sql` - Create view `vw_user_dashboard_stat`: aggregates user's recipe count, favorite count, review count for dashboard display | | |
+| TASK-004 | Write `01_create_database.sql` - CREATE DATABASE with charset UTF8MB4 | ✅ | 2026-02-07 |
+| TASK-005 | Write `02_create_tables.sql` - All CREATE TABLE statements with PKs, FKs, constraints | ✅ | 2026-02-07 |
+| TASK-006 | Design `user` table: id (PK INT AUTO_INCREMENT), username (VARCHAR 100), first_name (VARCHAR 50), last_name (VARCHAR 50), email (VARCHAR 100 UNIQUE NOT NULL), password_hash (VARCHAR 255 NOT NULL), birthday (DATE), role (ENUM: 'admin', 'user'), status (ENUM: 'active', 'inactive', 'pending', 'suspended'), joined_date (DATETIME), last_active (DATETIME), avatar_url (TEXT), bio (TEXT), location (VARCHAR 100), cooking_level (VARCHAR 50), created_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), updated_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-007 | Design `recipe` table: id (PK INT AUTO_INCREMENT), title (VARCHAR 200 NOT NULL), description (TEXT), category (VARCHAR 50), difficulty (ENUM: 'Easy', 'Medium', 'Hard'), prep_time (INT), cook_time (INT), servings (INT), author_id (INT FK→user.id ON DELETE CASCADE), status (ENUM: 'published', 'pending', 'rejected' DEFAULT 'pending'), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-008 | Design `ingredient` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), name (VARCHAR 200 NOT NULL), quantity (VARCHAR 50), unit (VARCHAR 50), sort_order (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-009 | Design `instruction` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), step_number (INT NOT NULL), instruction_text (TEXT NOT NULL), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-010 | Design `recipe_image` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), image_url (TEXT NOT NULL), display_order (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-011 | Design `review` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), rating (INT CHECK rating BETWEEN 1 AND 5), comment (TEXT), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe (user_id, recipe_id) | ✅ | 2026-02-07 |
+| TASK-012 | Design `favorite` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe_favorite (user_id, recipe_id) | ✅ | 2026-02-07 |
+| TASK-013 | Design `like_record` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe_like (user_id, recipe_id) | ✅ | 2026-02-07 |
+| TASK-014 | Design `recipe_view` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), user_id (INT NOT NULL FK→user.id ON DELETE CASCADE), viewed_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), created_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), updated_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP), INDEX idx_recipe_viewed (recipe_id, viewed_at), INDEX idx_user_viewed (user_id, viewed_at) | ✅ | 2026-02-07 |
+| TASK-015 | Design `search_history` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), query (TEXT NOT NULL), searched_at (TIMESTAMP), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-016 | Design `daily_stat` table: id (PK INT AUTO_INCREMENT), stat_date (DATE UNIQUE NOT NULL), page_view_count (INT DEFAULT 0), active_user_count (INT DEFAULT 0), new_user_count (INT DEFAULT 0), recipe_view_count (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-017 | Design `activity_log` table: id (PK INT AUTO_INCREMENT), admin_id (INT FK→user.id ON DELETE SET NULL), action_type (ENUM: 'user_create', 'user_update', 'user_delete', 'recipe_approve', 'recipe_reject', 'recipe_delete'), target_type (VARCHAR 50), target_id (INT), description (TEXT), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-018 | Design `session` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), session_token (VARCHAR 255 UNIQUE NOT NULL), expires_at (DATETIME NOT NULL), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-019 | Write `03_create_indexes.sql` - CREATE INDEX statements for: user(email), recipe(author_id, status, category), review(recipe_id, user_id), recipe_view(recipe_id, viewed_at), search_history(user_id, searched_at), daily_stat(stat_date), activity_log(admin_id, created_at) | ✅ | 2026-02-07 |
+| TASK-020 | Write `04_create_views.sql` - Create view `vw_recipe_with_stat`: joins recipe with like_count, view_count, avg_rating, author info using aggregation | ✅ | 2026-02-07 |
+| TASK-021 | Write `04_create_views.sql` - Create view `vw_user_dashboard_stat`: aggregates user's recipe count, favorite count, review count for dashboard display | ✅ | 2026-02-07 |
 
 ### Phase 2: SQL Data Scripts & Queries
 
@@ -142,28 +142,28 @@ The migration will transform the current React+Vite application into a three-tie
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-021 | Write `05_seed_users.sql` - INSERT statements for 3 admin users (matching current seed data) | | |
-| TASK-022 | Write `05_seed_users.sql` - INSERT statements for 7 user accounts (active, inactive, pending, suspended) | | |
-| TASK-023 | Write `06_seed_recipes.sql` - INSERT statements for 10+ sample recipes with varying statuses | | |
-| TASK-024 | Write `06_seed_recipes.sql` - INSERT corresponding ingredients for each recipe (3-10 per recipe) | | |
-| TASK-025 | Write `06_seed_recipes.sql` - INSERT corresponding instructions for each recipe (4-8 steps each) | | |
-| TASK-026 | Write `06_seed_recipes.sql` - INSERT recipe images (1-3 images per recipe) | | |
-| TASK-027 | Write `07_seed_reviews.sql` - INSERT sample reviews (20+ reviews across recipes) | | |
-| TASK-028 | Write `07_seed_reviews.sql` - INSERT likes and favorites data | | |
-| TASK-029 | Write `08_seed_stats.sql` - INSERT historical daily stats (last 30 days) | | |
-| TASK-030 | Write `08_seed_stats.sql` - INSERT activity logs for admin actions | | |
-| TASK-031 | Write `09_common_queries.sql` - SELECT query: Get all published recipes with author info (JOIN) | | |
-| TASK-032 | Write `09_common_queries.sql` - SELECT query: Get recipe details with ingredients, instructions, images (multiple JOINs) | | |
-| TASK-033 | Write `09_common_queries.sql` - SELECT query: Get user's favorite recipes with stats | | |
-| TASK-034 | Write `09_common_queries.sql` - SELECT query: Search recipes by title/description (LIKE with full-text search) | | |
-| TASK-035 | Write `09_common_queries.sql` - SELECT query: Get recipe reviews with user info ordered by date | | |
-| TASK-036 | Write `10_admin_queries.sql` - SELECT query: Count users by status (GROUP BY, COUNT) | | |
-| TASK-037 | Write `10_admin_queries.sql` - SELECT query: Count recipes by status and author | | |
-| TASK-038 | Write `10_admin_queries.sql` - SELECT query: Get pending recipes with author details for approval queue | | |
-| TASK-039 | Write `11_analytics_queries.sql` - SELECT query: Top 10 recipes by views/likes/ratings (ORDER BY, LIMIT) | | |
-| TASK-040 | Write `11_analytics_queries.sql` - SELECT query: User engagement metrics (subqueries for recipe count, review count, favorite count) | | |
-| TASK-041 | Write `11_analytics_queries.sql` - SELECT query: Daily/weekly/monthly growth trends (DATE functions, aggregation) | | |
-| TASK-042 | Write `11_analytics_queries.sql` - SELECT query: Recipe category distribution and popularity | | |
+| TASK-021 | Write `05_seed_users.sql` - INSERT statements for 3 admin users (matching current seed data) | ✅ | 2026-02-07 |
+| TASK-022 | Write `05_seed_users.sql` - INSERT statements for 7 user accounts (active, inactive, pending, suspended) | ✅ | 2026-02-07 |
+| TASK-023 | Write `06_seed_recipes.sql` - INSERT statements for 10+ sample recipes with varying statuses | ✅ | 2026-02-07 |
+| TASK-024 | Write `06_seed_recipes.sql` - INSERT corresponding ingredients for each recipe (3-10 per recipe) | ✅ | 2026-02-07 |
+| TASK-025 | Write `06_seed_recipes.sql` - INSERT corresponding instructions for each recipe (4-8 steps each) | ✅ | 2026-02-07 |
+| TASK-026 | Write `06_seed_recipes.sql` - INSERT recipe images (1-3 images per recipe) | ✅ | 2026-02-07 |
+| TASK-027 | Write `07_seed_reviews.sql` - INSERT sample reviews (20+ reviews across recipes) | ✅ | 2026-02-07 |
+| TASK-028 | Write `07_seed_reviews.sql` - INSERT likes and favorites data | ✅ | 2026-02-07 |
+| TASK-029 | Write `08_seed_stats.sql` - INSERT historical daily stats (last 30 days) | ✅ | 2026-02-07 |
+| TASK-030 | Write `08_seed_stats.sql` - INSERT activity logs for admin actions | ✅ | 2026-02-07 |
+| TASK-031 | Write `09_common_queries.sql` - SELECT query: Get all published recipes with author info (JOIN) | ✅ | 2026-02-07 |
+| TASK-032 | Write `09_common_queries.sql` - SELECT query: Get recipe details with ingredients, instructions, images (multiple JOINs) | ✅ | 2026-02-07 |
+| TASK-033 | Write `09_common_queries.sql` - SELECT query: Get user's favorite recipes with stats | ✅ | 2026-02-07 |
+| TASK-034 | Write `09_common_queries.sql` - SELECT query: Search recipes by title/description (LIKE with full-text search) | ✅ | 2026-02-07 |
+| TASK-035 | Write `09_common_queries.sql` - SELECT query: Get recipe reviews with user info ordered by date | ✅ | 2026-02-07 |
+| TASK-036 | Write `10_admin_queries.sql` - SELECT query: Count users by status (GROUP BY, COUNT) | ✅ | 2026-02-07 |
+| TASK-037 | Write `10_admin_queries.sql` - SELECT query: Count recipes by status and author | ✅ | 2026-02-07 |
+| TASK-038 | Write `10_admin_queries.sql` - SELECT query: Get pending recipes with author details for approval queue | ✅ | 2026-02-07 |
+| TASK-039 | Write `11_analytics_queries.sql` - SELECT query: Top 10 recipes by views/likes/ratings (ORDER BY, LIMIT) | ✅ | 2026-02-07 |
+| TASK-040 | Write `11_analytics_queries.sql` - SELECT query: User engagement metrics (subqueries for recipe count, review count, favorite count) | ✅ | 2026-02-07 |
+| TASK-041 | Write `11_analytics_queries.sql` - SELECT query: Daily/weekly/monthly growth trends (DATE functions, aggregation) | ✅ | 2026-02-07 |
+| TASK-042 | Write `11_analytics_queries.sql` - SELECT query: Recipe category distribution and popularity | ✅ | 2026-02-07 |
 
 ### Phase 3: Advanced SQL Features
 
@@ -171,19 +171,19 @@ The migration will transform the current React+Vite application into a three-tie
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-043 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_CreateRecipe` (handles transaction for recipe + ingredient + instruction inserts with proper error handling) | | |
-| TASK-044 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_DeleteRecipe` (cascading deletes with cleanup, logs activity) | | |
-| TASK-045 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_ApproveRecipe` (updates status to 'published' + logs activity) | | |
-| TASK-046 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_GetRecipeStat` (returns aggregated statistics for a recipe: likes, views, avg_rating) | | |
-| TASK-047 | Write `12_stored_procedures.sql` - CREATE FUNCTION `fn_CalculateAvgRating` (returns DECIMAL average rating for recipe_id parameter) | | |
-| TASK-048 | Write `13_triggers.sql` - CREATE TRIGGER `trg_RecipeView_UpdateStat` - AFTER INSERT on recipe_view, increment daily_stat.recipe_view_count | | |
-| TASK-049 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_UpdateLastActive` - BEFORE UPDATE on session, update user.last_active timestamp | | |
-| TASK-050 | Write `13_triggers.sql` - CREATE TRIGGER `trg_Recipe_DeleteCleanup` - BEFORE DELETE on recipe, log activity_log entry | | |
-| TASK-051 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_NewUserStat` - AFTER INSERT on user, increment daily_stat.new_user_count for today | | |
-| TASK-052 | Write `13_triggers.sql` - CREATE TRIGGER `trg_Recipe_SetTimestamp` - BEFORE INSERT on recipe, set created_at and updated_at if NULL | | |
-| TASK-053 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_SetTimestamp` - BEFORE INSERT on user, set created_at and updated_at if NULL | | |
-| TASK-054 | Write `14_backup_restore.sql` - Document BACKUP DATABASE using mysqldump command with examples | | |
-| TASK-055 | Write `14_backup_restore.sql` - Document RESTORE DATABASE using mysql command with examples | | |
+| TASK-043 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_CreateRecipe` (handles transaction for recipe + ingredient + instruction inserts with proper error handling) | ✅ | 2026-02-07 |
+| TASK-044 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_DeleteRecipe` (cascading deletes with cleanup, logs activity) | ✅ | 2026-02-07 |
+| TASK-045 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_ApproveRecipe` (updates status to 'published' + logs activity) | ✅ | 2026-02-07 |
+| TASK-046 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_GetRecipeStat` (returns aggregated statistics for a recipe: likes, views, avg_rating) | ✅ | 2026-02-07 |
+| TASK-047 | Write `12_stored_procedures.sql` - CREATE FUNCTION `fn_CalculateAvgRating` (returns DECIMAL average rating for recipe_id parameter) | ✅ | 2026-02-07 |
+| TASK-048 | Write `13_triggers.sql` - CREATE TRIGGER `trg_RecipeView_UpdateStat` - AFTER INSERT on recipe_view, increment daily_stat.recipe_view_count | ✅ | 2026-02-07 |
+| TASK-049 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_UpdateLastActive` - BEFORE UPDATE on session, update user.last_active timestamp | ✅ | 2026-02-07 |
+| TASK-050 | Write `13_triggers.sql` - CREATE TRIGGER `trg_Recipe_DeleteCleanup` - BEFORE DELETE on recipe, log activity_log entry | ✅ | 2026-02-07 |
+| TASK-051 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_NewUserStat` - AFTER INSERT on user, increment daily_stat.new_user_count for today | ✅ | 2026-02-07 |
+| TASK-052 | Write `13_triggers.sql` - CREATE TRIGGER `trg_Recipe_SetTimestamp` - BEFORE INSERT on recipe, set created_at and updated_at if NULL | ✅ | 2026-02-07 |
+| TASK-053 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_SetTimestamp` - BEFORE INSERT on user, set created_at and updated_at if NULL | ✅ | 2026-02-07 |
+| TASK-054 | Write `14_backup_restore.sql` - Document BACKUP DATABASE using mysqldump command with examples | ✅ | 2026-02-07 |
+| TASK-055 | Write `14_backup_restore.sql` - Document RESTORE DATABASE using mysql command with examples | ✅ | 2026-02-07 |
 
 ### Phase 4: PHP Backend API Development
 
