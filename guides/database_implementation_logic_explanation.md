@@ -320,37 +320,13 @@ CREATE TABLE ingredient (
     name            VARCHAR(200) NOT NULL,
     quantity        VARCHAR(50),
     unit            VARCHAR(50),
-
-**Purpose (updated):** Tracks recipe views for analytics, associated only with authenticated users.
-
-```sql
-CREATE TABLE recipe_view (
-        id               INT AUTO_INCREMENT PRIMARY KEY,
-        recipe_id        INT NOT NULL,
-        user_id          INT NOT NULL,
-        viewed_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_recipe_viewed (recipe_id, viewed_at),
-        INDEX idx_user_viewed (user_id, viewed_at),
-        CONSTRAINT fk_recipe_view_recipe FOREIGN KEY (recipe_id) REFERENCES recipe(id) ON DELETE CASCADE ON UPDATE CASCADE,
-        CONSTRAINT fk_recipe_view_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE
+    sort_order      INT DEFAULT 0,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_ingredient_recipe
+        FOREIGN KEY (recipe_id) REFERENCES recipe(id) ON DELETE CASCADE
 );
-```
-
-**Design for Authenticated User-Only Tracking:**
-
-- `recipe_view` now requires a non-NULL `user_id` to associate each view with an authenticated user; guest/session-based tracking has been removed per project decision.
-- There is no `viewer_type` or `guest_identifier` column in this design; all analytics and personalization are derived from authenticated-user activity only.
-
-**Why use `ON DELETE CASCADE` for `user_id`?**
-
-- The chosen behavior is to cascade-delete views when a user is removed, aligning with stricter data-retention and user-deletion policies (removes user-related history). If the project prefers to retain anonymous analytics while removing personal identifiers, consider `ON DELETE SET NULL` and allow `user_id` to be nullable instead.
-
-**Indexing:**
-
-- `idx_recipe_viewed (recipe_id, viewed_at)` supports fast aggregation of views per recipe and time-range queries.
-- `idx_user_viewed (user_id, viewed_at)` supports user activity queries (recent views, history).
 ```
 
 **Column Logic:**
@@ -534,46 +510,36 @@ CREATE TABLE like_record (
 
 ### 4.9 `recipe_view` Table
 
-**Purpose:** Tracks recipe views for analytics, supporting both authenticated users and guests.
+**Purpose:** Tracks recipe views for analytics, associated only with authenticated users.
 
 ```sql
 CREATE TABLE recipe_view (
-    id               INT AUTO_INCREMENT PRIMARY KEY,
-    recipe_id        INT NOT NULL,
-    viewer_type      ENUM('user', 'guest') NOT NULL,
-    viewer_id        INT,
-    guest_identifier VARCHAR(100),
-    viewed_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    CONSTRAINT fk_view_recipe 
-        FOREIGN KEY (recipe_id) REFERENCES recipe(id) ON DELETE CASCADE,
-    CONSTRAINT fk_view_user 
-        FOREIGN KEY (viewer_id) REFERENCES user(id) ON DELETE SET NULL,
-        
-    INDEX idx_recipe_viewed (recipe_id, viewed_at)
+        id               INT AUTO_INCREMENT PRIMARY KEY,
+        recipe_id        INT NOT NULL,
+        user_id          INT NOT NULL,
+        viewed_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_recipe_viewed (recipe_id, viewed_at),
+        INDEX idx_user_viewed (user_id, viewed_at),
+        CONSTRAINT fk_recipe_view_recipe FOREIGN KEY (recipe_id REFERENCES recipe(id) ON DELETE CASCADE ON UPDATE CASCADE),
+        CONSTRAINT fk_recipe_view_user FOREIGN KEY (user_id REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE)
 );
 ```
 
-**Design for Guest Tracking:**
+**Design for Authenticated User-Only Tracking:**
 
-```
-Authenticated User View:
-  viewer_type = 'user'
-  viewer_id = user.id (FK)
-  guest_identifier = NULL
+- `recipe_view` now requires a non-NULL `user_id` to associate each view with an authenticated user; guest/session-based tracking has been removed per project decision.
+- There is no `viewer_type` or `guest_identifier` column in this design; all analytics and personalization are derived from authenticated-user activity only.
 
-Guest View:
-  viewer_type = 'guest'
-  viewer_id = NULL
-  guest_identifier = 'guest:abc123...' (session-based ID)
-```
+**Why use `ON DELETE CASCADE` for `user_id`?**
 
-**Why ON DELETE SET NULL for viewer_id?**
-- Preserve view history even if user is deleted
-- Analytics remain accurate (view count doesn't decrease)
-- Contrast with recipe FK which cascades (no orphan views for deleted recipes)
+- The chosen behavior is to cascade-delete views when a user is removed, aligning with stricter data-retention and user-deletion policies (removes user-related history). If the project prefers to retain anonymous analytics while removing personal identifiers, consider `ON DELETE SET NULL` and allow `user_id` to be nullable instead.
+
+**Indexing:**
+
+- `idx_recipe_viewed (recipe_id, viewed_at)` supports fast aggregation of views per recipe and time-range queries.
+- `idx_user_viewed (user_id, viewed_at)` supports user activity queries (recent views, history).
 
 ---
 

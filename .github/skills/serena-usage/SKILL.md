@@ -365,9 +365,32 @@ Serena provides reflection tools to maintain focus:
 - [Memory Management](./references/memory-management.md) — Memory naming conventions, lifecycle, and maintenance best practices
 - [Symbol Navigation](./references/symbol-navigation.md) — find_symbol and find_referencing_symbols patterns and workflows
 
+### Project-Specific Guide (Recipe Sharing System)
+- [Serena Project Guide](.serena/memories/serena-project-guide-2026-02-13.md) — Customized Serena usage for CSX3006 project, including:
+  - Current memory structure (14 active memories)
+  - Modified onboarding workflow
+  - Project-specific best practices
+  - Session-start patterns for Phase 4 (backend development)
+  - When to update specific memories vs. creating new ones
+
 ### Scripts
 - [Memory Backup](./scripts/serena-memory-backup.ps1) — PowerShell script to backup Serena memory files with timestamps
 
 ### Examples
 - [Refactoring Workflow](./examples/refactoring-workflow.md) — 13-step refactoring walkthrough using Serena tools
+
+---
+
+## This File vs. Project Guide
+
+**This SKILL.md** provides general Serena usage documentation applicable to any project.
+
+**Project guide** (`.serena/memories/serena-project-guide-2026-02-13.md`) provides:
+- CSX3006-specific memory patterns
+- Phase-appropriate workflows (currently: Phase 4 pending)
+- Database conventions (cookhub, singular tables)
+- Tailwind v4 + React 19 specifics
+- Plan v2.0 integration (138-task implementation)
+
+**Usage strategy:** Read both to understand general Serena capabilities + project-specific customization.
 ```
