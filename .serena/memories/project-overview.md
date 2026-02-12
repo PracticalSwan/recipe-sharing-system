@@ -1,4 +1,6 @@
-Project: Recipe Sharing System (React 19 + Vite + Tailwind v4). CSX3006 Database Systems course project.
+# Recipe Sharing System — Project Overview
+
+**Project:** Recipe Sharing System (React 19 + Vite + Tailwind v4). CSX3006 Database Systems course project.
 
 **Current Focus:** Database implementation complete with all 14 SQL scripts verified and corrected (February 13, 2026).
 
@@ -11,7 +13,7 @@ Project: Recipe Sharing System (React 19 + Vite + Tailwind v4). CSX3006 Database
 
 ---
 
-**Project Status — 38% Complete (Phases 1-3 of 6)**
+## Project Status — 38% Complete (Phases 1-3 of 6)
 
 **✅ Phase 1: Database Design** — 100% Complete
 - All 13 tables designed with FKs and constraints
@@ -40,18 +42,16 @@ Project: Recipe Sharing System (React 19 + Vite + Tailwind v4). CSX3006 Database
 
 ---
 
-**Recent Completion (February 13, 2026):**
-- Full review of all 14 SQL scripts vs authoritative schema (02_create_tables.sql)
-- Fixed column name mismatches in scripts 09-14:
-  - Parent table PK corrections: `recipe_id`→`id`, `user_id`→`id`
-  - Column renames: `cuisine`→`category`, `display_name`→`username`, `amount`→`quantity`, `description`→`instruction_text`, `is_primary`→`display_order`
-  - ENUM case fixes: `'easy'`→`'Easy'`, etc.
-  - Removed non-existent columns: `caption`, `display_name`
-- Verification completed — all scripts now consistent with schema
+## Recent Work (February 13, 2026)
+
+**SQL Fixes:** Full review of all 14 SQL scripts vs authoritative schema (02_create_tables.sql). Fixed column name mismatches in scripts 09-14: parent table PK corrections, column renames, ENUM case fixes, removed non-existent columns.
+
+**Plan v2.0 (February 8, 2026):** Merged implementation plan from 181 to 138 tasks. Simplified backend from 23 files (MVC) to 12 files (flat procedural), switched from axios to native fetch(), removed JWT option.
 
 ---
 
-**Next Steps:**
+## Next Steps
+
 1. Execute SQL scripts 01-14 in phpMyAdmin (build complete database)
 2. Create `backend/` folder structure with flat PHP files
 3. Implement `database.php` (PDO connection)
@@ -60,7 +60,8 @@ Project: Recipe Sharing System (React 19 + Vite + Tailwind v4). CSX3006 Database
 
 ---
 
-**Implementation Plan:** 138 tasks across 6 phases
-**Documentation:** [upgrade-database-integration-1.md](../../plan/upgrade-database-integration-1.md) (v2.0)
-**Database Reference:** [csx3006-database-project-updates.md](../csx3006-database-project-updates.md)
+## Implementation Plan: 138 tasks across 6 phases
+
+**Documentation:** [upgrade-database-integration-1.md](../../plan/upgrade-database-integration-1.md) (v2.0)  
+**Task Tracking:** [database-integration-implementation-plan-task.md](../database-integration-implementation-plan-task.md)  
 **SQL Fix Details:** [csx3006-sql-fixes-2026-02-13.md](../csx3006-sql-fixes-2026-02-13.md)

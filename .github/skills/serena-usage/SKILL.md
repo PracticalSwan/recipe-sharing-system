@@ -309,29 +309,21 @@ Serena provides reflection tools to maintain focus:
 ## Session Workflow
 
 ### Starting a Session
-1. `check_onboarding_performed` → verify Serena is properly initialized
-2. `list_memories` → review all available project memories
-3. `read_memory` → load relevant memories:
-   - Read `project-brief` to understand core requirements
-   - Read `active-context` for current focus
-   - Read `progress` to understand project status
-   - Read `task-index` to see active tasks
-4. Begin work with full project context
+1. `list_memories` → review all 10 available project memories
+2. `read_memory` → load relevant memories for current work phase:
+   - **Always:** Read `project-overview` (current status, tech stack, next steps)
+   - **Phase 4 (Backend):** Read `database-integration-implementation-plan-task` (TASK-057 to TASK-092)
+   - **Feature work:** Read specific feature memory (admin-features, recipe-features, auth-context)
+   - **SQL work:** Read `csx3006-sql-fixes-2026-02-13.md` (column conventions, FK patterns)
+   - **Notion sync:** Read `notion-implementation-tracking.md` (update protocol)
+3. Begin work with current phase context
 
 ### During a Session
-- Use `write_memory` to create new memories when discovering patterns or decisions
-- Use `edit_memory` to update existing memories as work progresses
-- For new work: Create or update task memories with progress logs
-- Update `task-index` when task status changes
-- Call `think_about_*` tools periodically to maintain focus
-
-### Ending a Session
-1. Review all changes made during session
-2. Update task-specific memories with progress log entries
-3. Update `task-index` to reflect task status changes
-4. Update `active-context` with current focus and next steps
-5. Update `progress` with completion status and any blockers
-6. Ensure all project intelligence and task history is preserved for next session
+- **SQL/database work:** Create `{topic}-fixes-{date}.md` memory for bug fixes (e.g., column name corrections)
+- **Feature implementation:** Update or create `{feature-name}.md` memory for feature specs
+- **Phase completion:** Update `project-overview.md` with new status percentage
+- **Notion updates:** Use `notion-update-page` after completing plan tasks (TASK-001 → TASK-138)
+- **Code navigation:** Use symbol tools to explore React components and future PHP backend files
 
 ---
 
@@ -366,12 +358,67 @@ Serena provides reflection tools to maintain focus:
 - [Symbol Navigation](./references/symbol-navigation.md) — find_symbol and find_referencing_symbols patterns and workflows
 
 ### Project-Specific Guide (Recipe Sharing System)
-- [Serena Project Guide](.serena/memories/serena-project-guide-2026-02-13.md) — Customized Serena usage for CSX3006 project, including:
-  - Current memory structure (14 active memories)
-  - Modified onboarding workflow
-  - Project-specific best practices
-  - Session-start patterns for Phase 4 (backend development)
-  - When to update specific memories vs. creating new ones
+
+**Current Memory Structure (10 active memories):**
+
+| Memory | Purpose | Notes |
+|---------|---------|--------|
+| `project-overview` | Project status, tech stack, next steps | Central reference, read first |
+| `database-integration-implementation-plan-task` | 138-task plan v2.0 status | 38% complete (Phases 1-3 done) |
+| `csx3006-sql-fixes-2026-02-13` | SQL script corrections | Keep for debugging |
+| `notion-implementation-tracking` | Notion sync protocol | Update when completing tasks |
+| `admin-features` | Admin workflow, moderation, user management | Feature specs only |
+| `recipe-features` | Recipe CRUD, search, reviews, engagement | Feature specs only |
+| `auth-context` | Session-based authentication flow | Phase 4 backend, Phase 5 integration |
+| `routing-layouts` | Route configuration and page layouts | HashRouter with layout guards |
+| `storage-data-model` | Pre-Phase 5 localStorage structure | Will be replaced by API |
+| `ui-components-and-styling` | Component library and Tailwind v4 | Reusable components |
+
+**Session-Start Pattern (Phase 4 — Backend Pending):**
+1. `list_memories` → verify 10 memories available
+2. Read `project-overview` → current status (38% complete, Phases 1-3 done)
+3. Read `database-integration-implementation-plan-task` → Phase 4 tasks (TASK-057 to TASK-092)
+4. Begin PHP backend development: `backend/config/database.php`, `backend/helpers/`, then `backend/api/`
+
+**Project-Specific Best Practices:**
+
+**Database Conventions:**
+- Database: `cookhub` (utf8mb4_unicode_ci)
+- Tables: singular (user, recipe, ingredient, etc.)
+- Columns: snake_case, `id` PKs
+- PK access: `WHERE id = ?` on parent tables, FK references on child tables
+- FKs: `{table}_id` columns
+
+**Architecture:**
+- Plain PHP (no frameworks, no Composer)
+- Structure: `backend/{config, helpers, api}/`
+- Each API file handles routing via `$_SERVER['REQUEST_METHOD']`
+- Auth: Session-based (HttpOnly cookies, `session` table)
+- HTTP: Native `fetch()` with `credentials: 'include'`
+
+**Documentation Flow:**
+- SQL fixes → create `{topic}-fixes-{date}.md` memory
+- Major milestones → update `project-overview.md`
+- Phase completion → update `database-integration-implementation-plan-task.md`
+- Notion sync → update `notion-implementation-tracking.md`
+
+**Naming Patterns Used:**
+- Feature memories: lowercase kebab-case (admin-features, recipe-features, auth-context)
+- Fix memories: `{name}-fixes-{date}.md`
+- Status memories: `{project}-updates.md` or `{plan}-task.md`
+
+---
+
+## Memory Reference Table (CSX3006 Project)
+
+| Category | Memory Name | Update Frequency | When to Read |
+|----------|---------------|------------------|--------------|
+| **Status & Plan** | `project-overview` | After phase completion, architecture decisions | Always first when starting session |
+| **Task Tracking** | `database-integration-implementation-plan-task` | After phase completion | When starting backend/frontend work |
+| **SQL Fixes** | `csx3006-sql-fixes-2026-02-13.md` | When fixing database issues | During SQL/database work |
+| **Notion Sync** | `notion-implementation-tracking` | When Notion sync pattern changes | Before updating Notion pages |
+| **Feature Specs** | `admin-features`, `recipe-features`, `auth-context` | Feature changes/improvements | Implementing related features |
+| **Reference** | `routing-layouts`, `storage-data-model`, `ui-components-and-styling` | Rarely changes | Quick lookup for these topics |
 
 ### Scripts
 - [Memory Backup](./scripts/serena-memory-backup.ps1) — PowerShell script to backup Serena memory files with timestamps
@@ -381,16 +428,23 @@ Serena provides reflection tools to maintain focus:
 
 ---
 
-## This File vs. Project Guide
+## Memory Management Strategy for This Project
 
-**This SKILL.md** provides general Serena usage documentation applicable to any project.
+**Why 10 memories (not 15 from Memory Bank standard):**
+- Project tracks implementation plan via `plan/upgrade-database-integration-1.md` (138 tasks) instead of task memories
+- No individual `task-{id}` memories needed (tasks are in plan file)
+- No `task-index` or `progress` memories (status in `project-overview.md`)
+- Feature specs kept concise (admin-features, recipe-features, auth-context at ~500 bytes each)
+- One-line reference memories for quick lookups (routing-layouts, storage-data-model, ui-components-and-styling)
 
-**Project guide** (`.serena/memories/serena-project-guide-2026-02-13.md`) provides:
-- CSX3006-specific memory patterns
-- Phase-appropriate workflows (currently: Phase 4 pending)
-- Database conventions (cookhub, singular tables)
-- Tailwind v4 + React 19 specifics
-- Plan v2.0 integration (138-task implementation)
+**When to create new memories:**
+- SQL/script fixes: `{topic}-fixes-{date}.md` (e.g., csx3006-sql-fixes-2026-02-13.md)
+- Feature documentation: `{feature-name}.md` (e.g., admin-features.md)
+- Major milestones: Update `project-overview.md` (status changes, architecture decisions)
 
-**Usage strategy:** Read both to understand general Serena capabilities + project-specific customization.
+**When NOT to create memories:**
+- Individual tasks (use `upgrade-database-integration-1.md` task list)
+- Everyday progress (project status tracked in `project-overview.md`)
+- Code samples (code is in actual files, not memories)
+- Historical one-time events (delete when obsolete)
 ```
