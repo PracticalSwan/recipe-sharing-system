@@ -1,11 +1,11 @@
 ---
 goal: Integrate MySQL Database Backend into Recipe Sharing System
-version: 1.0
+version: 2.0
 date_created: 2026-02-04
-last_updated: 2026-02-07
+last_updated: 2026-02-08
 owner: CSX3006 Database Systems Course Project
 status: 'In Progress'
-tags: [database, backend, php, mysql, api, migration, architecture]
+tags: [database, backend, php, mysql, api, migration, architecture, xampp]
 ---
 
 # Introduction
@@ -15,6 +15,29 @@ tags: [database, backend, php, mysql, api, migration, architecture]
 This implementation plan outlines the complete migration of the Recipe Sharing System from a localStorage-based frontend-only application to a full-stack web application with MySQL database backend and PHP RESTful API. The plan maintains all existing frontend functionality while demonstrating comprehensive database design, SQL scripting, and backend development skills required for the CSX3006 Database Systems course.
 
 The migration will transform the current React+Vite application into a three-tier architecture (Presentation Layer → Application Layer → Data Layer) while preserving all features including authentication, recipe management, reviews, favorites, search, and admin dashboard functionality.
+
+**Architecture Overview:**
+
+```
+┌─────────────────────────┐
+│   React + Vite + TW4    │  ← Presentation Layer (port 5173)
+│   (fetch + credentials) │
+└───────────┬─────────────┘
+            │ HTTP (JSON)
+┌───────────▼─────────────┐
+│   PHP REST API (XAMPP)   │  ← Application Layer (port 80/8080)
+│   Plain PHP, no framework│
+│   PDO + Prepared Stmts   │
+│   Session-based Auth     │
+└───────────┬─────────────┘
+            │ PDO/MySQL
+┌───────────▼─────────────┐
+│   MySQL / MariaDB        │  ← Data Layer (port 3306)
+│   Database: cookhub      │
+│   13 tables, 2 views     │
+│   5 procedures, 6 triggers│
+└─────────────────────────┘
+```
 
 ## 1. Requirements & Constraints
 
@@ -41,30 +64,30 @@ The migration will transform the current React+Vite application into a three-tie
 - **REQ-SQL-007**: Create views for commonly used complex queries
 
 ### Backend API Requirements
-- **REQ-API-001**: Implement RESTful API using PHP (compatible with XAMPP environment)
+- **REQ-API-001**: Implement RESTful API using plain PHP (compatible with XAMPP environment)
 - **REQ-API-002**: Use PDO (PHP Data Objects) for secure database access
 - **REQ-API-003**: Implement prepared statements to prevent SQL injection
 - **REQ-API-004**: All endpoints must return JSON responses
 - **REQ-API-005**: Implement proper HTTP status codes (200, 201, 400, 401, 403, 404, 500)
 - **REQ-API-006**: Support CORS for React frontend communication
-- **REQ-API-007**: Implement session-based or JWT authentication
+- **REQ-API-007**: Implement session-based authentication using the `session` table and HTTP cookies
 - **REQ-API-008**: Include input validation and sanitization for all endpoints
 
 ### Frontend Integration Requirements
 - **REQ-FE-001**: Maintain all existing React components without breaking changes
-- **REQ-FE-002**: Replace localStorage operations with API calls
+- **REQ-FE-002**: Replace localStorage operations with API calls using native `fetch()`
 - **REQ-FE-003**: Implement loading states for async operations
-- **REQ-FE-004**: Add proper error handling for network failures
-- **REQ-FE-005**: Maintain existing UI/UX functionality
-- **REQ-FE-006**: Support environment configuration for API URL
+- **REQ-FE-004**: Use `credentials: 'include'` in all fetch requests for session cookie handling
+- **REQ-FE-005**: Add proper error handling for network failures
+- **REQ-FE-006**: Support environment configuration for API URL (API_BASE_URL)
 
 ### Security Requirements
-- **SEC-001**: Store passwords using secure hashing (bcrypt or password_hash)
+- **SEC-001**: Store passwords using `password_hash()` with `PASSWORD_BCRYPT`
 - **SEC-002**: Implement authentication for protected routes
 - **SEC-003**: Implement role-based authorization (Admin vs User)
-- **SEC-004**: Prevent SQL injection through prepared statements
+- **SEC-004**: Prevent SQL injection through prepared statements exclusively
 - **SEC-005**: Validate and sanitize all user inputs
-- **SEC-006**: Implement CSRF protection for state-changing operations
+- **SEC-006**: Set session cookie with `HttpOnly`, `SameSite=Lax` attributes
 - **SEC-007**: Use HTTPS in production environment
 
 ### Data Migration Requirements
@@ -79,6 +102,7 @@ The migration will transform the current React+Vite application into a three-tie
 - **CON-004**: Database server should handle concurrent user access
 - **CON-005**: API response time should be under 200ms for simple queries
 - **CON-006**: Support at minimum 100 concurrent users
+- **CON-007**: No external PHP frameworks or Composer packages — plain PHP only
 
 ### Guidelines & Patterns
 - **GUD-001**: Follow RESTful API design principles
@@ -101,10 +125,8 @@ The migration will transform the current React+Vite application into a three-tie
 - **GUD-018**: Provide default values for optional stored procedure parameters
 - **GUD-019**: Document stored procedures with header comment blocks including description, parameters, and return values
 - **GUD-020**: Temporary tables must use 'tmp_' prefix
-- **PAT-001**: Use Repository Pattern for data access in PHP models
-- **PAT-002**: Implement DTO (Data Transfer Objects) for API responses
-- **PAT-003**: Use Factory Pattern for database connection management
-- **PAT-004**: Use Transaction Pattern for multi-step database operations in stored procedures
+- **GUD-021**: Each PHP API file handles its own routing via `$_SERVER['REQUEST_METHOD']` and URL parsing
+- **GUD-022**: Use `.htaccess` with `mod_rewrite` for clean API URLs
 
 ## 2. Implementation Steps
 
@@ -117,17 +139,17 @@ The migration will transform the current React+Vite application into a three-tie
 | TASK-001 | Create conceptual ER diagram showing entities and relationships | | |
 | TASK-002 | Create logical ER diagram with attributes and cardinalities | | |
 | TASK-003 | Normalize schema to 3NF (identify functional dependencies) | | |
-| TASK-004 | Write `01_create_database.sql` - CREATE DATABASE with charset UTF8MB4 | ✅ | 2026-02-07 |
-| TASK-005 | Write `02_create_tables.sql` - All CREATE TABLE statements with PKs, FKs, constraints | ✅ | 2026-02-07 |
-| TASK-006 | Design `user` table: id (PK INT AUTO_INCREMENT), username (VARCHAR 100), first_name (VARCHAR 50), last_name (VARCHAR 50), email (VARCHAR 100 UNIQUE NOT NULL), password_hash (VARCHAR 255 NOT NULL), birthday (DATE), role (ENUM: 'admin', 'user'), status (ENUM: 'active', 'inactive', 'pending', 'suspended'), joined_date (DATETIME), last_active (DATETIME), avatar_url (TEXT), bio (TEXT), location (VARCHAR 100), cooking_level (VARCHAR 50), created_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), updated_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP) | ✅ | 2026-02-07 |
+| TASK-004 | Write `01_create_database.sql` - CREATE DATABASE `cookhub` with charset UTF8MB4 | ✅ | 2026-02-07 |
+| TASK-005 | Write `02_create_tables.sql` - All 13 CREATE TABLE statements with PKs, FKs, constraints | ✅ | 2026-02-07 |
+| TASK-006 | Design `user` table: id (PK INT AUTO_INCREMENT), username (VARCHAR 100), first_name (VARCHAR 50), last_name (VARCHAR 50), email (VARCHAR 100 UNIQUE NOT NULL), password_hash (VARCHAR 255 NOT NULL), birthday (DATE), role (ENUM: 'admin', 'user'), status (ENUM: 'active', 'inactive', 'pending', 'suspended'), joined_date (DATETIME), last_active (DATETIME), avatar_url (TEXT), bio (TEXT), location (VARCHAR 100), cooking_level (VARCHAR 50), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
 | TASK-007 | Design `recipe` table: id (PK INT AUTO_INCREMENT), title (VARCHAR 200 NOT NULL), description (TEXT), category (VARCHAR 50), difficulty (ENUM: 'Easy', 'Medium', 'Hard'), prep_time (INT), cook_time (INT), servings (INT), author_id (INT FK→user.id ON DELETE CASCADE), status (ENUM: 'published', 'pending', 'rejected' DEFAULT 'pending'), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
 | TASK-008 | Design `ingredient` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), name (VARCHAR 200 NOT NULL), quantity (VARCHAR 50), unit (VARCHAR 50), sort_order (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
 | TASK-009 | Design `instruction` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), step_number (INT NOT NULL), instruction_text (TEXT NOT NULL), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
 | TASK-010 | Design `recipe_image` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), image_url (TEXT NOT NULL), display_order (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
-| TASK-011 | Design `review` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), rating (INT CHECK rating BETWEEN 1 AND 5), comment (TEXT), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe (user_id, recipe_id) | ✅ | 2026-02-07 |
-| TASK-012 | Design `favorite` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe_favorite (user_id, recipe_id) | ✅ | 2026-02-07 |
-| TASK-013 | Design `like_record` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY unique_user_recipe_like (user_id, recipe_id) | ✅ | 2026-02-07 |
-| TASK-014 | Design `recipe_view` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), user_id (INT NOT NULL FK→user.id ON DELETE CASCADE), viewed_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), created_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP), updated_at (TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP), INDEX idx_recipe_viewed (recipe_id, viewed_at), INDEX idx_user_viewed (user_id, viewed_at) | ✅ | 2026-02-07 |
+| TASK-011 | Design `review` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), rating (INT CHECK 1-5), comment (TEXT), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY (user_id, recipe_id) | ✅ | 2026-02-07 |
+| TASK-012 | Design `favorite` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY (user_id, recipe_id) | ✅ | 2026-02-07 |
+| TASK-013 | Design `like_record` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), recipe_id (INT FK→recipe.id ON DELETE CASCADE), created_at (TIMESTAMP), updated_at (TIMESTAMP), UNIQUE KEY (user_id, recipe_id) | ✅ | 2026-02-07 |
+| TASK-014 | Design `recipe_view` table: id (PK INT AUTO_INCREMENT), recipe_id (INT FK→recipe.id ON DELETE CASCADE), user_id (INT NOT NULL FK→user.id ON DELETE CASCADE), viewed_at (TIMESTAMP), created_at (TIMESTAMP), updated_at (TIMESTAMP), INDEX idx_recipe_viewed, INDEX idx_user_viewed | ✅ | 2026-02-07 |
 | TASK-015 | Design `search_history` table: id (PK INT AUTO_INCREMENT), user_id (INT FK→user.id ON DELETE CASCADE), query (TEXT NOT NULL), searched_at (TIMESTAMP), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
 | TASK-016 | Design `daily_stat` table: id (PK INT AUTO_INCREMENT), stat_date (DATE UNIQUE NOT NULL), page_view_count (INT DEFAULT 0), active_user_count (INT DEFAULT 0), new_user_count (INT DEFAULT 0), recipe_view_count (INT DEFAULT 0), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
 | TASK-017 | Design `activity_log` table: id (PK INT AUTO_INCREMENT), admin_id (INT FK→user.id ON DELETE SET NULL), action_type (ENUM: 'user_create', 'user_update', 'user_delete', 'recipe_approve', 'recipe_reject', 'recipe_delete'), target_type (VARCHAR 50), target_id (INT), description (TEXT), created_at (TIMESTAMP), updated_at (TIMESTAMP) | ✅ | 2026-02-07 |
@@ -142,28 +164,28 @@ The migration will transform the current React+Vite application into a three-tie
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-021 | Write `05_seed_users.sql` - INSERT statements for 3 admin users (matching current seed data) | ✅ | 2026-02-07 |
-| TASK-022 | Write `05_seed_users.sql` - INSERT statements for 7 user accounts (active, inactive, pending, suspended) | ✅ | 2026-02-07 |
-| TASK-023 | Write `06_seed_recipes.sql` - INSERT statements for 10+ sample recipes with varying statuses | ✅ | 2026-02-07 |
-| TASK-024 | Write `06_seed_recipes.sql` - INSERT corresponding ingredients for each recipe (3-10 per recipe) | ✅ | 2026-02-07 |
-| TASK-025 | Write `06_seed_recipes.sql` - INSERT corresponding instructions for each recipe (4-8 steps each) | ✅ | 2026-02-07 |
-| TASK-026 | Write `06_seed_recipes.sql` - INSERT recipe images (1-3 images per recipe) | ✅ | 2026-02-07 |
-| TASK-027 | Write `07_seed_reviews.sql` - INSERT sample reviews (20+ reviews across recipes) | ✅ | 2026-02-07 |
-| TASK-028 | Write `07_seed_reviews.sql` - INSERT likes and favorites data | ✅ | 2026-02-07 |
-| TASK-029 | Write `08_seed_stats.sql` - INSERT historical daily stats (last 30 days) | ✅ | 2026-02-07 |
-| TASK-030 | Write `08_seed_stats.sql` - INSERT activity logs for admin actions | ✅ | 2026-02-07 |
-| TASK-031 | Write `09_common_queries.sql` - SELECT query: Get all published recipes with author info (JOIN) | ✅ | 2026-02-07 |
-| TASK-032 | Write `09_common_queries.sql` - SELECT query: Get recipe details with ingredients, instructions, images (multiple JOINs) | ✅ | 2026-02-07 |
-| TASK-033 | Write `09_common_queries.sql` - SELECT query: Get user's favorite recipes with stats | ✅ | 2026-02-07 |
-| TASK-034 | Write `09_common_queries.sql` - SELECT query: Search recipes by title/description (LIKE with full-text search) | ✅ | 2026-02-07 |
-| TASK-035 | Write `09_common_queries.sql` - SELECT query: Get recipe reviews with user info ordered by date | ✅ | 2026-02-07 |
-| TASK-036 | Write `10_admin_queries.sql` - SELECT query: Count users by status (GROUP BY, COUNT) | ✅ | 2026-02-07 |
-| TASK-037 | Write `10_admin_queries.sql` - SELECT query: Count recipes by status and author | ✅ | 2026-02-07 |
-| TASK-038 | Write `10_admin_queries.sql` - SELECT query: Get pending recipes with author details for approval queue | ✅ | 2026-02-07 |
-| TASK-039 | Write `11_analytics_queries.sql` - SELECT query: Top 10 recipes by views/likes/ratings (ORDER BY, LIMIT) | ✅ | 2026-02-07 |
-| TASK-040 | Write `11_analytics_queries.sql` - SELECT query: User engagement metrics (subqueries for recipe count, review count, favorite count) | ✅ | 2026-02-07 |
-| TASK-041 | Write `11_analytics_queries.sql` - SELECT query: Daily/weekly/monthly growth trends (DATE functions, aggregation) | ✅ | 2026-02-07 |
-| TASK-042 | Write `11_analytics_queries.sql` - SELECT query: Recipe category distribution and popularity | ✅ | 2026-02-07 |
+| TASK-022 | Write `05_seed_users.sql` - INSERT statements for 3 admin users (admin=1, matching current seed data) | ✅ | 2026-02-07 |
+| TASK-023 | Write `05_seed_users.sql` - INSERT statements for 9 user accounts with varying statuses (olivia=2, marcus=3, john=4, maria=5, tom=6, amy=7, kevin=8, sarah=9, daniel=10, lina=11, omar=12) | ✅ | 2026-02-07 |
+| TASK-024 | Write `06_seed_recipes.sql` - INSERT statements for 10+ sample recipes with varying statuses | ✅ | 2026-02-07 |
+| TASK-025 | Write `06_seed_recipes.sql` - INSERT corresponding ingredients for each recipe (3-10 per recipe) | ✅ | 2026-02-07 |
+| TASK-026 | Write `06_seed_recipes.sql` - INSERT corresponding instructions for each recipe (4-8 steps each) | ✅ | 2026-02-07 |
+| TASK-027 | Write `06_seed_recipes.sql` - INSERT recipe images (1-3 images per recipe) | ✅ | 2026-02-07 |
+| TASK-028 | Write `07_seed_reviews.sql` - INSERT sample reviews (20+ reviews across recipes) | ✅ | 2026-02-07 |
+| TASK-029 | Write `07_seed_reviews.sql` - INSERT likes and favorites data | ✅ | 2026-02-07 |
+| TASK-030 | Write `08_seed_stats.sql` - INSERT historical daily stats (last 30 days) | ✅ | 2026-02-07 |
+| TASK-031 | Write `08_seed_stats.sql` - INSERT activity logs for admin actions | ✅ | 2026-02-07 |
+| TASK-032 | Write `09_common_queries.sql` - SELECT query: Get all published recipes with author info (JOIN) | ✅ | 2026-02-07 |
+| TASK-033 | Write `09_common_queries.sql` - SELECT query: Get recipe details with ingredients, instructions, images (multiple JOINs) | ✅ | 2026-02-07 |
+| TASK-034 | Write `09_common_queries.sql` - SELECT query: Get user's favorite recipes with stats | ✅ | 2026-02-07 |
+| TASK-035 | Write `09_common_queries.sql` - SELECT query: Search recipes by title/description (LIKE with full-text search) | ✅ | 2026-02-07 |
+| TASK-036 | Write `09_common_queries.sql` - SELECT query: Get recipe reviews with user info ordered by date | ✅ | 2026-02-07 |
+| TASK-037 | Write `10_admin_queries.sql` - SELECT query: Count users by status (GROUP BY, COUNT) | ✅ | 2026-02-07 |
+| TASK-038 | Write `10_admin_queries.sql` - SELECT query: Count recipes by status and author | ✅ | 2026-02-07 |
+| TASK-039 | Write `10_admin_queries.sql` - SELECT query: Get pending recipes with author details for approval queue | ✅ | 2026-02-07 |
+| TASK-040 | Write `11_analytics_queries.sql` - SELECT query: Top 10 recipes by views/likes/ratings (ORDER BY, LIMIT) | ✅ | 2026-02-07 |
+| TASK-041 | Write `11_analytics_queries.sql` - SELECT query: User engagement metrics (subqueries for recipe count, review count, favorite count) | ✅ | 2026-02-07 |
+| TASK-042 | Write `11_analytics_queries.sql` - SELECT query: Daily/weekly/monthly growth trends (DATE functions, aggregation) | ✅ | 2026-02-07 |
+| TASK-043 | Write `11_analytics_queries.sql` - SELECT query: Recipe category distribution and popularity | ✅ | 2026-02-07 |
 
 ### Phase 3: Advanced SQL Features
 
@@ -171,430 +193,580 @@ The migration will transform the current React+Vite application into a three-tie
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-043 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_CreateRecipe` (handles transaction for recipe + ingredient + instruction inserts with proper error handling) | ✅ | 2026-02-07 |
-| TASK-044 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_DeleteRecipe` (cascading deletes with cleanup, logs activity) | ✅ | 2026-02-07 |
-| TASK-045 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_ApproveRecipe` (updates status to 'published' + logs activity) | ✅ | 2026-02-07 |
-| TASK-046 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_GetRecipeStat` (returns aggregated statistics for a recipe: likes, views, avg_rating) | ✅ | 2026-02-07 |
-| TASK-047 | Write `12_stored_procedures.sql` - CREATE FUNCTION `fn_CalculateAvgRating` (returns DECIMAL average rating for recipe_id parameter) | ✅ | 2026-02-07 |
-| TASK-048 | Write `13_triggers.sql` - CREATE TRIGGER `trg_RecipeView_UpdateStat` - AFTER INSERT on recipe_view, increment daily_stat.recipe_view_count | ✅ | 2026-02-07 |
-| TASK-049 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_UpdateLastActive` - BEFORE UPDATE on session, update user.last_active timestamp | ✅ | 2026-02-07 |
-| TASK-050 | Write `13_triggers.sql` - CREATE TRIGGER `trg_Recipe_DeleteCleanup` - BEFORE DELETE on recipe, log activity_log entry | ✅ | 2026-02-07 |
-| TASK-051 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_NewUserStat` - AFTER INSERT on user, increment daily_stat.new_user_count for today | ✅ | 2026-02-07 |
-| TASK-052 | Write `13_triggers.sql` - CREATE TRIGGER `trg_Recipe_SetTimestamp` - BEFORE INSERT on recipe, set created_at and updated_at if NULL | ✅ | 2026-02-07 |
-| TASK-053 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_SetTimestamp` - BEFORE INSERT on user, set created_at and updated_at if NULL | ✅ | 2026-02-07 |
-| TASK-054 | Write `14_backup_restore.sql` - Document BACKUP DATABASE using mysqldump command with examples | ✅ | 2026-02-07 |
-| TASK-055 | Write `14_backup_restore.sql` - Document RESTORE DATABASE using mysql command with examples | ✅ | 2026-02-07 |
+| TASK-044 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_CreateRecipe` (handles transaction for recipe + ingredient + instruction inserts with proper error handling) | ✅ | 2026-02-07 |
+| TASK-045 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_DeleteRecipe` (cascading deletes with cleanup, logs activity) | ✅ | 2026-02-07 |
+| TASK-046 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_ApproveRecipe` (updates status to 'published' + logs activity) | ✅ | 2026-02-07 |
+| TASK-047 | Write `12_stored_procedures.sql` - CREATE PROCEDURE `usp_GetRecipeStat` (returns aggregated statistics for a recipe: likes, views, avg_rating) | ✅ | 2026-02-07 |
+| TASK-048 | Write `12_stored_procedures.sql` - CREATE FUNCTION `fn_CalculateAvgRating` (returns DECIMAL average rating for recipe_id parameter) | ✅ | 2026-02-07 |
+| TASK-049 | Write `13_triggers.sql` - CREATE TRIGGER `trg_RecipeView_UpdateStat` - AFTER INSERT on recipe_view, increment daily_stat.recipe_view_count | ✅ | 2026-02-07 |
+| TASK-050 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_UpdateLastActive` - BEFORE UPDATE on session, update user.last_active timestamp | ✅ | 2026-02-07 |
+| TASK-051 | Write `13_triggers.sql` - CREATE TRIGGER `trg_Recipe_DeleteCleanup` - BEFORE DELETE on recipe, log activity_log entry | ✅ | 2026-02-07 |
+| TASK-052 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_NewUserStat` - AFTER INSERT on user, increment daily_stat.new_user_count for today | ✅ | 2026-02-07 |
+| TASK-053 | Write `13_triggers.sql` - CREATE TRIGGER `trg_Recipe_SetTimestamp` - BEFORE INSERT on recipe, set created_at and updated_at if NULL | ✅ | 2026-02-07 |
+| TASK-054 | Write `13_triggers.sql` - CREATE TRIGGER `trg_User_SetTimestamp` - BEFORE INSERT on user, set created_at and updated_at if NULL | ✅ | 2026-02-07 |
+| TASK-055 | Write `14_backup_restore.sql` - Document BACKUP DATABASE using mysqldump command with examples | ✅ | 2026-02-07 |
+| TASK-056 | Write `14_backup_restore.sql` - Document RESTORE DATABASE using mysql command with examples | ✅ | 2026-02-07 |
 
 ### Phase 4: PHP Backend API Development
 
-**GOAL-004**: Develop complete PHP RESTful API with secure database access
+**GOAL-004**: Develop complete PHP RESTful API with secure database access using plain PHP (no frameworks)
+
+**Backend Structure:**
+
+```
+backend/
+├── .htaccess                    # URL rewriting for clean API routes
+├── config/
+│   └── database.php             # PDO connection (singleton pattern)
+├── helpers/
+│   ├── cors.php                 # CORS headers for localhost:5173
+│   ├── auth.php                 # Session validation & getCurrentUser
+│   └── response.php             # JSON response helpers
+└── api/
+    ├── auth.php                 # POST register/login/logout, GET me
+    ├── recipes.php              # CRUD + like/favorite/view
+    ├── reviews.php              # CRUD for reviews
+    ├── users.php                # CRUD + status (admin)
+    ├── search.php               # Search + history
+    ├── stats.php                # Dashboard + daily stats
+    └── activity.php             # Admin activity logs
+```
+
+**Setup & Configuration:**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-056 | Create backend folder structure: `backend/` with subdirs: `api/`, `config/`, `models/`, `controllers/`, `middleware/`, `utils/` | | |
-| TASK-057 | Create `config/database.php` - Database connection class using PDO with error handling | | |
-| TASK-058 | Create `config/config.php` - Application configuration (DB credentials, JWT secret, CORS settings) | | |
-| TASK-059 | Create `.htaccess` for URL rewriting to enable clean API routes | | |
-| TASK-060 | Create `middleware/cors.php` - CORS middleware to allow React frontend access | | |
-| TASK-061 | Create `middleware/auth.php` - Authentication middleware to verify session/JWT token | | |
-| TASK-062 | Create `middleware/admin.php` - Authorization middleware to verify admin role | | |
-| TASK-063 | Create `utils/response.php` - Helper functions for JSON responses (success, error, validation) | | |
-| TASK-064 | Create `utils/validator.php` - Input validation functions (email, password strength, required fields) | | |
-| TASK-065 | Create `models/User.php` - User model with methods: create(), findById(), findByEmail(), update(), delete(), authenticate(), updateLastActive() | | |
-| TASK-066 | Create `models/Recipe.php` - Recipe model with methods: create(), findById(), findAll(), update(), delete(), updateStatus(), getWithDetails() | | |
-| TASK-067 | Create `models/Review.php` - Review model with methods: create(), update(), delete(), findByRecipe(), findByUserAndRecipe() | | |
-| TASK-068 | Create `models/Favorite.php` - Favorite model with methods: toggle(), getUserFavorites(), isRecipeFavorited() | | |
-| TASK-069 | Create `models/Like.php` - Like model with methods: toggle(), getRecipeLikes(), isRecipeLiked() | | |
-| TASK-070 | Create `models/Stats.php` - Stats model with methods: getDailyStats(), updateStats(), getAnalytics() | | |
-| TASK-071 | Create `models/Activity.php` - Activity model with methods: log(), getRecentActivity() | | |
-| TASK-072 | Create `controllers/AuthController.php` - POST /api/auth/register endpoint (validate, hash password, create user, return token) | | |
-| TASK-073 | Create `controllers/AuthController.php` - POST /api/auth/login endpoint (validate credentials, create session, return user + token) | | |
-| TASK-074 | Create `controllers/AuthController.php` - POST /api/auth/logout endpoint (destroy session, clear token) | | |
-| TASK-075 | Create `controllers/UserController.php` - GET /api/users endpoint (admin only, return all users with pagination) | | |
-| TASK-076 | Create `controllers/UserController.php` - GET /api/users/:id endpoint (return user profile) | | |
-| TASK-077 | Create `controllers/UserController.php` - PUT /api/users/:id endpoint (update user profile, validate ownership/admin) | | |
-| TASK-078 | Create `controllers/UserController.php` - DELETE /api/users/:id endpoint (admin only, soft delete) | | |
-| TASK-079 | Create `controllers/UserController.php` - PUT /api/users/:id/status endpoint (admin only, update status) | | |
-| TASK-080 | Create `controllers/RecipeController.php` - GET /api/recipes endpoint (return published recipes with filters: category, difficulty, search, sort) | | |
-| TASK-081 | Create `controllers/RecipeController.php` - GET /api/recipes/:id endpoint (return full recipe with ingredients, instructions, images, stats) | | |
-| TASK-082 | Create `controllers/RecipeController.php` - POST /api/recipes endpoint (create recipe with nested ingredients/instructions, set status=pending) | | |
-| TASK-083 | Create `controllers/RecipeController.php` - PUT /api/recipes/:id endpoint (update recipe, validate ownership) | | |
-| TASK-084 | Create `controllers/RecipeController.php` - DELETE /api/recipes/:id endpoint (validate ownership or admin, cascade delete) | | |
-| TASK-085 | Create `controllers/RecipeController.php` - PUT /api/recipes/:id/status endpoint (admin only, approve/reject recipe) | | |
-| TASK-086 | Create `controllers/RecipeController.php` - POST /api/recipes/:id/like endpoint (toggle like) | | |
-| TASK-087 | Create `controllers/RecipeController.php` - POST /api/recipes/:id/favorite endpoint (toggle favorite) | | |
-| TASK-088 | Create `controllers/RecipeController.php` - POST /api/recipes/:id/view endpoint (record view, update stats) | | |
-| TASK-089 | Create `controllers/ReviewController.php` - GET /api/recipes/:id/reviews endpoint (get all reviews for recipe) | | |
-| TASK-090 | Create `controllers/ReviewController.php` - POST /api/recipes/:id/reviews endpoint (create review, enforce one per user) | | |
-| TASK-091 | Create `controllers/ReviewController.php` - PUT /api/reviews/:id endpoint (update review, validate ownership) | | |
-| TASK-092 | Create `controllers/ReviewController.php` - DELETE /api/reviews/:id endpoint (delete review, validate ownership or admin) | | |
-| TASK-093 | Create `controllers/StatsController.php` - GET /api/stats/dashboard endpoint (admin only, return aggregated dashboard stats) | | |
-| TASK-094 | Create `controllers/StatsController.php` - GET /api/stats/daily endpoint (return daily stats) | | |
-| TASK-095 | Create `controllers/ActivityController.php` - GET /api/activity endpoint (admin only, return recent activity logs with pagination) | | |
-| TASK-096 | Create `controllers/SearchController.php` - GET /api/search endpoint (full-text search recipes) | | |
-| TASK-097 | Create `controllers/SearchController.php` - POST /api/search/history endpoint (save search query) | | |
-| TASK-098 | Create `controllers/SearchController.php` - GET /api/search/history/:userId endpoint (retrieve user search history) | | |
-| TASK-099 | Create `controllers/SearchController.php` - DELETE /api/search/history/:userId endpoint (clear user search history) | | |
-| TASK-100 | Create `api/index.php` - Main router file that routes requests to appropriate controllers | | |
-| TASK-101 | Test all API endpoints with Postman/curl and document response formats | | |
+| TASK-057 | Create backend folder structure: `backend/` with subdirs: `config/`, `helpers/`, `api/` | | |
+| TASK-058 | Create `backend/config/database.php` - PDO connection class using singleton pattern, charset utf8mb4, error mode EXCEPTION, default fetch ASSOC | | |
+| TASK-059 | Create `backend/.htaccess` - mod_rewrite rules to route `/api/{resource}` to `api/{resource}.php`, pass path info via query string | | |
+| TASK-060 | Create `backend/helpers/cors.php` - Set CORS headers: `Access-Control-Allow-Origin: http://localhost:5173`, `Access-Control-Allow-Credentials: true`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, handle OPTIONS preflight | | |
+| TASK-061 | Create `backend/helpers/auth.php` - `getCurrentUser($pdo)` function: read session token from cookie, validate against `session` table, check `expires_at`, return user row or null; `requireAuth($pdo)` function: call getCurrentUser, return 401 if null | | |
+| TASK-062 | Create `backend/helpers/response.php` - Helper functions: `jsonResponse($data, $status)`, `errorResponse($message, $status)`, `paginatedResponse($data, $total, $page, $limit)` | | |
+
+**Auth API Endpoints (`api/auth.php`):**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-063 | `POST /api/auth/register` - Validate required fields (username, email, password, first_name, last_name), check email uniqueness, `password_hash()` with BCRYPT, INSERT into user table, create session, set HttpOnly cookie, return user data | | |
+| TASK-064 | `POST /api/auth/login` - Validate email + password, `password_verify()`, create session row with `bin2hex(random_bytes(32))` token, set HttpOnly/SameSite=Lax cookie, update user.last_active, return user data | | |
+| TASK-065 | `POST /api/auth/logout` - Read session token from cookie, DELETE from session table, clear cookie | | |
+| TASK-066 | `GET /api/auth/me` - Call `requireAuth()`, return current user data from session (exclude password_hash) | | |
+
+**Recipe API Endpoints (`api/recipes.php`):**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-067 | `GET /api/recipes` - Return published recipes with optional filters: `?category=`, `?difficulty=`, `?search=`, `?sort=`, `?page=`, `?limit=`. JOIN with user for author info, include like_count/view_count/avg_rating from aggregation | | |
+| TASK-068 | `GET /api/recipes/{id}` - Return full recipe with nested: ingredients (ORDER BY sort_order), instructions (ORDER BY step_number), images (ORDER BY display_order), author info, stats (likes, views, avg_rating), user-specific flags (isLiked, isFavorited) | | |
+| TASK-069 | `POST /api/recipes` - requireAuth, validate fields, INSERT recipe with status='pending', INSERT ingredients array, INSERT instructions array with step_numbers, return created recipe with ID | | |
+| TASK-070 | `PUT /api/recipes/{id}` - requireAuth, verify ownership (author_id = current user OR admin), UPDATE recipe fields, replace ingredients (DELETE old + INSERT new), replace instructions, return updated recipe | | |
+| TASK-071 | `DELETE /api/recipes/{id}` - requireAuth, verify ownership or admin role, DELETE recipe (CASCADE handles related data), return success | | |
+| TASK-072 | `PUT /api/recipes/{id}/status` - requireAuth + requireAdmin, validate status ('published'/'rejected'), UPDATE recipe.status, INSERT activity_log entry, return updated recipe | | |
+| TASK-073 | `POST /api/recipes/{id}/like` - requireAuth, toggle: check if like_record exists for user+recipe → DELETE if yes, INSERT if no. Return { liked: bool, likeCount: int } | | |
+| TASK-074 | `POST /api/recipes/{id}/favorite` - requireAuth, toggle: check if favorite exists for user+recipe → DELETE if yes, INSERT if no. Return { favorited: bool } | | |
+| TASK-075 | `POST /api/recipes/{id}/view` - requireAuth, INSERT into recipe_view (user_id, recipe_id). Triggers handle daily_stat update. Return success | | |
+
+**Review API Endpoints (`api/reviews.php`):**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-076 | `GET /api/reviews?recipe_id={id}` - Return all reviews for recipe, JOIN with user for reviewer info (username, avatar_url), ORDER BY created_at DESC | | |
+| TASK-077 | `POST /api/reviews` - requireAuth, validate rating (1-5) and recipe_id, enforce unique constraint (one review per user per recipe), INSERT review, return created review with user info | | |
+| TASK-078 | `PUT /api/reviews/{id}` - requireAuth, verify ownership (review.user_id = current user), UPDATE rating and/or comment, return updated review | | |
+| TASK-079 | `DELETE /api/reviews/{id}` - requireAuth, verify ownership or admin role, DELETE review, return success | | |
+
+**User API Endpoints (`api/users.php`):**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-080 | `GET /api/users` - requireAuth + requireAdmin, return all users with pagination (?page=, ?limit=), exclude password_hash from response, include user counts by status | | |
+| TASK-081 | `GET /api/users/{id}` - requireAuth, return user profile (exclude password_hash), include recipe count, review count, favorite count from aggregation | | |
+| TASK-082 | `PUT /api/users/{id}` - requireAuth, verify ownership or admin, UPDATE allowed fields (first_name, last_name, bio, location, cooking_level, avatar_url, birthday), return updated user | | |
+| TASK-083 | `DELETE /api/users/{id}` - requireAuth + requireAdmin, DELETE user (CASCADE handles recipes/reviews), INSERT activity_log entry, return success | | |
+| TASK-084 | `PUT /api/users/{id}/status` - requireAuth + requireAdmin, validate status ENUM, UPDATE user.status, INSERT activity_log entry, return updated user | | |
+
+**Search API Endpoints (`api/search.php`):**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-085 | `GET /api/search?q={query}` - Search published recipes by title and description using LIKE or FULLTEXT, return matching recipes with author info and stats | | |
+| TASK-086 | `POST /api/search/history` - requireAuth, INSERT search query into search_history table with user_id and current timestamp | | |
+| TASK-087 | `GET /api/search/history` - requireAuth, return current user's search history ordered by searched_at DESC, limit 20 | | |
+| TASK-088 | `DELETE /api/search/history` - requireAuth, DELETE all search_history rows for current user | | |
+
+**Stats & Activity API Endpoints (`api/stats.php`, `api/activity.php`):**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-089 | `GET /api/stats/dashboard` - requireAuth + requireAdmin, return aggregated dashboard: total users (by status), total recipes (by status), total reviews, total views, recent daily_stat rows (last 30 days) | | |
+| TASK-090 | `GET /api/stats/daily` - requireAuth, return daily_stat rows for charting (last 30 days default, configurable via ?days= param) | | |
+| TASK-091 | `GET /api/activity` - requireAuth + requireAdmin, return activity_log rows with admin username, ordered by created_at DESC, with pagination | | |
+
+**API Testing:**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-092 | Test all API endpoints with Postman/curl, document request/response formats for each endpoint | | |
 
 ### Phase 5: Frontend Integration
 
-**GOAL-005**: Replace localStorage with API calls while maintaining existing functionality
+**GOAL-005**: Replace localStorage with API calls using native `fetch()` while maintaining all existing functionality
+
+**API Service Layer (`src/lib/api.js`):**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-102 | Install axios in React project: `npm install axios` | | |
-| TASK-103 | Create `src/lib/api.js` - Base axios instance with API_BASE_URL config and interceptors | | |
-| TASK-104 | Create `src/config/environment.js` - Environment configuration for API URL (localhost:8080 for dev) | | |
-| TASK-105 | Implement api.auth.register() method - POST /api/auth/register | | |
-| TASK-106 | Implement api.auth.login() method - POST /api/auth/login, store token in localStorage | | |
-| TASK-107 | Implement api.auth.logout() method - POST /api/auth/logout, clear token | | |
-| TASK-108 | Implement api.auth.getCurrentUser() method - GET /api/auth/me with token | | |
-| TASK-109 | Implement api.users.getAll() method - GET /api/users | | |
-| TASK-110 | Implement api.users.getById(id) method - GET /api/users/:id | | |
-| TASK-111 | Implement api.users.update(id, data) method - PUT /api/users/:id | | |
-| TASK-112 | Implement api.users.delete(id) method - DELETE /api/users/:id | | |
-| TASK-113 | Implement api.users.updateStatus(id, status) method - PUT /api/users/:id/status | | |
-| TASK-114 | Implement api.recipes.getAll(filters) method - GET /api/recipes with query params | | |
-| TASK-115 | Implement api.recipes.getById(id) method - GET /api/recipes/:id | | |
-| TASK-116 | Implement api.recipes.create(data) method - POST /api/recipes | | |
-| TASK-117 | Implement api.recipes.update(id, data) method - PUT /api/recipes/:id | | |
-| TASK-118 | Implement api.recipes.delete(id) method - DELETE /api/recipes/:id | | |
-| TASK-119 | Implement api.recipes.updateStatus(id, status) method - PUT /api/recipes/:id/status | | |
-| TASK-120 | Implement api.recipes.like(id) method - POST /api/recipes/:id/like | | |
-| TASK-121 | Implement api.recipes.favorite(id) method - POST /api/recipes/:id/favorite | | |
-| TASK-122 | Implement api.recipes.recordView(id) method - POST /api/recipes/:id/view | | |
-| TASK-123 | Implement api.reviews.getByRecipe(recipeId) method - GET /api/recipes/:id/reviews | | |
-| TASK-124 | Implement api.reviews.create(recipeId, data) method - POST /api/recipes/:id/reviews | | |
-| TASK-125 | Implement api.reviews.update(id, data) method - PUT /api/reviews/:id | | |
-| TASK-126 | Implement api.reviews.delete(id) method - DELETE /api/reviews/:id | | |
-| TASK-127 | Implement api.stats.getDashboard() method - GET /api/stats/dashboard | | |
-| TASK-128 | Implement api.stats.getDaily() method - GET /api/stats/daily | | |
-| TASK-129 | Implement api.activity.getRecent() method - GET /api/activity | | |
-| TASK-130 | Implement api.search.search(query, filters) method - GET /api/search | | |
-| TASK-131 | Implement api.search.saveHistory(query) method - POST /api/search/history | | |
-| TASK-132 | Implement api.search.getHistory(userId) method - GET /api/search/history/:userId | | |
-| TASK-133 | Implement api.search.clearHistory(userId) method - DELETE /api/search/history/:userId | | |
-| TASK-134 | Update `src/context/AuthContext.jsx` - Replace storage.login() with api.auth.login() | | |
-| TASK-135 | Update `src/context/AuthContext.jsx` - Replace storage.logout() with api.auth.logout() | | |
-| TASK-136 | Update `src/context/AuthContext.jsx` - Add token management and auto-refresh | | |
-| TASK-137 | Update `src/pages/Auth/Login.jsx` - Add loading state and error handling for login | | |
-| TASK-138 | Update `src/pages/Auth/Signup.jsx` - Add loading state and error handling for registration | | |
-| TASK-139 | Update `src/pages/Recipe/Home.jsx` - Replace storage.getRecipes() with api.recipes.getAll(), add loading spinner | | |
-| TASK-140 | Update `src/pages/Recipe/RecipeDetail.jsx` - Replace storage calls with api calls, remove guest view tracking, require authentication for views | | |
-| TASK-141 | Update `src/pages/Recipe/CreateRecipe.jsx` - Replace storage.saveRecipe() with api.recipes.create() | | |
-| TASK-142 | Update `src/pages/Recipe/Search.jsx` - Replace storage.search with api.search.search(), remove storage.getOrCreateGuestId() calls | | |
-| TASK-143 | Update `src/pages/Recipe/Profile.jsx` - Replace storage.saveUser() with api.users.update() | | |
-| TASK-144 | Update `src/pages/Recipe/Profile.jsx` - Replace storage.deleteRecipe() with api.recipes.delete() | | |
-| TASK-145 | Update `src/pages/Recipe/Profile.jsx` - Replace storage.getUsers() with api.users.getById() for fetching user data | | |
-| TASK-146 | Update `src/pages/Admin/UserList.jsx` - Replace storage.getUsers() with api.users.getAll() | | |
-| TASK-147 | Update `src/pages/Admin/UserList.jsx` - Replace storage.saveUser() and storage.deleteUser() with API methods | | |
-| TASK-148 | Update `src/pages/Admin/UserList.jsx` - Remove storage.addActivity() calls (auto-logged via backend triggers) | | |
-| TASK-149 | Update `src/pages/Admin/AdminStats.jsx` - Replace all storage.get* methods with api.stats.getDashboard() | | |
-| TASK-150 | Update `src/pages/Admin/AdminStats.jsx` - Replace storage.getRecentActivity() with api.activity.getRecent() | | |
-| TASK-151 | Update `src/pages/Admin/AdminRecipes.jsx` - Replace storage.getRecipes() with api.recipes.getAll() | | |
-| TASK-152 | Update `src/pages/Admin/AdminRecipes.jsx` - Replace storage.saveRecipe() with api.recipes.updateStatus() for approval/rejection | | |
-| TASK-153 | Update `src/pages/Admin/AdminRecipes.jsx` - Replace storage.deleteRecipe() and storage.addActivity() with API methods | | |
-| TASK-154 | Create `src/components/ui/LoadingSpinner.jsx` - Reusable loading component | | |
-| TASK-155 | Create `src/components/ui/ErrorMessage.jsx` - Reusable error display component | | |
-| TASK-156 | Update `src/lib/storage.js` - Remove completely or keep only as fallback (optional, recommend removal) | | |
-| TASK-157 | Add error boundaries for React components to catch API errors | | |
+| TASK-093 | Create `src/lib/api.js` - Base fetch wrapper: configure API_BASE_URL (default `http://localhost/recipe-sharing-system/backend`), create `apiFetch(endpoint, options)` function with `credentials: 'include'`, default headers `Content-Type: application/json`, automatic JSON parsing, error handling (throw on non-ok response with parsed error message) | | |
+| TASK-094 | `api.js` - Implement auth methods: `api.auth.register(data)`, `api.auth.login(email, password)`, `api.auth.logout()`, `api.auth.getCurrentUser()` | | |
+| TASK-095 | `api.js` - Implement recipe CRUD methods: `api.recipes.getAll(filters)`, `api.recipes.getById(id)`, `api.recipes.create(data)`, `api.recipes.update(id, data)`, `api.recipes.delete(id)` | | |
+| TASK-096 | `api.js` - Implement recipe action methods: `api.recipes.updateStatus(id, status)`, `api.recipes.like(id)`, `api.recipes.favorite(id)`, `api.recipes.recordView(id)` | | |
+| TASK-097 | `api.js` - Implement review methods: `api.reviews.getByRecipe(recipeId)`, `api.reviews.create(recipeId, data)`, `api.reviews.update(id, data)`, `api.reviews.delete(id)` | | |
+| TASK-098 | `api.js` - Implement user methods: `api.users.getAll(params)`, `api.users.getById(id)`, `api.users.update(id, data)`, `api.users.delete(id)`, `api.users.updateStatus(id, status)` | | |
+| TASK-099 | `api.js` - Implement search methods: `api.search.search(query, filters)`, `api.search.saveHistory(query)`, `api.search.getHistory()`, `api.search.clearHistory()` | | |
+| TASK-100 | `api.js` - Implement stats/activity methods: `api.stats.getDashboard()`, `api.stats.getDaily(days)`, `api.activity.getRecent(params)` | | |
+
+**Auth Integration:**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-101 | Update `src/context/AuthContext.jsx` - Replace `storage.login()`/`storage.logout()` with `api.auth.login()`/`api.auth.logout()`, on mount call `api.auth.getCurrentUser()` to restore session from cookie, remove localStorage user references | | |
+| TASK-102 | Update `src/pages/Auth/Login.jsx` - Replace storage call with `api.auth.login()`, add loading state during API call, add error display for failed login, handle network errors | | |
+| TASK-103 | Update `src/pages/Auth/Signup.jsx` - Replace storage call with `api.auth.register()`, add loading state, add error display for validation failures, handle duplicate email error | | |
+
+**Recipe Pages:**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-104 | Update `src/pages/Recipe/Home.jsx` - Replace `storage.getRecipes()` with `api.recipes.getAll()`, add loading spinner while fetching, add error state for failed fetch | | |
+| TASK-105 | Update `src/pages/Recipe/RecipeDetail.jsx` - Replace all storage calls with API: `api.recipes.getById()`, `api.recipes.like()`, `api.recipes.favorite()`, `api.recipes.recordView()`, `api.reviews.getByRecipe()`, `api.reviews.create()`. Remove guest view tracking code. Require authentication for viewing | | |
+| TASK-106 | Update `src/pages/Recipe/CreateRecipe.jsx` - Replace `storage.saveRecipe()` with `api.recipes.create()`, add loading state during submission, handle validation errors from API | | |
+| TASK-107 | Update `src/pages/Recipe/Search.jsx` - Replace `storage.search*` methods with `api.search.search()`, `api.search.saveHistory()`, `api.search.getHistory()`, `api.search.clearHistory()`. Remove `storage.getOrCreateGuestId()` calls | | |
+| TASK-108 | Update `src/pages/Recipe/Profile.jsx` - Replace `storage.saveUser()` with `api.users.update()`, replace `storage.deleteRecipe()` with `api.recipes.delete()`, replace `storage.getUsers()` with `api.users.getById()` | | |
+
+**Admin Pages:**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-109 | Update `src/pages/Admin/UserList.jsx` - Replace `storage.getUsers()` with `api.users.getAll()`, replace `storage.saveUser()` with `api.users.update()`/`api.users.updateStatus()`, replace `storage.deleteUser()` with `api.users.delete()`. Remove `storage.addActivity()` calls (auto-logged via backend) | | |
+| TASK-110 | Update `src/pages/Admin/AdminStats.jsx` - Replace all `storage.get*` methods with `api.stats.getDashboard()`, replace `storage.getRecentActivity()` with `api.activity.getRecent()` | | |
+| TASK-111 | Update `src/pages/Admin/AdminRecipes.jsx` - Replace `storage.getRecipes()` with `api.recipes.getAll()`, replace `storage.saveRecipe()` status changes with `api.recipes.updateStatus()`, replace `storage.deleteRecipe()` with `api.recipes.delete()`. Remove `storage.addActivity()` calls | | |
+
+**UI Components & Cleanup:**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-112 | Create `src/components/ui/LoadingSpinner.jsx` - Reusable loading component with Tailwind styling, support sizes (sm/md/lg) | | |
+| TASK-113 | Create `src/components/ui/ErrorMessage.jsx` - Reusable error display component with retry button, Tailwind styling | | |
+| TASK-114 | Remove `src/lib/storage.js` entirely — all localStorage calls replaced by API. Remove all guest-related code (`getOrCreateGuestId`, `cookhub_guest_id` references) | | |
+| TASK-115 | Add React error boundary component to catch unhandled API errors gracefully | | |
 
 ### Phase 6: Testing & Deployment
 
 **GOAL-006**: Comprehensive testing and deployment documentation
 
+**Database Setup:**
+
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-158 | Create `database/README.md` - Database setup instructions for XAMPP | | |
-| TASK-159 | Create `database/run_all_scripts.sql` - Master script that executes all SQL files in order | | |
-| TASK-149 | Test database installation: Run all SQL scripts on fresh MySQL instance | | |
-| TASK-150 | Test API endpoints: Create Postman collection for all endpoints with sample requests | | |
-| TASK-151 | Test user registration flow: Create account → verify DB entry → login → verify session | | |
-| TASK-152 | Test recipe creation flow: Login → create recipe → verify ingredients/instructions in DB | | |
-| TASK-153 | Test admin approval flow: Create recipe (pending) → admin approves → verify status change | | |
-| TASK-154 | Test review system: Add review → verify unique constraint → update review → delete review | | |
-| TASK-155 | Test likes/favorites: Toggle like → verify DB → check recipe stats update | | |
-| TASK-156 | Test search functionality: Search by keyword → verify full-text search results | | |
-| TASK-157 | Test admin dashboard: Verify all stats calculations and aggregations | | |
-| TASK-158 | Test authorization: Verify role-based access (user cannot access admin endpoints) | | |
-| TASK-159 | Test concurrent users: Simulate 10+ concurrent requests to same recipe | | |
-| TASK-160 | Test data integrity: Attempt SQL injection, verify prepared statements protection | | |
-| TASK-161 | Test cascading deletes: Delete recipe → verify reviews/likes/views also deleted | | |
-| TASK-162 | Load test: Insert 1000 recipes and measure query performance | | |
-| TASK-163 | Create `docs/API_DOCUMENTATION.md` - Complete API reference with request/response examples | | |
-| TASK-164 | Create `docs/DATABASE_SCHEMA.md` - ER diagrams and table structure documentation | | |
-| TASK-165 | Create `docs/SQL_QUERIES.md` - Common SQL query examples with explanations | | |
-| TASK-166 | Create `docs/DEPLOYMENT_GUIDE.md` - Step-by-step XAMPP deployment instructions | | |
-| TASK-167 | Create `docs/TESTING_GUIDE.md` - Testing procedures and test cases | | |
-| TASK-168 | Create `CHANGELOG.md` - Document all changes from localStorage to database version | | |
-| TASK-169 | Update main `README.md` - Add database setup section and architecture updates | | |
-| TASK-170 | Record video demo: Show registration → recipe creation → admin approval → search | | |
+| TASK-116 | Create `database/README.md` - Database setup instructions for XAMPP (start MySQL, open phpMyAdmin, import scripts) | | |
+| TASK-117 | Create `database/run_all_scripts.sql` - Master script that sources all 14 SQL files in dependency order | | |
+| TASK-118 | Test database installation: Run all SQL scripts on fresh MySQL instance, verify 13 tables, 2 views, 5 procedures, 6 triggers created | | |
+
+**API & Integration Testing:**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-119 | Create Postman collection for all endpoints with sample requests and expected responses | | |
+| TASK-120 | Test user registration flow: Register → verify DB row → login → verify session row → logout → verify session deleted | | |
+| TASK-121 | Test recipe creation flow: Login → create recipe (pending) → verify recipe + ingredients + instructions in DB | | |
+| TASK-122 | Test admin approval flow: Create recipe (pending) → admin approves → verify status = 'published', activity_log entry | | |
+| TASK-123 | Test review system: Add review → verify unique constraint → update review → delete review → verify CASCADE | | |
+| TASK-124 | Test likes/favorites: Toggle like → verify like_record row → toggle again → verify removed. Same for favorites | | |
+| TASK-125 | Test search functionality: Search by keyword → verify LIKE/FULLTEXT results → save history → retrieve history | | |
+| TASK-126 | Test admin dashboard: Verify all stats calculations match actual data aggregations | | |
+| TASK-127 | Test authorization: Verify user cannot access admin endpoints (403), unauthenticated gets 401 | | |
+| TASK-128 | Test concurrent users: Simulate 10+ concurrent requests to verify no race conditions | | |
+| TASK-129 | Test data integrity: Attempt SQL injection via form inputs, verify prepared statements prevent it | | |
+| TASK-130 | Test cascading deletes: Delete recipe → verify reviews, likes, favorites, views, ingredients, instructions, images all deleted | | |
+| TASK-131 | Load test: Insert 1000 recipes and measure query performance against CON-005 (< 200ms) | | |
+
+**Documentation:**
+
+| Task | Description | Completed | Date |
+|------|-------------|-----------|------|
+| TASK-132 | Create `docs/API_DOCUMENTATION.md` - Complete API reference with request/response examples for all endpoints | | |
+| TASK-133 | Create `docs/DATABASE_SCHEMA.md` - ER diagrams and table structure documentation with relationships | | |
+| TASK-134 | Create `docs/DEPLOYMENT_GUIDE.md` - Step-by-step XAMPP deployment: folder placement, Apache config, phpMyAdmin import, Vite proxy | | |
+| TASK-135 | Create `docs/TESTING_GUIDE.md` - Testing procedures, test cases, Postman collection usage | | |
+| TASK-136 | Create `CHANGELOG.md` - Document all changes from localStorage version to database-backed version | | |
+| TASK-137 | Update main `README.md` - Add database setup section, architecture diagram, API documentation reference | | |
+| TASK-138 | Record video demo: Show registration → recipe creation → admin approval → search → profile management | | |
 
 ## 3. Alternatives
 
-**ALT-001**: **Node.js + Express Backend Instead of PHP**  
+**ALT-001**: **Node.js + Express Backend Instead of PHP**
 - *Why considered:* JavaScript full-stack, easier for React developers, modern ecosystem
 - *Why not chosen:* Course uses PHPWebApp.pdf suggesting PHP requirement, XAMPP is PHP-focused
 
-**ALT-002**: **MongoDB NoSQL Database Instead of MySQL**  
+**ALT-002**: **MongoDB NoSQL Database Instead of MySQL**
 - *Why considered:* Flexible schema, easier to map from localStorage JSON structure
 - *Why not chosen:* Course focuses on relational database design, SQL scripting requirements
 
-**ALT-003**: **Keep LocalStorage + Add Backend Sync**  
+**ALT-003**: **Keep LocalStorage + Add Backend Sync**
 - *Why considered:* Gradual migration, offline-first capability
 - *Why not chosen:* Doesn't demonstrate full database integration, adds complexity
 
-**ALT-004**: **Firebase/Supabase Backend-as-a-Service**  
+**ALT-004**: **Firebase/Supabase Backend-as-a-Service**
 - *Why considered:* Quick setup, built-in auth, real-time features
 - *Why not chosen:* Course requires custom SQL scripting and database design understanding
 
-**ALT-005**: **PostgreSQL Instead of MySQL**  
+**ALT-005**: **PostgreSQL Instead of MySQL**
 - *Why considered:* More advanced features, better standards compliance
 - *Why not chosen:* XAMPP default is MySQL/MariaDB, wider PHP documentation
 
-**ALT-006**: **GraphQL API Instead of REST**  
+**ALT-006**: **GraphQL API Instead of REST**
 - *Why considered:* More flexible queries, single endpoint, matches React patterns
 - *Why not chosen:* REST is more standard for course learning, simpler to implement
 
+**ALT-007**: **Axios HTTP Client Instead of Native Fetch**
+- *Why considered:* Convenient interceptors, automatic JSON, request cancellation
+- *Why not chosen:* Native `fetch()` has no additional dependency, sufficient for this project, simpler setup with `credentials: 'include'`
+
+**ALT-008**: **PHP MVC Framework (Laravel/Slim) Instead of Plain PHP**
+- *Why considered:* Built-in routing, ORM, middleware, testing tools
+- *Why not chosen:* Requires Composer, adds complexity, course focuses on understanding raw PHP/SQL concepts
+
 ## 4. Dependencies
 
-**DEP-001**: **XAMPP** (v8.0+)  
+**DEP-001**: **XAMPP** (v8.0+)
 - Components needed: Apache web server, MySQL/MariaDB, PHP 8.0+, phpMyAdmin
 - Required for local development and testing
 - Download: https://www.apachefriends.org/
 
-**DEP-002**: **PHP 8.0 or higher**  
-- Required for modern PHP features (typed properties, named arguments)
+**DEP-002**: **PHP 8.0 or higher**
+- Required for modern PHP features (typed properties, named arguments, `str_contains()`)
 - Included with XAMPP
 
-**DEP-003**: **MySQL 5.7+ or MariaDB 10.3+**  
-- Required for database features (JSON columns, triggers, stored procedures)
+**DEP-003**: **MySQL 5.7+ or MariaDB 10.3+**
+- Required for database features (CHECK constraints, triggers, stored procedures)
 - Included with XAMPP
 
-**DEP-004**: **Node.js 16+ and npm**  
+**DEP-004**: **Node.js 16+ and npm**
 - Already installed for existing React project
-- Required for frontend build process
+- Required for frontend build process (Vite)
 
-**DEP-005**: **Axios** (^1.6.0)  
-- HTTP client for React frontend API calls
-- Install: `npm install axios`
-
-**DEP-006**: **PHP PDO MySQL Extension**  
-- Required for database connectivity
+**DEP-005**: **PHP PDO MySQL Extension**
+- Required for database connectivity via PDO
 - Usually enabled by default in XAMPP
 
-**DEP-007**: **Apache mod_rewrite**  
-- Required for clean API URLs
+**DEP-006**: **Apache mod_rewrite**
+- Required for clean API URLs via `.htaccess`
 - Enable in httpd.conf: `LoadModule rewrite_module modules/mod_rewrite.so`
 
-**DEP-008**: **PHP OpenSSL Extension**  
-- Required for password hashing and JWT tokens
+**DEP-007**: **PHP OpenSSL Extension**
+- Required for `random_bytes()` (session token generation) and `password_hash()`
 - Usually enabled by default in XAMPP
 
-**DEP-009**: **Postman or similar API testing tool** (optional)  
-- Recommended for API endpoint testing
-- Alternative: curl command-line tool
+**DEP-008**: **Postman or similar API testing tool** (optional)
+- Recommended for API endpoint testing during development
+- Alternative: curl command-line tool, browser DevTools
 
-**DEP-010**: **Git** (optional)  
+**DEP-009**: **Git** (optional)
 - For version control during development
 
 ## 5. Files
 
-**Database SQL Scripts:**
+### Database SQL Scripts (14 files — all exist ✅)
 
-- **FILE-001**: `database/01_create_database.sql` - Database creation with charset and collation
-- **FILE-002**: `database/02_create_tables.sql` - All table definitions (~400 lines)
-- **FILE-003**: `database/03_create_indexes.sql` - Performance indexes (~50 lines)
-- **FILE-004**: `database/04_create_views.sql` - Useful views (~100 lines)
-- **FILE-005**: `database/05_seed_users.sql` - User seed data (~150 lines)
-- **FILE-006**: `database/06_seed_recipes.sql` - Recipe seed data with ingredients/instructions (~600 lines)
-- **FILE-007**: `database/07_seed_reviews.sql` - Reviews, likes, favorites seed data (~200 lines)
-- **FILE-008**: `database/08_seed_stats.sql` - Daily stats and activity logs seed data (~100 lines)
-- **FILE-009**: `database/09_common_queries.sql` - Common SELECT queries (~200 lines)
-- **FILE-010**: `database/10_admin_queries.sql` - Admin dashboard queries (~100 lines)
-- **FILE-011**: `database/11_analytics_queries.sql` - Analytics and reporting queries (~150 lines)
-- **FILE-012**: `database/12_stored_procedures.sql` - Stored procedures and functions (~300 lines)
-- **FILE-013**: `database/13_triggers.sql` - Database triggers (~200 lines)
-- **FILE-014**: `database/14_backup_restore.sql` - Backup/restore documentation and scripts (~50 lines)
-- **FILE-015**: `database/run_all_scripts.sql` - Master execution script (~50 lines)
-- **FILE-016**: `database/README.md` - Database setup instructions
+| File ID | Path | Task(s) | Lines (est.) | Status |
+|---------|------|---------|-------------|--------|
+| FILE-001 | `database/01_create_database.sql` | TASK-004 | ~20 | ✅ EXISTS |
+| FILE-002 | `database/02_create_tables.sql` | TASK-005 to TASK-018 | ~400 | ✅ EXISTS |
+| FILE-003 | `database/03_create_indexes.sql` | TASK-019 | ~50 | ✅ EXISTS |
+| FILE-004 | `database/04_create_views.sql` | TASK-020, TASK-021 | ~100 | ✅ EXISTS |
+| FILE-005 | `database/05_seed_users.sql` | TASK-022, TASK-023 | ~150 | ✅ EXISTS |
+| FILE-006 | `database/06_seed_recipes.sql` | TASK-024 to TASK-027 | ~600 | ✅ EXISTS |
+| FILE-007 | `database/07_seed_reviews.sql` | TASK-028, TASK-029 | ~200 | ✅ EXISTS |
+| FILE-008 | `database/08_seed_stats.sql` | TASK-030, TASK-031 | ~100 | ✅ EXISTS |
+| FILE-009 | `database/09_common_queries.sql` | TASK-032 to TASK-036 | ~200 | ✅ EXISTS |
+| FILE-010 | `database/10_admin_queries.sql` | TASK-037 to TASK-039 | ~100 | ✅ EXISTS |
+| FILE-011 | `database/11_analytics_queries.sql` | TASK-040 to TASK-043 | ~150 | ✅ EXISTS |
+| FILE-012 | `database/12_stored_procedures.sql` | TASK-044 to TASK-048 | ~300 | ✅ EXISTS |
+| FILE-013 | `database/13_triggers.sql` | TASK-049 to TASK-054 | ~200 | ✅ EXISTS |
+| FILE-014 | `database/14_backup_restore.sql` | TASK-055, TASK-056 | ~50 | ✅ EXISTS |
+| FILE-015 | `database/run_all_scripts.sql` | TASK-117 | ~50 | TO CREATE |
+| FILE-016 | `database/README.md` | TASK-116 | ~100 | TO CREATE |
 
-**PHP Backend Files:**
+### PHP Backend Files (12 files — to be created)
 
-- **FILE-017**: `backend/config/database.php` - PDO database connection class (~100 lines)
-- **FILE-018**: `backend/config/config.php` - Application configuration (~50 lines)
-- **FILE-019**: `backend/.htaccess` - URL rewriting rules (~20 lines)
-- **FILE-020**: `backend/middleware/cors.php` - CORS middleware (~30 lines)
-- **FILE-021**: `backend/middleware/auth.php` - Authentication middleware (~80 lines)
-- **FILE-022**: `backend/middleware/admin.php` - Admin authorization middleware (~40 lines)
-- **FILE-023**: `backend/utils/response.php` - Response helper functions (~60 lines)
-- **FILE-024**: `backend/utils/validator.php` - Input validation helpers (~150 lines)
-- **FILE-025**: `backend/models/User.php` - User model (~400 lines)
-- **FILE-026**: `backend/models/Recipe.php` - Recipe model (~500 lines)
-- **FILE-027**: `backend/models/Review.php` - Review model (~200 lines)
-- **FILE-028**: `backend/models/Favorite.php` - Favorite model (~100 lines)
-- **FILE-029**: `backend/models/Like.php` - Like model (~100 lines)
-- **FILE-030**: `backend/models/Stats.php` - Stats model (~200 lines)
-- **FILE-031**: `backend/models/Activity.php` - Activity model (~100 lines)
-- **FILE-032**: `backend/controllers/AuthController.php` - Auth endpoints (~300 lines)
-- **FILE-033**: `backend/controllers/UserController.php` - User endpoints (~400 lines)
-- **FILE-034**: `backend/controllers/RecipeController.php` - Recipe endpoints (~600 lines)
-- **FILE-035**: `backend/controllers/ReviewController.php` - Review endpoints (~250 lines)
-- **FILE-036**: `backend/controllers/StatsController.php` - Stats endpoints (~200 lines)
-- **FILE-037**: `backend/controllers/ActivityController.php` - Activity endpoints (~100 lines)
-- **FILE-038**: `backend/controllers/SearchController.php` - Search endpoints (~150 lines)
-- **FILE-039**: `backend/api/index.php` - Main router (~200 lines)
+| File ID | Path | Task(s) | Lines (est.) | Status |
+|---------|------|---------|-------------|--------|
+| FILE-017 | `backend/config/database.php` | TASK-058 | ~60 | TO CREATE |
+| FILE-018 | `backend/.htaccess` | TASK-059 | ~20 | TO CREATE |
+| FILE-019 | `backend/helpers/cors.php` | TASK-060 | ~25 | TO CREATE |
+| FILE-020 | `backend/helpers/auth.php` | TASK-061 | ~60 | TO CREATE |
+| FILE-021 | `backend/helpers/response.php` | TASK-062 | ~40 | TO CREATE |
+| FILE-022 | `backend/api/auth.php` | TASK-063 to TASK-066 | ~200 | TO CREATE |
+| FILE-023 | `backend/api/recipes.php` | TASK-067 to TASK-075 | ~400 | TO CREATE |
+| FILE-024 | `backend/api/reviews.php` | TASK-076 to TASK-079 | ~150 | TO CREATE |
+| FILE-025 | `backend/api/users.php` | TASK-080 to TASK-084 | ~200 | TO CREATE |
+| FILE-026 | `backend/api/search.php` | TASK-085 to TASK-088 | ~120 | TO CREATE |
+| FILE-027 | `backend/api/stats.php` | TASK-089, TASK-090 | ~100 | TO CREATE |
+| FILE-028 | `backend/api/activity.php` | TASK-091 | ~60 | TO CREATE |
 
-**Frontend Files (New/Modified):**
+### Frontend Files — New (4 files)
 
-- **FILE-040**: `src/lib/api.js` - API service layer (~600 lines) - NEW
-- **FILE-041**: `src/config/environment.js` - Environment configuration (~20 lines) - NEW
-- **FILE-042**: `src/components/ui/LoadingSpinner.jsx` - Loading component (~40 lines) - NEW
-- **FILE-043**: `src/components/ui/ErrorMessage.jsx` - Error component (~40 lines) - NEW
-- **FILE-044**: `src/context/AuthContext.jsx` - Updated for API authentication (~300 lines) - MODIFIED
-- **FILE-045**: `src/pages/Auth/Login.jsx` - Updated with API calls (~200 lines) - MODIFIED
-- **FILE-046**: `src/pages/Auth/Signup.jsx` - Updated with API calls (~250 lines) - MODIFIED
-- **FILE-047**: `src/pages/Recipe/Home.jsx` - Updated with API calls (~400 lines) - MODIFIED
-- **FILE-048**: `src/pages/Recipe/RecipeDetail.jsx` - Updated with API calls (~500 lines) - MODIFIED
-- **FILE-049**: `src/pages/Recipe/CreateRecipe.jsx` - Updated with API calls (~400 lines) - MODIFIED
-- **FILE-050**: `src/pages/Recipe/Search.jsx` - Updated with API calls (~350 lines) - MODIFIED
-- **FILE-051**: `src/pages/Recipe/Profile.jsx` - Updated with API calls (~300 lines) - MODIFIED
-- **FILE-052**: `src/pages/Admin/UserList.jsx` - Updated with API calls (~400 lines) - MODIFIED
-- **FILE-053**: `src/pages/Admin/AdminRecipes.jsx` - Updated with API calls (~400 lines) - MODIFIED
-- **FILE-054**: `src/pages/Admin/AdminStats.jsx` - Updated with API calls (~300 lines) - MODIFIED
+| File ID | Path | Task(s) | Lines (est.) | Status |
+|---------|------|---------|-------------|--------|
+| FILE-029 | `src/lib/api.js` | TASK-093 to TASK-100 | ~400 | TO CREATE |
+| FILE-030 | `src/components/ui/LoadingSpinner.jsx` | TASK-112 | ~30 | TO CREATE |
+| FILE-031 | `src/components/ui/ErrorMessage.jsx` | TASK-113 | ~35 | TO CREATE |
+| FILE-032 | `src/components/ui/ErrorBoundary.jsx` | TASK-115 | ~40 | TO CREATE |
 
-**Documentation Files:**
+### Frontend Files — Modified (11 files)
 
-- **FILE-055**: `docs/API_DOCUMENTATION.md` - Complete API reference (~500 lines) - NEW
-- **FILE-056**: `docs/DATABASE_SCHEMA.md` - ER diagrams and schema documentation (~300 lines) - NEW
-- **FILE-057**: `docs/SQL_QUERIES.md` - SQL query examples and explanations (~400 lines) - NEW
-- **FILE-058**: `docs/DEPLOYMENT_GUIDE.md` - XAMPP deployment instructions (~200 lines) - NEW
-- **FILE-059**: `docs/TESTING_GUIDE.md` - Testing procedures (~200 lines) - NEW
-- **FILE-060**: `CHANGELOG.md` - Version history and changes (~100 lines) - NEW
-- **FILE-061**: `README.md` - Updated with database setup section (~800 lines) - MODIFIED
-- **FILE-062**: `postman/recipe_api_collection.json` - Postman API test collection - NEW
+| File ID | Path | Task(s) | Status |
+|---------|------|---------|--------|
+| FILE-033 | `src/context/AuthContext.jsx` | TASK-101 | TO MODIFY |
+| FILE-034 | `src/pages/Auth/Login.jsx` | TASK-102 | TO MODIFY |
+| FILE-035 | `src/pages/Auth/Signup.jsx` | TASK-103 | TO MODIFY |
+| FILE-036 | `src/pages/Recipe/Home.jsx` | TASK-104 | TO MODIFY |
+| FILE-037 | `src/pages/Recipe/RecipeDetail.jsx` | TASK-105 | TO MODIFY |
+| FILE-038 | `src/pages/Recipe/CreateRecipe.jsx` | TASK-106 | TO MODIFY |
+| FILE-039 | `src/pages/Recipe/Search.jsx` | TASK-107 | TO MODIFY |
+| FILE-040 | `src/pages/Recipe/Profile.jsx` | TASK-108 | TO MODIFY |
+| FILE-041 | `src/pages/Admin/UserList.jsx` | TASK-109 | TO MODIFY |
+| FILE-042 | `src/pages/Admin/AdminStats.jsx` | TASK-110 | TO MODIFY |
+| FILE-043 | `src/pages/Admin/AdminRecipes.jsx` | TASK-111 | TO MODIFY |
+
+### Frontend Files — Deleted (1 file)
+
+| File ID | Path | Task(s) | Status |
+|---------|------|---------|--------|
+| FILE-044 | `src/lib/storage.js` | TASK-114 | TO DELETE |
+
+### Documentation Files (7 files — to be created)
+
+| File ID | Path | Task(s) | Lines (est.) | Status |
+|---------|------|---------|-------------|--------|
+| FILE-045 | `docs/API_DOCUMENTATION.md` | TASK-132 | ~500 | TO CREATE |
+| FILE-046 | `docs/DATABASE_SCHEMA.md` | TASK-133 | ~300 | TO CREATE |
+| FILE-047 | `docs/DEPLOYMENT_GUIDE.md` | TASK-134 | ~200 | TO CREATE |
+| FILE-048 | `docs/TESTING_GUIDE.md` | TASK-135 | ~200 | TO CREATE |
+| FILE-049 | `CHANGELOG.md` | TASK-136 | ~100 | TO CREATE |
+| FILE-050 | `README.md` | TASK-137 | ~800 | TO MODIFY |
+| FILE-051 | `postman/recipe_api_collection.json` | TASK-119 | ~500 | TO CREATE |
+
+**File Summary:** 51 tracked files total (14 existing SQL + 12 new PHP + 4 new frontend + 11 modified frontend + 1 deleted + 7 docs + 1 Postman + 1 new DB script)
 
 ## 6. Testing
 
-**Authentication & Authorization Tests:**
+### Authentication & Authorization Tests
 
-- **TEST-001**: User Registration - Verify new user created with hashed password, status=pending, appropriate role
-- **TEST-002**: User Login - Verify credentials validated, session/token created, user data returned
-- **TEST-003**: Invalid Login - Verify proper error message for wrong password/non-existent email
-- **TEST-004**: Logout - Verify session destroyed, token invalidated
-- **TEST-005**: Protected Route Access - Verify unauthorized user cannot access protected endpoints (401)
-- **TEST-006**: Admin Authorization - Verify non-admin user cannot access admin endpoints (403)
-- **TEST-007**: Token Expiration - Verify expired token returns 401 and requires re-login
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-001 | User Registration - Verify new user created with hashed password, status=pending, role=user | SEC-001, REQ-API-008 |
+| TEST-002 | User Login - Verify credentials validated, session row created, HttpOnly cookie set, user data returned | REQ-API-007, SEC-006 |
+| TEST-003 | Invalid Login - Verify proper error message for wrong password/non-existent email (no info leak) | SEC-002, REQ-API-005 |
+| TEST-004 | Logout - Verify session row deleted, cookie cleared | REQ-API-007 |
+| TEST-005 | Protected Route Access - Verify unauthenticated request returns 401 | SEC-002, REQ-API-005 |
+| TEST-006 | Admin Authorization - Verify non-admin user cannot access admin endpoints (403) | SEC-003, REQ-API-005 |
+| TEST-007 | Session Expiration - Verify expired session returns 401 and requires re-login | REQ-API-007 |
 
-**Recipe Management Tests:**
+### Recipe Management Tests
 
-- **TEST-008**: Create Recipe - Verify recipe created with ingredients, instructions, images, status=pending
-- **TEST-009**: Get Published Recipes - Verify only published recipes returned to non-admin users
-- **TEST-010**: Get Recipe Details - Verify full recipe data with nested ingredients/instructions/images
-- **TEST-011**: Update Recipe - Verify owner can update, non-owner cannot (403)
-- **TEST-012**: Delete Recipe - Verify owner can delete, cascading delete removes ingredients/instructions/reviews
-- **TEST-013**: Recipe Search - Verify full-text search returns relevant results
-- **TEST-014**: Recipe Filters - Verify category, difficulty, sort filters work correctly
-- **TEST-015**: Recipe Pagination - Verify pagination parameters work correctly
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-008 | Create Recipe - Verify recipe created with ingredients, instructions, status=pending | REQ-API-001, REQ-API-008 |
+| TEST-009 | Get Published Recipes - Verify only published recipes returned to non-admin users | REQ-FE-001 |
+| TEST-010 | Get Recipe Details - Verify full recipe data with nested ingredients/instructions/images/stats | REQ-API-004 |
+| TEST-011 | Update Recipe - Verify owner can update, non-owner gets 403 | SEC-003 |
+| TEST-012 | Delete Recipe - Verify owner/admin can delete, CASCADE removes related data | REQ-DB-005 |
+| TEST-013 | Recipe Search - Verify LIKE/FULLTEXT search returns relevant results | REQ-SQL-003 |
+| TEST-014 | Recipe Filters - Verify category, difficulty, sort filters work correctly | REQ-API-001 |
+| TEST-015 | Recipe Pagination - Verify page/limit parameters work correctly | REQ-API-004 |
 
-**Admin Functions Tests:**
+### Admin Functions Tests
 
-- **TEST-016**: Approve Recipe - Verify admin can approve pending recipe, status changes to published
-- **TEST-017**: Reject Recipe - Verify admin can reject recipe, status changes to rejected
-- **TEST-018**: User Status Update - Verify admin can change user status (active, inactive, suspended)
-- **TEST-019**: Delete User - Verify admin can delete user, cascading to user's recipes/reviews
-- **TEST-020**: Admin Dashboard Stats - Verify correct aggregation of user counts, recipe counts, views
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-016 | Approve Recipe - Verify admin can approve pending recipe, status='published', activity logged | SEC-003, REQ-SQL-006 |
+| TEST-017 | Reject Recipe - Verify admin can reject recipe, status='rejected', activity logged | SEC-003 |
+| TEST-018 | User Status Update - Verify admin can change user status (active/inactive/suspended) | SEC-003 |
+| TEST-019 | Delete User - Verify admin can delete user, CASCADE to recipes/reviews | REQ-DB-005 |
+| TEST-020 | Admin Dashboard Stats - Verify correct aggregation of user counts, recipe counts, views | REQ-SQL-003 |
 
-**Review System Tests:**
+### Review System Tests
 
-- **TEST-021**: Add Review - Verify review created with rating (1-5), associated with user and recipe
-- **TEST-022**: Duplicate Review Prevention - Verify unique constraint prevents user from reviewing same recipe twice
-- **TEST-023**: Update Review - Verify user can update their own review, cannot update others
-- **TEST-024**: Delete Review - Verify user can delete own review, admin can delete any review
-- **TEST-025**: Recipe Rating Calculation - Verify average rating calculated correctly from all reviews
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-021 | Add Review - Verify review created with rating (1-5), associated with user and recipe | REQ-DB-007 |
+| TEST-022 | Duplicate Review Prevention - Verify unique constraint prevents double review | REQ-DB-004 |
+| TEST-023 | Update Review - Verify user can update own review, cannot update others (403) | SEC-003 |
+| TEST-024 | Delete Review - Verify user can delete own review, admin can delete any | SEC-003 |
+| TEST-025 | Recipe Rating Calculation - Verify average rating calculated correctly via fn_CalculateAvgRating | REQ-SQL-005 |
 
-**Engagement Features Tests:**
+### Engagement Features Tests
 
-- **TEST-026**: Toggle Like - Verify like added if not exists, removed if exists (idempotent)
-- **TEST-027**: Toggle Favorite - Verify favorite added/removed correctly
-- **TEST-028**: Recipe View Tracking - Verify view recorded for authenticated user with proper user_id FK
-- **TEST-029**: Multiple Views Tracking - Verify same user viewing same recipe multiple times creates multiple view records
-- **TEST-030**: Daily Stats Update - Verify daily_stats table updated correctly on user activity
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-026 | Toggle Like - Verify like added if not exists, removed if exists (idempotent toggle) | REQ-DB-003 |
+| TEST-027 | Toggle Favorite - Verify favorite added/removed correctly | REQ-DB-003 |
+| TEST-028 | Recipe View Tracking - Verify view recorded for authenticated user with user_id FK | REQ-MIG-003 |
+| TEST-029 | Multiple Views Tracking - Verify same user viewing same recipe creates multiple view records | REQ-DB-010 |
+| TEST-030 | Daily Stats Update - Verify trg_RecipeView_UpdateStat trigger increments daily_stat | REQ-SQL-006 |
 
-**Search & History Tests:**
+### Search & History Tests
 
-- **TEST-031**: Full-Text Search - Verify search across recipe title and description
-- **TEST-032**: Search History Save - Verify user search queries saved with timestamp
-- **TEST-033**: Search History Retrieve - Verify user can retrieve their search history
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-031 | Full-Text Search - Verify search across recipe title and description returns relevant results | REQ-SQL-003 |
+| TEST-032 | Search History Save - Verify user search queries saved with timestamp | REQ-DB-010 |
+| TEST-033 | Search History Retrieve - Verify user can retrieve their search history, not others' | SEC-002 |
 
-**Data Integrity Tests:**
+### Data Integrity Tests
 
-- **TEST-034**: SQL Injection Prevention - Verify prepared statements prevent SQL injection attacks
-- **TEST-035**: XSS Prevention - Verify user input sanitized to prevent cross-site scripting
-- **TEST-036**: Foreign Key Constraints - Verify cannot delete user with existing recipes (or cascades correctly)
-- **TEST-037**: Unique Constraints - Verify email uniqueness enforced, duplicate emails rejected
-- **TEST-038**: Data Type Validation - Verify invalid data types rejected (string for integer field, etc.)
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-034 | SQL Injection Prevention - Verify prepared statements prevent SQL injection via form inputs | SEC-004 |
+| TEST-035 | XSS Prevention - Verify user input sanitized (htmlspecialchars) to prevent XSS | SEC-005 |
+| TEST-036 | Foreign Key Constraints - Verify CASCADE deletes work correctly across all tables | REQ-DB-005 |
+| TEST-037 | Unique Constraints - Verify email uniqueness, duplicate review prevention | REQ-DB-004 |
+| TEST-038 | Data Type Validation - Verify invalid data types rejected (string for rating, etc.) | REQ-API-008 |
 
-**Performance Tests:**
+### Performance Tests
 
-- **TEST-039**: Query Performance - Verify indexed queries execute under 50ms for typical datasets
-- **TEST-040**: Large Dataset - Verify application performs well with 1000+ recipes, 10000+ reviews
-- **TEST-041**: Concurrent Users - Verify 100 concurrent requests handled without errors
-- **TEST-042**: API Response Time - Verify average API response time under 200ms
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-039 | Query Performance - Verify indexed queries execute under 50ms for typical datasets | REQ-DB-006, CON-005 |
+| TEST-040 | Large Dataset - Verify application performs with 1000+ recipes, 10000+ reviews | CON-004 |
+| TEST-041 | Concurrent Users - Verify 100 concurrent requests handled without errors | CON-006 |
+| TEST-042 | API Response Time - Verify average API response time under 200ms | CON-005 |
 
-**Integration Tests:**
+### Integration Tests
 
-- **TEST-043**: End-to-End Registration Flow - Browser → API → Database → Response → UI update
-- **TEST-044**: End-to-End Recipe Creation Flow - Form submit → API → Database → Admin approval → Published
-- **TEST-045**: End-to-End Search Flow - User types search → API → Database query → Results displayed
+| Test | Description | Validates |
+|------|-------------|-----------|
+| TEST-043 | End-to-End Registration Flow - Browser → fetch API → PHP → MySQL → JSON → React UI update | REQ-FE-001 to REQ-FE-006 |
+| TEST-044 | End-to-End Recipe Creation Flow - Form → API → DB → Admin approval → Published → Visible on Home | REQ-FE-001, REQ-API-001 |
+| TEST-045 | End-to-End Search Flow - User types search → fetch → PHP → MySQL LIKE → Results displayed | REQ-FE-002, REQ-SQL-003 |
 
 ## 7. Risks & Assumptions
 
-**Risks:**
+### Risks
 
-- **RISK-001**: **PHP Version Compatibility** - Different XAMPP versions may have different PHP versions, affecting code compatibility
-  - *Mitigation:* Target PHP 8.0+ features, document minimum version requirement, test on multiple versions
+| Risk | Description | Impact | Mitigation |
+|------|-------------|--------|------------|
+| RISK-001 | **PHP Version Compatibility** - Different XAMPP versions may have different PHP versions | Medium | Target PHP 8.0+ features, document minimum version, test on multiple versions |
+| RISK-002 | **CORS Issues** - React on port 5173 calling PHP on port 80/8080 may face CORS blocking | High | Implement CORS headers in helpers/cors.php early, test cross-origin requests on day 1 |
+| RISK-003 | **Session Cookie Issues** - `credentials: 'include'` + CORS cookie handling can be tricky | High | Set `Access-Control-Allow-Credentials: true`, use `SameSite=Lax`, test cookie flow early |
+| RISK-004 | **SQL Performance Degradation** - Unoptimized queries may slow with large datasets | Medium | Indexes on FK columns (already created), use EXPLAIN to analyze, monitor query times |
+| RISK-005 | **Security Vulnerabilities** - Inexperienced backend may introduce flaws | High | Use prepared statements exclusively, validate all input, sanitize output, follow SEC-001 to SEC-007 |
+| RISK-006 | **API Breaking Changes** - Changing data structure may break React components | Medium | Keep API response format similar to localStorage structure, gradual migration per component |
+| RISK-007 | **Time Estimation** - Project may take longer than expected (138 tasks) | Medium | Prioritize core features (auth, recipes, reviews), Phase 3 already complete as bonus |
 
-- **RISK-002**: **Database Migration Data Loss** - Converting from localStorage to database could lose existing user data
-  - *Mitigation:* Provide migration script to export localStorage to SQL, test thoroughly before production
+### Assumptions
 
-- **RISK-003**: **CORS Issues** - React frontend on port 5173 calling PHP backend on port 8080 may face CORS blocking
-  - *Mitigation:* Implement proper CORS headers in PHP middleware, test cross-origin requests early
+| ID | Assumption |
+|----|------------|
+| ASSUMPTION-001 | Student has XAMPP installed or can install it successfully |
+| ASSUMPTION-002 | Student has basic knowledge of SQL (SELECT, INSERT, UPDATE, DELETE) |
+| ASSUMPTION-003 | Student has access to course materials (PHPWebApp.pdf) for PHP reference |
+| ASSUMPTION-004 | Development on Windows with XAMPP (alternative: LAMP on Linux, MAMP on macOS) |
+| ASSUMPTION-005 | MySQL 5.7+ or MariaDB 10.3+ features available (CHECK constraints, CTEs) |
+| ASSUMPTION-006 | Frontend React code structure is familiar (existing project) |
+| ASSUMPTION-007 | Application tested locally before any production deployment |
+| ASSUMPTION-008 | Database handles typical usage (100 users, 1000 recipes, 5000 reviews) |
+| ASSUMPTION-009 | No Composer or external PHP packages needed (plain PHP only) |
+| ASSUMPTION-010 | Instructor accepts PHP backend as fulfillment of course requirements |
 
-- **RISK-004**: **Session Management Complexity** - PHP sessions vs JWT tokens decision affects security and scalability
-  - *Mitigation:* Document both approaches, implement JWT for stateless API, easier for future mobile apps
+## 8. API Endpoint Reference
 
-- **RISK-005**: **SQL Performance Degradation** - Unoptimized queries may slow down with large datasets
-  - *Mitigation:* Create indexes on foreign keys and frequently queried columns, use EXPLAIN to analyze queries
+Quick reference of all RESTful endpoints:
 
-- **RISK-006**: **Learning Curve** - Student may not be familiar with PHP/PDO/MySQL
-  - *Mitigation:* Provide extensive code comments, reference documentation, incremental implementation approach
+| Method | Endpoint | Auth | Admin | Description | Task |
+|--------|----------|------|-------|-------------|------|
+| POST | `/api/auth/register` | No | No | Register new user | TASK-063 |
+| POST | `/api/auth/login` | No | No | Login, create session | TASK-064 |
+| POST | `/api/auth/logout` | Yes | No | Logout, destroy session | TASK-065 |
+| GET | `/api/auth/me` | Yes | No | Get current user | TASK-066 |
+| GET | `/api/recipes` | No | No | List published recipes (filters) | TASK-067 |
+| GET | `/api/recipes/{id}` | No | No | Get recipe details | TASK-068 |
+| POST | `/api/recipes` | Yes | No | Create recipe (pending) | TASK-069 |
+| PUT | `/api/recipes/{id}` | Yes | No | Update recipe (owner) | TASK-070 |
+| DELETE | `/api/recipes/{id}` | Yes | No | Delete recipe (owner/admin) | TASK-071 |
+| PUT | `/api/recipes/{id}/status` | Yes | Yes | Approve/reject recipe | TASK-072 |
+| POST | `/api/recipes/{id}/like` | Yes | No | Toggle like | TASK-073 |
+| POST | `/api/recipes/{id}/favorite` | Yes | No | Toggle favorite | TASK-074 |
+| POST | `/api/recipes/{id}/view` | Yes | No | Record view | TASK-075 |
+| GET | `/api/reviews?recipe_id={id}` | No | No | Get recipe reviews | TASK-076 |
+| POST | `/api/reviews` | Yes | No | Create review | TASK-077 |
+| PUT | `/api/reviews/{id}` | Yes | No | Update review (owner) | TASK-078 |
+| DELETE | `/api/reviews/{id}` | Yes | No | Delete review (owner/admin) | TASK-079 |
+| GET | `/api/users` | Yes | Yes | List all users (paginated) | TASK-080 |
+| GET | `/api/users/{id}` | Yes | No | Get user profile | TASK-081 |
+| PUT | `/api/users/{id}` | Yes | No | Update user (owner/admin) | TASK-082 |
+| DELETE | `/api/users/{id}` | Yes | Yes | Delete user | TASK-083 |
+| PUT | `/api/users/{id}/status` | Yes | Yes | Update user status | TASK-084 |
+| GET | `/api/search?q={query}` | No | No | Search recipes | TASK-085 |
+| POST | `/api/search/history` | Yes | No | Save search query | TASK-086 |
+| GET | `/api/search/history` | Yes | No | Get search history | TASK-087 |
+| DELETE | `/api/search/history` | Yes | No | Clear search history | TASK-088 |
+| GET | `/api/stats/dashboard` | Yes | Yes | Dashboard statistics | TASK-089 |
+| GET | `/api/stats/daily` | Yes | No | Daily stats for charts | TASK-090 |
+| GET | `/api/activity` | Yes | Yes | Activity logs | TASK-091 |
 
-- **RISK-007**: **Security Vulnerabilities** - Inexperienced backend development may introduce security flaws
-  - *Mitigation:* Use prepared statements exclusively, implement input validation, follow security best practices
+**Total: 31 endpoints across 7 API files**
 
-- **RISK-008**: **API Breaking Changes** - Changing data structure may break existing frontend components
-  - *Mitigation:* Keep API response format similar to localStorage structure, gradual migration strategy
+## 9. Database Reference
 
-- **RISK-009**: **Time Estimation** - Project may take longer than expected (168 tasks)
-  - *Mitigation:* Prioritize core features (auth, recipes, reviews), mark advanced features (triggers, procedures) as optional
+### Tables (13)
 
-**Assumptions:**
+| Table | PK | Key FKs | Description |
+|-------|----|---------|-------------|
+| `user` | id | — | User accounts (admin=1, olivia=2, ..., omar=12) |
+| `session` | id | user_id → user | Server-side session tokens |
+| `recipe` | id | author_id → user | Recipe metadata, publication status |
+| `ingredient` | id | recipe_id → recipe | Recipe ingredients with quantity/unit |
+| `instruction` | id | recipe_id → recipe | Step-by-step cooking instructions |
+| `recipe_image` | id | recipe_id → recipe | Multiple images per recipe |
+| `review` | id | user_id → user, recipe_id → recipe | Star ratings + comments (1 per user per recipe) |
+| `favorite` | id | user_id → user, recipe_id → recipe | Saved/bookmarked recipes |
+| `like_record` | id | user_id → user, recipe_id → recipe | Recipe likes |
+| `recipe_view` | id | recipe_id → recipe, user_id → user | View tracking (authenticated only) |
+| `search_history` | id | user_id → user | Search query history |
+| `daily_stat` | id | — | Pre-aggregated daily statistics |
+| `activity_log` | id | admin_id → user (SET NULL) | Admin action audit trail |
 
-- **ASSUMPTION-001**: Student has XAMPP installed or can install it successfully
-- **ASSUMPTION-002**: Student has basic knowledge of SQL (SELECT, INSERT, UPDATE, DELETE)
-- **ASSUMPTION-003**: Student has access to course materials in PHPWebApp.pdf for PHP reference
-- **ASSUMPTION-004**: Development will be done on Windows with XAMPP (alternative: LAMP on Linux)
-- **ASSUMPTION-005**: MySQL 5.7+ or MariaDB 10.3+ features are available (JSON columns, CTEs)
-- **ASSUMPTION-006**: Frontend React code structure is familiar to student (existing project)
-- **ASSUMPTION-007**: Application will be tested locally before any production deployment
-- **ASSUMPTION-008**: Database will handle typical usage (100 users, 1000 recipes, 5000 reviews) adequately
-- **ASSUMPTION-009**: Student has time to complete project incrementally (2-4 weeks estimated)
-- **ASSUMPTION-010**: Instructor accepts PHP backend as fulfillment of course requirements
+### Views (2)
 
-## 8. Related Specifications / Further Reading
+| View | Description |
+|------|-------------|
+| `vw_recipe_with_stat` | Recipe + like_count + view_count + avg_rating + author info |
+| `vw_user_dashboard_stat` | User's recipe count + favorite count + review count |
+
+### Stored Procedures & Functions (5+1)
+
+| Name | Type | Description |
+|------|------|-------------|
+| `usp_CreateRecipe` | Procedure | Transaction: recipe + ingredients + instructions |
+| `usp_DeleteRecipe` | Procedure | Delete recipe + log activity |
+| `usp_ApproveRecipe` | Procedure | Set status='published' + log |
+| `usp_GetRecipeStat` | Procedure | Aggregated likes/views/avg_rating |
+| `fn_CalculateAvgRating` | Function | Returns DECIMAL avg rating for recipe |
+
+### Triggers (6)
+
+| Name | Table | Event | Description |
+|------|-------|-------|-------------|
+| `trg_RecipeView_UpdateStat` | recipe_view | AFTER INSERT | Increment daily_stat.recipe_view_count |
+| `trg_User_UpdateLastActive` | session | BEFORE UPDATE | Update user.last_active |
+| `trg_Recipe_DeleteCleanup` | recipe | BEFORE DELETE | Log activity_log entry |
+| `trg_User_NewUserStat` | user | AFTER INSERT | Increment daily_stat.new_user_count |
+| `trg_Recipe_SetTimestamp` | recipe | BEFORE INSERT | Set timestamps if NULL |
+| `trg_User_SetTimestamp` | user | BEFORE INSERT | Set timestamps if NULL |
+
+## 10. Related Specifications / Further Reading
 
 ### Course Materials
 - **PHPWebApp.pdf** - Course reference material on PHP web application development
@@ -605,7 +777,6 @@ The migration will transform the current React+Vite application into a three-tie
 - [MySQL Documentation](https://dev.mysql.com/doc/) - Official MySQL reference manual
 - [Database Normalization Guide](https://www.guru99.com/database-normalization.html) - 1NF, 2NF, 3NF explained
 - [ER Diagram Tutorial](https://www.lucidchart.com/pages/er-diagrams) - Entity-Relationship diagram best practices
-- [SQL Tutorial](https://www.w3schools.com/sql/) - W3Schools SQL reference
 
 ### PHP & Backend Development
 - [PHP Manual](https://www.php.net/manual/en/) - Official PHP documentation
@@ -616,38 +787,39 @@ The migration will transform the current React+Vite application into a three-tie
 ### Security
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Top 10 web application security risks
 - [PHP Security Guide](https://www.php.net/manual/en/security.php) - PHP security considerations
-- [SQL Injection Prevention](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html) - OWASP SQL injection prevention
+- [SQL Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html) - OWASP guidelines
 
-### React Integration
-- [Axios Documentation](https://axios-http.com/docs/intro) - HTTP client library
+### React & Frontend
+- [Fetch API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) - Native fetch documentation
 - [React Error Boundaries](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) - Error handling in React
-- [React Query](https://tanstack.com/query/latest) - Optional: Advanced data fetching library
 
-### Project Management
+### Project Resources
 - [Existing Project README](../README.md) - Current project documentation
-- [Serena Project Memories](./.serena/memories/) - Project context and patterns
-- [Database Diagrams](./python_diagrams/) - Existing data flow diagrams
-
-### Tools & Testing
-- [Postman Learning Center](https://learning.postman.com/) - API testing with Postman
-- [phpMyAdmin Documentation](https://docs.phpmyadmin.net/) - Database administration tool
-- [MySQL Workbench](https://www.mysql.com/products/workbench/) - Alternative database design tool
+- [Database Implementation Logic](../guides/database_implementation_logic_explanation.md) - SQL scripts explanation
+- [SQL Scripts Guide](../guides/SQL_SCRIPTS.md) - Consolidated SQL reference
+- [Setup Guide (phpMyAdmin)](../guides/SETUP_GUIDE_PHPMYADMIN.md) - Database setup instructions
 
 ---
 
-**Implementation Timeline Estimate:**
-- Phase 1 (Database Design): 3-5 days
-- Phase 2 (SQL Scripts): 3-4 days
-- Phase 3 (Advanced SQL): 2-3 days
-- Phase 4 (PHP Backend): 7-10 days
-- Phase 5 (Frontend Integration): 5-7 days
-- Phase 6 (Testing & Documentation): 3-4 days
+## Progress Summary
 
-**Total Estimated Time:** 23-33 days (full-time) or 4-7 weeks (part-time course work)
+| Phase | Tasks | Completed | Remaining | Status |
+|-------|-------|-----------|-----------|--------|
+| Phase 1: Database Design | 21 (TASK-001 → TASK-021) | 18 | 3 (ER diagrams) | ✅ SQL Complete |
+| Phase 2: SQL Data Scripts | 22 (TASK-022 → TASK-043) | 22 | 0 | ✅ Complete |
+| Phase 3: Advanced SQL | 13 (TASK-044 → TASK-056) | 13 | 0 | ✅ Complete |
+| Phase 4: PHP Backend | 36 (TASK-057 → TASK-092) | 0 | 36 | ⏳ Not Started |
+| Phase 5: Frontend Integration | 23 (TASK-093 → TASK-115) | 0 | 23 | ⏳ Not Started |
+| Phase 6: Testing & Docs | 23 (TASK-116 → TASK-138) | 0 | 23 | ⏳ Not Started |
+| **Total** | **138** | **53** | **85** | **38% Complete** |
 
 **Priority Levels:**
-- **Critical (Must Have):** Phase 1, Phase 2 (TASK-001 to TASK-042), Phase 4 (TASK-054 to TASK-097), Phase 5 (TASK-098 to TASK-144)
-- **Important (Should Have):** Phase 6 Testing (TASK-145 to TASK-160)
-- **Nice to Have (Optional):** Phase 3 Advanced SQL (TASK-043 to TASK-053), Phase 6 Documentation (TASK-161 to TASK-168)
+- **Critical (Must Have):** Phase 1 (TASK-004 to TASK-021), Phase 2, Phase 4 (TASK-057 to TASK-092), Phase 5 (TASK-093 to TASK-115)
+- **Important (Should Have):** Phase 6 Testing (TASK-118 to TASK-131), Phase 6 Documentation (TASK-132 to TASK-137)
+- **Nice to Have (Optional):** Phase 1 ER Diagrams (TASK-001 to TASK-003), Phase 3 Advanced SQL (already complete)
 
-The implementation should be approached incrementally - get core database and API working first (authentication, recipes, reviews), then add advanced features (stored procedures, triggers) if time permits.
+---
+
+*Document Version History:*
+- **v1.0** (2026-02-04): Initial plan with 170 tasks, MVC backend structure, axios dependency
+- **v2.0** (2026-02-08): Merged plan — simplified backend (flat PHP, no frameworks), native fetch(), session-based auth only, fixed task numbering (138 tasks), added API reference table, database reference section

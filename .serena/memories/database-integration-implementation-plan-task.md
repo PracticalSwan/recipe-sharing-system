@@ -3,116 +3,129 @@
 ## Task Overview
 
 **Date Created:** 2026-02-04  
+**Last Updated:** 2026-02-08  
 **Project:** Recipe Sharing System (CSX3006 Database Systems Course)  
-**Status:** Phases 1-3 SQL Implementation Complete - Phase 4+ Pending
+**Status:** Phases 1-3 Complete — Plan v2.0 Merged — Phase 4+ Pending
 
 ## What Was Done
 
-### 1. Updated Implementation Plan (`upgrade-database-integration-1.md`)
+### Plan Merge: v1.0 → v2.0 (February 8, 2026)
 
-The implementation plan was updated to follow SQL naming conventions from `sql-sp-generation.instructions.md`:
+The implementation plan was **completely rewritten** by merging v1.0 (`upgrade-database-integration-1.md`) with the v2.0 draft (`upgrade-to-fullstack-xampp-option1.md`). The merged document replaces 181 tasks with a cleaner 138-task plan.
 
-#### Database Requirements Updated (REQ-DB-001 to REQ-DB-011)
-- Added requirements for singular table names
-- Added requirements for snake_case column naming
-- Added foreign key constraint naming requirements
-- Added timestamp column requirements (created_at, updated_at)
+#### Key Changes in v2.0 Merge
 
-#### Data Migration Requirements Updated (REQ-MIG-003)
-- Changed from "Support guest user tracking (temporary IDs for non-authenticated views)"
-- To "All recipe views must be associated with authenticated users only (no guest tracking)"
-- Removed guest/user separation - all viewers must be authenticated users
+**Backend Simplified (Major Change):**
+- **v1.0**: 23 PHP files in MVC pattern (models/, controllers/, middleware/)
+- **v2.0**: 12 PHP files in flat procedural structure (config/, helpers/, api/)
+- NO Composer, NO external frameworks, NO MVC pattern
+- Each `api/*.php` file handles its own routing via `$_SERVER['REQUEST_METHOD']`
+- Constraint CON-007 added: "No external PHP frameworks or Composer packages — plain PHP only"
+- ALT-008 added documenting why MVC was rejected
 
-#### Table Designs Updated (TASK-006 to TASK-018)
-- All tables use singular names: `user`, `recipe`, `ingredient`, `instruction`, `recipe_image`, `review`, `favorite`, `like_record`, `recipe_view`, `search_history`, `daily_stat`, `activity_log`, `session`
-- Foreign keys defined inline with ON DELETE CASCADE/SET NULL as appropriate
-- All columns use snake_case naming
+**HTTP Client Changed:**
+- **v1.0**: axios with interceptors
+- **v2.0**: Native `fetch()` with `credentials: 'include'`
+- ALT-007 added documenting why axios was rejected
+- No additional npm dependency needed
 
-#### recipe_view Table Simplified (TASK-014)
-- Removed `viewer_type` ENUM column ('user', 'guest')
-- Removed `guest_identifier` VARCHAR(100) column
-- Changed `viewer_id` to `user_id` with NOT NULL constraint
-- Added ON DELETE CASCADE to user_id foreign key
-- Added `idx_user_viewed` index for user-based view queries
-- All recipe views now require authenticated users only
+**Auth Simplified:**
+- **v1.0**: Session-based auth (primary) with JWT option noted
+- **v2.0**: Session-based ONLY — JWT option fully removed
+- Session table + HttpOnly cookie with SameSite=Lax
 
-#### Advanced SQL Features Updated (TASK-043 to TASK-055)
-- Stored procedures: `usp_` prefix + PascalCase (e.g., `usp_CreateRecipe`, `usp_ApproveRecipe`)
-- Functions: `fn_` prefix + PascalCase (e.g., `fn_CalculateAvgRating`)
-- Views: `vw_` prefix + snake_case (e.g., `vw_recipe_with_stat`, `vw_user_dashboard_stat`)
-- Triggers: `trg_` prefix + TableName_Action (e.g., `trg_User_NewUserStat`, `trg_RecipeView_UpdateStat`)
+**Task Numbering Fixed:**
+- **v1.0**: Had duplicate TASK-021 at Phase 2 start, Phase 6 renumbering issues, 181 total
+- **v2.0**: Clean sequential TASK-001 to TASK-138 (no gaps, no duplicates)
+- Phase 2 now starts at TASK-022
 
-#### Testing Updated (TEST-029)
-- Changed from "Guest View Tracking - Verify view recorded for guest with temporary ID"
-- To "Multiple Views Tracking - Verify same user viewing same recipe multiple times creates multiple view records"
+**OOP Patterns Removed:**
+- Removed PAT-001 to PAT-004 (Repository, Singleton, Builder, Strategy patterns)
+- Not applicable with flat procedural PHP approach
 
-#### Guidelines Updated (GUD-001 to GUD-020, PAT-001 to PAT-004)
-- Added 15 new SQL-specific guidelines
-- SQL keywords UPPERCASE
-- Stored procedure naming conventions
-- Parameter naming with @ prefix and camelCase
+**Sections Added:**
+- Section 8: API Endpoint Reference (31 endpoints across 7 files)
+- Section 9: Database Reference (tables, views, procedures, triggers summary)
+- Version history at document end
 
-### 2. Created Explanation Document (`database_implementation_logic_explanation.md`)
+### Previous Updates (v1.0 history)
 
-Comprehensive document covering:
-- Database design philosophy (3NF normalization)
-- Entity-relationship model with cardinality
-- All 13 table designs with column logic and constraints
-- Naming conventions summary
-- Constraint types and referential integrity
-- Indexing strategy
-- Views logic
-- Stored procedures logic
-- Triggers logic
-- Data seeding strategy
-- Query patterns and examples
-- Security considerations
-- Performance optimization
+1. **2026-02-04**: Initial plan created, then updated with SQL naming conventions from `sql-sp-generation.instructions.md`, frontend-to-backend verification audit (63 storage.js calls mapped), gaps identified and filled (Profile.jsx, Admin pages, search history endpoints)
+2. **2026-02-07**: All Phase 1-3 SQL scripts implemented (14 files), 53 tasks marked complete, guides/SQL_SCRIPTS.md created, Notion pages updated
 
 ## Implementation Status
 
-### ✅ COMPLETED (February 7, 2026)
+### ✅ COMPLETED
 
-1. **Phase 1: Database Design** (TASK-004 to TASK-021) ✅
+1. **Phase 1: Database Design** (TASK-001 to TASK-021) — 18 of 21 tasks ✅
    - All DDL scripts: 01_create_database.sql through 04_create_views.sql
    - 13 tables, 2 views, 25+ indexes
-   - TASK-001 to TASK-003 (ER diagrams/normalization) NOT done - not SQL scripts
+   - TASK-001 to TASK-003 (ER diagrams/normalization) remain unchecked
 
-2. **Phase 2: Data Scripts** (TASK-021 to TASK-042) ✅
+2. **Phase 2: SQL Data Scripts** (TASK-022 to TASK-043) — 22 of 22 tasks ✅
    - All seed data: 05_seed_users.sql through 08_seed_stats.sql
    - All query scripts: 09_common_queries.sql through 11_analytics_queries.sql
 
-3. **Phase 3: Advanced SQL** (TASK-043 to TASK-055) ✅
+3. **Phase 3: Advanced SQL** (TASK-044 to TASK-056) — 13 of 13 tasks ✅
    - Stored procedures: 12_stored_procedures.sql (4 procedures + 1 function)
    - Triggers: 13_triggers.sql (6 triggers with @DISABLE_TRIGGERS pattern)
    - Backup/restore: 14_backup_restore.sql
 
-### Additional Deliverables Created (February 7, 2026)
-- `guides/SQL_SCRIPTS.md` - Consolidated guide with all 14 scripts
-- Notion child page: "CookHub - Complete SQL Scripts Reference" (https://www.notion.so/300e35b852f081c5a148ec7aa1cee4c8)
-- Implementation plan updated: 53 tasks marked ✅ with date 2026-02-07
+### ⏳ NOT YET IMPLEMENTED
 
-### ⏳ NOT YET IMPLEMENTED (Pending)
+4. **Phase 4: PHP Backend** (TASK-057 to TASK-092) — 36 tasks
+   - Flat structure: backend/config/, backend/helpers/, backend/api/
+   - 12 PHP files total (was 23 in v1.0)
+   - 31 API endpoints across 7 api/*.php files
 
-4. **Phase 4: PHP Backend** (TASK-056 to TASK-101)
-   - All PHP API files
+5. **Phase 5: Frontend Integration** (TASK-093 to TASK-115) — 23 tasks
+   - src/lib/api.js (fetch-based, replaces storage.js)
+   - 11 page files to modify
+   - 3 new UI components (LoadingSpinner, ErrorMessage, ErrorBoundary)
+   - storage.js to be deleted
 
-5. **Phase 5: Frontend Integration** (TASK-102 to TASK-157)
-   - Update React components for API calls
-
-6. **Phase 6: Testing & Deployment** (TASK-158 to TASK-170)
-   - Testing and documentation
+6. **Phase 6: Testing & Docs** (TASK-116 to TASK-138) — 23 tasks
+   - 45 test cases defined (TEST-001 to TEST-045)
+   - 7 documentation files to create
 
 ## Key Files
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `plan/upgrade-database-integration-1.md` | Implementation plan | ✅ Updated |
-| `plan/database_implementation_logic_explanation.md` | Logic explanation | ✅ Created |
+| `plan/upgrade-database-integration-1.md` | Implementation plan v2.0 (merged) | ✅ Updated 2026-02-08 |
+| `guides/database_implementation_logic_explanation.md` | Logic explanation | ✅ Created |
 | `database/*.sql` (14 files) | SQL scripts | ✅ Complete (2026-02-07) |
 | `guides/SQL_SCRIPTS.md` | All SQL scripts consolidated | ✅ Complete (2026-02-07) |
-| `backend/**/*.php` | PHP API | ⏳ Pending |
-| `src/lib/api.js` | Frontend API layer | ⏳ Pending |
+| `backend/**/*.php` (12 files) | PHP API (flat structure) | ⏳ Pending |
+| `src/lib/api.js` | Frontend API layer (native fetch) | ⏳ Pending |
+
+## Backend Structure Reference (v2.0)
+
+```
+backend/
+├── .htaccess             # URL rewriting for clean API routes
+├── config/
+│   └── database.php      # PDO connection (singleton pattern)
+├── helpers/
+│   ├── cors.php          # CORS headers for localhost:5173
+│   ├── auth.php          # Session validation & getCurrentUser
+│   └── response.php      # JSON response helpers
+└── api/
+    ├── auth.php           # POST register/login/logout, GET me
+    ├── recipes.php        # CRUD + like/favorite/view
+    ├── reviews.php        # CRUD for reviews
+    ├── users.php          # CRUD + status (admin)
+    ├── search.php         # Search + history
+    ├── stats.php          # Dashboard + daily stats
+    └── activity.php       # Admin activity logs
+```
+
+## Task Count Summary
+
+| Version | Total Tasks | Backend Files | HTTP Client | Auth |
+|---------|-------------|---------------|-------------|------|
+| v1.0 | 181 | 23 (MVC) | axios | Session + JWT option |
+| v2.0 | 138 | 12 (flat) | fetch() | Session only |
 
 ## SQL Naming Convention Summary
 
@@ -128,261 +141,31 @@ Triggers:        trg_Table_Action        → trg_User_NewUserStat
 Indexes:         idx_table_column        → idx_recipe_author_status
 ```
 
-## Frontend to Backend Integration Verification (Completed 2026-02-04)
+## Frontend→Backend Integration (63 storage.js calls → api.js)
 
-### Status Update (2026-02-04)
-
-✅ **ALL MISSING TASKS ADDED TO IMPLEMENTATION PLAN**
-
-The implementation plan has been successfully updated with all identified gaps:
-
-#### Backend Tasks Added to Phase 4:
-- **TASK-098**: GET /api/search/history/:userId endpoint (retrieve user search history)
-- **TASK-099**: DELETE /api/search/history/:userId endpoint (clear user search history)
-
-#### Frontend Tasks Added to Phase 5:
-- **TASK-132**: Implement api.search.getHistory(userId) method
-- **TASK-133**: Implement api.search.clearHistory(userId) method
-- **TASK-140**: Update RecipeDetail.jsx - Remove guest view tracking, require authentication
-- **TASK-142**: Update Search.jsx - Remove storage.getOrCreateGuestId() calls
-- **TASK-143-145**: Profile.jsx updates (3 tasks for user profile, recipe deletion, user data fetching)
-- **TASK-146-148**: UserList.jsx updates (3 tasks for user management, API integration, activity logging removal)
-- **TASK-149-150**: AdminStats.jsx updates (2 tasks for dashboard stats and activity logs)
-- **TASK-151-153**: AdminRecipes.jsx updates (3 tasks for recipe management, approval, deletion)
-
-#### Task Count Summary:
-- **Previous Plan**: 146 tasks
-- **Tasks Added**: 11 tasks
-- **Updated Plan**: 181 tasks total
-
-All frontend components now have explicit backend integration tasks. No localStorage calls will remain after full implementation.
-
----
-
-### Comprehensive Audit Results (Original Verification)
-
-**Verification Goal:** Ensure ALL front-end components connect to backend database, with NO hard-coded data values remaining.
-
-#### Storage.js API Methods (63 calls identified across frontend)
-
-All localStorage operations in `src/lib/storage.js` must be replaced with backend API calls:
-
-##### User Management (15 calls)
-- ✅ `storage.initialize()` → Will be removed (backend handles initialization)
-- ✅ `storage.getCurrentUser()` → API: `GET /api/auth/me`
-- ✅ `storage.login(email, password)` → API: `POST /api/auth/login`
-- ✅ `storage.logout(userId)` → API: `POST /api/auth/logout`
-- ✅ `storage.getUsers()` → API: `GET /api/users`
-- ✅ `storage.saveUser(user)` → API: `PUT /api/users/:id`
-- ✅ `storage.deleteUser(userId)` → API: `DELETE /api/users/:id`
-- ✅ `storage.updateLastActive(userId)` → API: Auto-updated via session middleware
-- ✅ `storage.setCurrentUser(user)` → Client-side state management only
-- ✅ `storage.recordActiveUser(userId)` → API: Trigger via session tracking
-- ✅ `storage.recordNewUser(userId, role)` → API: Trigger via `POST /api/auth/register`
-
-##### Recipe Management (11 calls)
-- ✅ `storage.getRecipes()` → API: `GET /api/recipes`
-- ✅ `storage.getRecipeById(id)` → API: `GET /api/recipes/:id`
-- ✅ `storage.saveRecipe(recipe)` → API: `POST /api/recipes` or `PUT /api/recipes/:id`
-- ✅ `storage.deleteRecipe(recipeId)` → API: `DELETE /api/recipes/:id`
-
-##### Review Management (5 calls)
-- ✅ `storage.getReviews(recipeId)` → API: `GET /api/recipes/:id/reviews`
-- ✅ `storage.addReview(review)` → API: `POST /api/recipes/:id/reviews`
-- ✅ `storage.deleteReview(reviewId)` → API: `DELETE /api/reviews/:id`
-- ✅ `storage.getAverageRating(recipeId)` → API: Included in recipe details response
-
-##### Engagement (8 calls)
-- ✅ `storage.toggleLike(userId, recipeId)` → API: `POST /api/recipes/:id/like`
-- ✅ `storage.toggleFavorite(userId, recipeId)` → API: `POST /api/recipes/:id/favorite`
-- ✅ `storage.hasUserLiked(userId, recipeId)` → API: Included in recipe details
-- ✅ `storage.hasUserFavorited(userId, recipeId)` → API: Included in recipe details
-- ✅ `storage.getLikeCount(recipeId)` → API: Included in recipe stats
-- ✅ `storage.getViewCount(recipeId)` → API: Included in recipe stats
-- ✅ `storage.recordView(options)` → API: `POST /api/recipes/:id/view`
-- ✅ `storage.getOrCreateGuestId()` → **REMOVED** (no guest tracking per REQ-MIG-003)
-
-##### Search & History (4 calls)
-- ✅ `storage.getSearchHistory(userId)` → API: `GET /api/search/history/:userId` (NEW endpoint needed)
-- ✅ `storage.addSearchHistory(query)` → API: `POST /api/search/history`
-- ✅ `storage.clearSearchHistory(userId)` → API: `DELETE /api/search/history/:userId` (NEW endpoint needed)
-
-##### Statistics & Activity (9 calls)
-- ✅ `storage.getDailyStats()` → API: `GET /api/stats/daily`
-- ✅ `storage.getNewUsersToday()` → API: `GET /api/stats/dashboard`
-- ✅ `storage.getNewContributorsToday()` → API: `GET /api/stats/dashboard`
-- ✅ `storage.getDailyActiveUsers()` → API: `GET /api/stats/dashboard`
-- ✅ `storage.getDailyViews()` → API: `GET /api/stats/dashboard`
-- ✅ `storage.addActivity(activity)` → API: Auto-logged via triggers & admin endpoints
-- ✅ `storage.getRecentActivity(limit)` → API: `GET /api/activity`
-- ✅ `storage.resetData()` → **REMOVED** (development only, not in production)
-
-#### Files Using Storage (Component Coverage)
-
-| File | Storage Calls | Backend Integration Status |
-|------|---------------|----------------------------|
-| `src/context/AuthContext.jsx` | 15 calls | ✅ Covered by TASK-130 to TASK-132 |
-| `src/pages/Auth/Login.jsx` | Indirect (via context) | ✅ Covered by TASK-133 |
-| `src/pages/Auth/Signup.jsx` | Indirect (via context) | ✅ Covered by TASK-134 |
-| `src/pages/Recipe/Home.jsx` | 2 calls (`getRecipes`) | ✅ Covered by TASK-135 |
-| `src/pages/Recipe/Search.jsx` | 10 calls | ✅ Covered by TASK-128, TASK-129 |
-| `src/pages/Recipe/RecipeDetail.jsx` | 11 calls | ✅ Covered by TASK-136 |
-| `src/pages/Recipe/CreateRecipe.jsx` | 3 calls | ✅ Covered by TASK-137 |
-| `src/pages/Recipe/Profile.jsx` | 3 calls | ⚠️ **GAP** - Not explicitly in plan |
-| `src/pages/Admin/UserList.jsx` | 8 calls | ⚠️ **GAP** - Not explicitly in plan |
-| `src/pages/Admin/AdminStats.jsx` | 8 calls | ⚠️ **GAP** - Not explicitly in plan |
-| `src/pages/Admin/AdminRecipes.jsx` | 8 calls | ⚠️ **GAP** - Not explicitly in plan |
-| `src/components/recipe/RecipeCard.jsx` | 8 calls | ✅ Covered (used by Home/Search) |
-
-#### Hard-Coded Values Identified
-
-##### ✅ ACCEPTABLE (Reference Data - Should be in Database)
-
-These are currently hard-coded in `src/lib/utils.js` but should ideally come from backend:
-
-```javascript
-RECIPE_CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Italian', 'Asian', 'Health']
-RECIPE_DIFFICULTIES = ['Easy', 'Medium', 'Hard']
-```
-
-**Recommendation:** Add to implementation plan:
-- **TASK-XXX**: Create `category` reference table with seed data
-- **API Endpoint**: `GET /api/recipes/categories` → Returns list of valid categories
-- **API Endpoint**: `GET /api/recipes/difficulties` → Returns list of valid difficulties (or keep as ENUM)
-
-##### ✅ ACCEPTABLE (UI Constants - Can remain client-side)
-
-- Avatar URLs from Dicebear API (default avatars)
-- UI labels, button text, form placeholders
-- Tailwind CSS classes
-- Route paths in React Router
-
-##### 🚨 CRITICAL GAPS FOUND
-
-**Gap 1: Profile Page Update Not Covered**
-- File: `src/pages/Recipe/Profile.jsx`
-- Missing Tasks:
-  - Update user profile (uses `storage.saveUser()`)
-  - Delete recipes from profile (uses `storage.deleteRecipe()`)
-  - Fetch user data (uses `storage.getUsers()`)
-
-**Gap 2: Admin Pages Not Covered**
-- Files: `src/pages/Admin/UserList.jsx`, `AdminStats.jsx`, `AdminRecipes.jsx`
-- Missing Tasks for UserList:
-  - Fetch all users
-  - Update user status
-  - Delete users
-  - Log admin activities
-- Missing Tasks for AdminStats:
-  - Fetch aggregated dashboard statistics
-  - Fetch recent activity logs
-- Missing Tasks for AdminRecipes:
-  - Fetch all recipes (including pending/rejected)
-  - Approve/reject recipes
-  - Delete recipes
-  - Log admin activities
-
-**Gap 3: Search History Endpoints Missing**
-- Current plan has `POST /api/search/history` (TASK-129)
-- Missing:
-  - `GET /api/search/history/:userId` - Retrieve user's search history
-  - `DELETE /api/search/history/:userId` - Clear user's search history
-
-**Gap 4: Guest Tracking Removal Impact**
-- `Search.jsx` and `RecipeDetail.jsx` still reference `storage.getOrCreateGuestId()`
-- These calls must be removed or wrapped in authentication checks
-
-#### Implementation Plan Completeness Assessment
-
-| Phase | Completeness | Missing Items |
-|-------|--------------|---------------|
-| Phase 1: Database Schema | ✅ 100% | None |
-| Phase 2: SQL Data Scripts | ✅ 100% | None |
-| Phase 3: Advanced SQL | ✅ 100% | None |
-| Phase 4: PHP Backend | ⚠️ ~90% | Admin endpoints, search history GET/DELETE |
-| Phase 5: Frontend Integration | ⚠️ ~75% | Profile page, Admin pages updates |
-
-### Required Additions to Implementation Plan
-
-#### Add to Phase 4 (Backend API):
-
-```markdown
-| TASK-098a | Create `controllers/SearchController.php` - GET /api/search/history/:userId endpoint | | |
-| TASK-098b | Create `controllers/SearchController.php` - DELETE /api/search/history/:userId endpoint | | |
-```
-
-#### Add to Phase 5 (Frontend Integration):
-
-```markdown
-| TASK-138 | Update `src/pages/Recipe/Profile.jsx` - Replace storage.saveUser() with api.users.update() | | |
-| TASK-139 | Update `src/pages/Recipe/Profile.jsx` - Replace storage.deleteRecipe() with api.recipes.delete() | | |
-| TASK-140 | Update `src/pages/Recipe/Profile.jsx` - Replace storage.getUsers() with api.users.getById() | | |
-| TASK-141 | Update `src/pages/Admin/UserList.jsx` - Replace storage calls with api.users methods | | |
-| TASK-142 | Update `src/pages/Admin/UserList.jsx` - Replace storage.addActivity() with API auto-logging | | |
-| TASK-143 | Update `src/pages/Admin/AdminStats.jsx` - Replace all storage.get*() with api.stats.getDashboard() | | |
-| TASK-144 | Update `src/pages/Admin/AdminRecipes.jsx` - Replace storage calls with api.recipes methods | | |
-| TASK-145 | Update `src/pages/Recipe/Search.jsx` - Remove storage.getOrCreateGuestId() calls (guest tracking removed) | | |
-| TASK-146 | Update `src/pages/Recipe/RecipeDetail.jsx` - Remove guest view tracking, require authentication | | |
-```
-
-### Final Verification Status
-
-✅ **Database Schema:** Complete - All tables support required frontend features  
-✅ **Guest Tracking:** Removed from plan as required (REQ-MIG-003)  
-✅ **Backend API:** 100% complete - All endpoints including search history GET/DELETE added  
-✅ **Frontend Integration:** 100% complete - All Profile + Admin pages + guest removal tasks added  
-✅ **No Hard-Coded Data:** Categories/difficulties acceptable as constants (can be enhanced with API endpoints later)  
-✅ **Implementation Plan:** Updated with all 181 tasks - Ready for execution
-
-### Implementation Plan Update Summary
-
-**Date Updated:** 2026-02-04  
-**Plan Version:** 1.0 (Updated)  
-**Total Tasks:** 181 (was 146, added 11 frontend tasks + 2 backend tasks + renumbered Phase 6)
-
-**Changes Made:**
-1. Added TASK-098 (GET search history endpoint) to Phase 4
-2. Added TASK-099 (DELETE search history endpoint) to Phase 4  
-3. Added TASK-132-133 (search history API methods) to Phase 5
-4. Updated TASK-140 to include guest tracking removal for RecipeDetail.jsx
-5. Updated TASK-142 to include guest tracking removal for Search.jsx
-6. Added TASK-143-145 for complete Profile.jsx integration (3 tasks)
-7. Added TASK-146-148 for complete UserList.jsx integration (3 tasks)
-8. Added TASK-149-150 for complete AdminStats.jsx integration (2 tasks)
-9. Added TASK-151-153 for complete AdminRecipes.jsx integration (3 tasks)
-10. Renumbered Phase 6 tasks from TASK-158 to TASK-181
-
-**No Further Gaps Identified** - Implementation plan is now complete and ready for execution.
-
----
-
-### Recommendations for Next Implementation Session (UPDATED)
-
-1. ✅ **COMPLETED:** Add missing backend endpoints (search history GET/DELETE) - Added as TASK-098, TASK-099
-2. ✅ **COMPLETED:** Add missing frontend tasks (Profile page, Admin pages) - Added as TASK-143-153
-3. **OPTIONAL:** Consider adding `GET /api/recipes/categories` and `GET /api/recipes/difficulties` for dynamic reference data
-4. ✅ **COMPLETED:** Explicitly document guest tracking removal in frontend tasks - Updated TASK-140, TASK-142
-5. **READY:** Begin Phase 1 implementation following the complete 181-task plan
-
----
-
-## Next Steps for Future Sessions
-
-1. ✅ **COMPLETED:** Add missing tasks to implementation plan (11 tasks added + Phase 6 renumbered)
-2. ✅ **COMPLETED:** Phase 1-3 SQL scripts (14 files in database/ folder, 2026-02-07)
-3. ✅ **COMPLETED:** guides/SQL_SCRIPTS.md consolidated reference
-4. ✅ **COMPLETED:** Notion child page with SQL scripts reference
-5. ✅ **COMPLETED:** Implementation plan updated (53 tasks marked ✅)
-6. **START HERE:** Begin Phase 4 - PHP Backend API Development (TASK-056+)
-7. Follow the complete task sequence in `upgrade-database-integration-1.md`
-8. Reference `guides/database_implementation_logic_explanation.md` for design decisions
-9. Implement one phase at a time, testing each before proceeding
+All 63 localStorage calls from storage.js mapped to API endpoints:
+- User Management: 15 calls → auth.php + users.php
+- Recipe Management: 11 calls → recipes.php
+- Review Management: 5 calls → reviews.php
+- Engagement: 8 calls → recipes.php (like/favorite/view)
+- Search & History: 4 calls → search.php
+- Statistics & Activity: 9 calls → stats.php + activity.php
+- Guest tracking: REMOVED (REQ-MIG-003)
 
 ## Important Reminders
 
 - Follow `sql-sp-generation.instructions.md` for all SQL code
 - Use prepared statements (PDO) in PHP for security
+- Plain PHP only — NO Composer, NO frameworks (CON-007)
+- Native fetch() with credentials:'include' — NO axios
+- Session-based auth ONLY — NO JWT
+- All recipe views require authenticated users (REQ-MIG-003)
 - Test each phase before moving to the next
 - Keep existing React frontend working during migration
-- **All frontend components MUST connect to backend** - no localStorage calls should remain
-- **Remove all guest tracking code** per REQ-MIG-003
+
+## Next Steps
+
+1. **START HERE:** Begin Phase 4 — PHP Backend API Development (TASK-057+)
+2. Follow the 138-task sequence in `upgrade-database-integration-1.md` v2.0
+3. Reference `guides/database_implementation_logic_explanation.md` for design decisions
+4. Implement one phase at a time, testing each before proceeding
