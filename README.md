@@ -22,7 +22,13 @@ A collaborative web application that enables users to share, discover, and inter
 <a id="overview"></a>
 ## 🎯 Overview
 
-The Recipe Sharing System is built to facilitate a community-driven platform where:
+The Recipe Sharing System is currently in two implementation phases:
+
+1. **Current Release (localStorage):** A fully functional demonstration version with browser localStorage persistence, complete with user authentication, recipe management, reviews, admin dashboard, and all features listed below.
+
+2. **Database Integration (In Progress):** A migration to a full-stack application with MySQL/MariaDB database and PHP RESTful API is being developed as part of CSX3006 Database Systems course. This will transform the application into a three-tier architecture (Presentation → Application → Data Layer).
+
+Both versions are designed to facilitate a community-driven platform where:
 - **Guests (Pending Users)** - New registrations start with pending status; can browse and search recipes while awaiting admin approval
 - **Contributors (Active Users)** - Approved users with full platform access; create and manage recipes, interact with content through likes/favorites/reviews
 - **Admins** - Oversee the platform with user activation, recipe approval workflows, analytics, and content moderation
@@ -33,7 +39,7 @@ The system features a **comprehensive approval workflow** where:
 3. Contributors submit recipes → Admin approves before publication
 4. Activity tracking and analytics provide insights into platform engagement
 
-The system uses a **client-side storage approach** with localStorage, making it lightweight and suitable for demonstration and development purposes.
+The system currently uses a **client-side storage approach** with localStorage (demonstration mode), with a **full-stack database integration** in development to migrate to MySQL backend with PHP RESTful API.
 
 <a id="key-features"></a>
 ## ✨ Key Features
@@ -382,6 +388,12 @@ recipe-sharing-system/
 │   ├── main.jsx             # Application entry point
 │   └── index.css            # Global styles
 ├── public/                  # Static assets
+├── plan/                    # Development plans & specifications
+│   └── upgrade-database-integration-1.md  # MySQL + PHP backend migration plan
+├── guides/                  # Setup guides & documentation
+│   ├── database_implementation_logic_explanation.md  # SQL scripts overview
+│   ├── SETUP_GUIDE_PHPMYADMIN.md               # Database setup instructions
+│   └── SQL_SCRIPTS.md                          # SQL scripts reference
 ├── package.json             # Project dependencies & scripts
 ├── vite.config.js          # Vite configuration
 ├── eslint.config.js        # ESLint configuration
@@ -410,7 +422,7 @@ recipe-sharing-system/
 ### Utilities
 - **Clsx** (v2.1.1) - Conditional className utility
 - **date-fns** (v4.1.0) - Modern JavaScript date utility library for formatting and manipulation
-
+**Note:** Database scripts are complete and ready for implementation. See [Database Integration Plan](plan/upgrade-database-integration-1.md) for details on MySQL + PHP backend migration (current progress: 62% complete).
 <a id="system-diagrams"></a>
 ## 📊 System Diagrams
 
@@ -472,16 +484,52 @@ These diagrams provide comprehensive documentation for understanding the system'
 <a id="data-storage"></a>
 ## 💾 Data Storage
 
-The application uses **browser localStorage** for data persistence:
+### Current Storage: Browser localStorage
 
-### Stored Data
+The application currently uses **browser localStorage** for data persistence:
+
+**Stored Data:**
 1. **User Accounts** - All registered user profiles and credentials
 2. **Recipes** - All submitted recipes with their metadata
 3. **Reviews & Ratings** - User feedback on recipes (enforces one per user per recipe)
 4. **Session Data** - Current logged-in user information
-5. **Search History** - User search queries with timestamps (query-only, no filters)
+5. **Search History** - User search queries with timestamps
 6. **Daily Stats** - Page views, active users per day
 7. **Activity Logs** - Admin action history (user management, recipe approvals)
+
+### Database Integration (In Progress)
+
+**Target Storage:** MySQL/MariaDB Database + PHP RESTful API
+
+A comprehensive database backend is being developed as part of CSX3006 Database Systems course:
+
+**Database Features:**
+- **13 normalized tables** (3NF design) with proper constraints
+- **2 views** for complex queries (recipe statistics, user dashboard)
+- **5 stored procedures** for complex operations
+- **6 triggers** for automatic logging and statistics updates
+- **Complete seed data** matching current localStorage structure
+- **Full RESTful API** in plain PHP with PDO
+- **Session-based authentication** with HttpOnly cookies
+
+**Database Tables:**
+| Table | Description |
+|--------|-------------|
+| `user` | User accounts with roles (admin/user) and status (active/inactive/pending/suspended) |
+| `recipe` | Recipe metadata with status (published/pending/rejected) |
+| `ingredient` | Recipe ingredients with quantity/unit |
+| `instruction` | Step-by-step cooking instructions |
+| `recipe_image` | Multiple images per recipe |
+| `review` | Star ratings + comments (one per user per recipe) |
+| `favorite` | Saved/bookmarked recipes |
+| `like_record` | Recipe likes |
+| `recipe_view` | View tracking (authenticated users) |
+| `search_history` | Search query history |
+| `daily_stat` | Daily aggregation (views, active users, new users) |
+| `activity_log` | Admin action audit trail |
+| `session` | Server-side session tokens |
+
+**Progress:** View detailed implementation plan at [plan/upgrade-database-integration-1.md](plan/upgrade-database-integration-1.md) (62% complete — SQL scripts done, backend integration in progress)
 
 ### Initial Data
 The application comes with **comprehensive seed data** including:
@@ -534,6 +582,8 @@ This rich seed data allows you to immediately explore all features without creat
 | `lina@cookhub.com` | `lina123` | Lina Patel | User | Active/Inactive |
 | `omar@cookhub.com` | `omar123` | Omar Hassan | User | Pending |
 
+**Note:** These credentials are for the localStorage version. The database version will create matching accounts during seeding.
+
 ### Resetting Data
 
 To reset all data to the initial seed state, open the browser console and run:
@@ -549,6 +599,21 @@ storage.resetData();
 Or manually delete in the browser console -> Application -> Local storage
 
 <a id="support"></a>
-## 📧 Support
+## � Related Documentation
+
+### Database Integration
+- **[Database Integration Plan](plan/upgrade-database-integration-1.md)** — Complete migration plan to MySQL + PHP backend (62% complete)
+- **[Database Setup Guide](guides/SETUP_GUIDE_PHPMYADMIN.md)** — Step-by-step MySQL/XAMPP installation and configuration
+- **[Database Logic Explanation](guides/database_implementation_logic_explanation.md)** — Detailed SQL scripts documentation
+- **[SQL Scripts Reference](guides/SQL_SCRIPTS.md)** — Complete SQL scripts catalog
+
+### System Diagrams
+- **[Application Flowchart](mermaid-diagrams/application_flowchart_clean.mmd)** — Complete user journey and workflow
+- **[Data Flow Diagram](mermaid-diagrams/data-flow-from-py.mmd)** — Data movement through system layers
+
+### Project Resources
+- **[Upgrade Plan](plan/upgrade-database-integration-1.md)** — MySQL + PHP backend development roadmap
+
+## �📧 Support
 
 For issues, questions, or contributions, please contact the development team or submit an issue through the project repository.
