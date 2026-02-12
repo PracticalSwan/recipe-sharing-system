@@ -1,6 +1,6 @@
 # CSX3006 Database Project - Implementation Updates
 
-**Last Updated:** February 8, 2026
+**Last Updated:** February 13, 2026
 
 ---
 
@@ -34,6 +34,34 @@ The implementation plan was completely merged and rewritten:
 - Database Reference (tables, views, procedures, triggers)
 - ALT-007 (axios rejected), ALT-008 (MVC rejected)
 - Version history
+
+---
+
+## SQL Scripts Fixes (February 13, 2026)
+
+### Comprehensive Review Completed
+**User Request:** "Review and analyze the implementation plan in the project, review the SQL scripts and change/fix everything if you found fixes. All the SQL scripts must follow the project flow."
+
+**Issue Identified:** Scripts 09-14 used incorrect column names that didn't match authoritative schema in `02_create_tables.sql`.
+
+**Root Cause:** Query/procedure/trigger scripts (09-14) were written using a different naming convention than DDL/seed scripts (01-08). They assumed PKs named `table_id` (e.g., `recipe_id`, `user_id`) on parent tables, a `display_name` column, `cuisine` instead of `category`, etc.
+
+### Fixed Scripts Summary
+
+| # | File | Changes |
+|---|------|---------|
+| 09 | `09_common_queries.sql` | Rewrote 5 queries: `recipe_id`→`id`, `user_id`→`id` (PKs), `cuisine`→`category`, `display_name`→`username`, `amount`→`quantity`, `description`→`instruction_text`, `is_primary`→`display_order`, removed `caption`, fixed JOIN/WHERE |
+| 10 | `10_admin_queries.sql` | Rewrote 5 queries: Same column fixes, removed `'draft'` status, fixed `display_name`→`first_name`+`last_name`+`username` |
+| 11 | `11_analytics_queries.sql` | Rewrote 6 queries: Same fixes, fixed ENUM case (`'easy'`→`'Easy'`), renamed "Cuisine"→"Category" distribution |
+| 12 | `12_stored_procedures.sql` | Rewrote 4 procedures + usage: `pCuisine`→`pCategory`, fixed ENUM case, `cuisine`→`category`, `is_primary,caption`→`display_order`, `amount`→`quantity`, `description`→`instruction_text`, `WHERE recipe_id=`→`WHERE id=` on parent tables |
+| 13 | `13_triggers.sql` | 2 targeted fixes: `WHERE user_id=`→`WHERE id=` in user update, `OLD.recipe_id`→`OLD.id` in recipe delete |
+| 14 | `14_backup_restore.sql` | 1 targeted fix: Removed `display_name`, replaced with `username, first_name, last_name` |
+
+### Verification Status
+✅ All 14 SQL scripts are now consistent with authoritative schema in [02_create_tables.sql](database/02_create_tables.sql).
+✅ No remaining `display_name`, `OLD.recipe_id`, lowercase ENUM values, or column mismatches.
+
+**Detailed Documentation:** See [csx3006-sql-fixes-2026-02-13.md](.serena/memories/csx3006-sql-fixes-2026-02-13.md)
 
 ---
 

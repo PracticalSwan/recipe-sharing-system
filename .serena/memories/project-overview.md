@@ -1,1 +1,66 @@
-Project: Recipe Sharing System (React + Vite + Tailwind v4). Client-only app with localStorage persistence. Entry is in main render, Router is HashRouter. Roles: admin, user (contributor), pending guest; status controls permissions. Core features: auth, recipe CRUD, approval workflow, search/filter/sort, ratings/reviews, likes/favorites, profile editing, admin dashboards, daily stats/activity logs. Currently using localStorage as single data layer. v2.0 plan adds MySQL/MariaDB via PHP REST API (flat procedural, XAMPP) with session-based auth. Plan: plan/upgrade-database-integration-1.md (138 tasks, 38% complete — Phases 1-3 SQL done, Phase 4 PHP backend pending).
+Project: Recipe Sharing System (React 19 + Vite + Tailwind v4). CSX3006 Database Systems course project.
+
+**Current Focus:** Database implementation complete with all 14 SQL scripts verified and corrected (February 13, 2026).
+
+**Technology Stack:**
+- Frontend: React 19 + Vite + Tailwind v4
+- Database: MySQL/MariaDB with 13 tables + 6 triggers + 4 stored procedures
+- Backend: Plain PHP (flat procedural, XAMPP) — Phase 4 pending
+- Auth: Session-based with HttpOnly cookies
+- HTTP: Native fetch() with credentials:'include'
+
+---
+
+**Project Status — 38% Complete (Phases 1-3 of 6)**
+
+**✅ Phase 1: Database Design** — 100% Complete
+- All 13 tables designed with FKs and constraints
+- Naming conventions: singular tables, snake_case columns, `id` PKs
+
+**✅ Phase 2: SQL Data Scripts** — 100% Complete
+- Scripts 01-04: Database, tables, indexes, views
+- Scripts 05-08: Seed data (users, recipes, reviews, stats)
+
+**✅ Phase 3: Advanced SQL** — 100% Complete
+- Script 09-12: Query libraries, stored procedures, functions
+- Script 13-14: Triggers, backup/restore utilities
+- **February 13, 2026:** Comprehensive review and fixes applied to scripts 09-14 for schema consistency
+
+**⏳ Phase 4: PHP Backend** — 0% Complete (Not Started)
+- PDO connection, session management, CRUD API endpoints
+- 36 tasks remaining (TASK-057 → TASK-092)
+
+**⏳ Phase 5: Frontend Integration** — 0% Complete (Not Started)
+- Session auth integration, API client migration, localStorage replacement
+- 23 tasks remaining (TASK-093 → TASK-115)
+
+**⏳ Phase 6: Testing & Docs** — 0% Complete (Not Started)
+- end-to-end testing, performance validation, documentation
+- 23 tasks remaining (TASK-116 → TASK-138)
+
+---
+
+**Recent Completion (February 13, 2026):**
+- Full review of all 14 SQL scripts vs authoritative schema (02_create_tables.sql)
+- Fixed column name mismatches in scripts 09-14:
+  - Parent table PK corrections: `recipe_id`→`id`, `user_id`→`id`
+  - Column renames: `cuisine`→`category`, `display_name`→`username`, `amount`→`quantity`, `description`→`instruction_text`, `is_primary`→`display_order`
+  - ENUM case fixes: `'easy'`→`'Easy'`, etc.
+  - Removed non-existent columns: `caption`, `display_name`
+- Verification completed — all scripts now consistent with schema
+
+---
+
+**Next Steps:**
+1. Execute SQL scripts 01-14 in phpMyAdmin (build complete database)
+2. Create `backend/` folder structure with flat PHP files
+3. Implement `database.php` (PDO connection)
+4. Implement `auth.php` (register/login/logout)
+5. Follow 138-task sequence in [upgrade-database-integration-1.md](../../plan/upgrade-database-integration-1.md)
+
+---
+
+**Implementation Plan:** 138 tasks across 6 phases
+**Documentation:** [upgrade-database-integration-1.md](../../plan/upgrade-database-integration-1.md) (v2.0)
+**Database Reference:** [csx3006-database-project-updates.md](../csx3006-database-project-updates.md)
+**SQL Fix Details:** [csx3006-sql-fixes-2026-02-13.md](../csx3006-sql-fixes-2026-02-13.md)
