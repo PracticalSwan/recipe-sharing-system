@@ -44,7 +44,7 @@ BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
         UPDATE user
         SET last_active = NOW()
-        WHERE user_id = NEW.user_id;
+        WHERE id = NEW.user_id;
     END IF;
 END //
 
@@ -64,7 +64,7 @@ BEGIN
         IF NOT EXISTS (
             SELECT 1 FROM activity_log
             WHERE target_type = 'recipe'
-              AND target_id = OLD.recipe_id
+              AND target_id = OLD.id
               AND action_type = 'recipe_delete'
               AND created_at >= DATE_SUB(NOW(), INTERVAL 5 SECOND)
         ) THEN
@@ -73,7 +73,7 @@ BEGIN
                 COALESCE(@current_admin_id, 1),
                 'recipe_delete',
                 'recipe',
-                OLD.recipe_id,
+                OLD.id,
                 CONCAT('Trigger-logged deletion of recipe: ', OLD.title)
             );
         END IF;

@@ -27,16 +27,17 @@ ORDER BY role, status;
 
 -- Full user list for admin management (paginated)
 SELECT
-    u.user_id,
+    u.id,
     u.username,
     u.email,
-    u.display_name,
+    u.first_name,
+    u.last_name,
     u.role,
     u.status,
-    DATE_FORMAT(u.created_at, '%Y-%m-%d') AS joined_date,
+    DATE_FORMAT(u.joined_date, '%Y-%m-%d') AS joined_date,
     DATE_FORMAT(u.last_active, '%Y-%m-%d %H:%i') AS last_active,
-    (SELECT COUNT(*) FROM recipe WHERE author_id = u.user_id) AS recipe_count,
-    (SELECT COUNT(*) FROM review WHERE user_id = u.user_id)   AS review_count
+    (SELECT COUNT(*) FROM recipe WHERE author_id = u.id) AS recipe_count,
+    (SELECT COUNT(*) FROM review WHERE user_id = u.id)   AS review_count
 FROM user u
 ORDER BY u.created_at DESC
 LIMIT 20 OFFSET 0;
@@ -54,30 +55,29 @@ SELECT
     COUNT(DISTINCT author_id) AS unique_authors
 FROM recipe
 GROUP BY status
-ORDER BY FIELD(status, 'pending', 'published', 'rejected', 'draft');
+ORDER BY FIELD(status, 'pending', 'published', 'rejected');
 
 -- Full recipe list for admin management
 SELECT
-    r.recipe_id,
+    r.id,
     r.title,
     r.status,
-    r.cuisine,
+    r.category,
     r.difficulty,
-    u.display_name AS author_name,
+    u.username     AS author_name,
     u.email        AS author_email,
     DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_date,
     DATE_FORMAT(r.updated_at, '%Y-%m-%d') AS updated_date,
-    (SELECT COUNT(*) FROM review      WHERE recipe_id = r.recipe_id) AS review_count,
-    (SELECT COUNT(*) FROM like_record  WHERE recipe_id = r.recipe_id) AS like_count,
-    (SELECT COUNT(*) FROM recipe_view  WHERE recipe_id = r.recipe_id) AS view_count
+    (SELECT COUNT(*) FROM review      WHERE recipe_id = r.id) AS review_count,
+    (SELECT COUNT(*) FROM like_record  WHERE recipe_id = r.id) AS like_count,
+    (SELECT COUNT(*) FROM recipe_view  WHERE recipe_id = r.id) AS view_count
 FROM recipe r
-INNER JOIN user u ON r.author_id = u.user_id
+INNER JOIN user u ON r.author_id = u.id
 ORDER BY
     CASE r.status
         WHEN 'pending' THEN 1
         WHEN 'published' THEN 2
         WHEN 'rejected' THEN 3
-        WHEN 'draft' THEN 4
     END,
     r.created_at DESC;
 
@@ -87,25 +87,25 @@ ORDER BY
 -- Demonstrates: INNER JOIN, WHERE, subquery, ORDER BY date
 -- ============================================================================
 SELECT
-    r.recipe_id,
+    r.id,
     r.title,
     r.description,
-    r.cuisine,
+    r.category,
     r.difficulty,
     r.prep_time,
     r.cook_time,
     r.servings,
-    u.user_id      AS author_id,
-    u.display_name AS author_name,
+    u.id           AS author_id,
+    u.username     AS author_name,
     u.email        AS author_email,
     u.status       AS author_status,
     DATE_FORMAT(r.created_at, '%Y-%m-%d %H:%i') AS submitted_date,
     DATEDIFF(NOW(), r.created_at) AS days_pending,
-    (SELECT COUNT(*) FROM ingredient  WHERE recipe_id = r.recipe_id) AS ingredient_count,
-    (SELECT COUNT(*) FROM instruction WHERE recipe_id = r.recipe_id) AS instruction_count,
-    (SELECT image_url FROM recipe_image WHERE recipe_id = r.recipe_id AND is_primary = 1 LIMIT 1) AS image_url
+    (SELECT COUNT(*) FROM ingredient  WHERE recipe_id = r.id) AS ingredient_count,
+    (SELECT COUNT(*) FROM instruction WHERE recipe_id = r.id) AS instruction_count,
+    (SELECT image_url FROM recipe_image WHERE recipe_id = r.id ORDER BY display_order ASC LIMIT 1) AS image_url
 FROM recipe r
-INNER JOIN user u ON r.author_id = u.user_id
+INNER JOIN user u ON r.author_id = u.id
 WHERE r.status = 'pending'
 ORDER BY r.created_at ASC;
 
@@ -136,19 +136,19 @@ SELECT
 -- Demonstrates: INNER JOIN, ORDER BY, DATE_FORMAT, LIMIT
 -- ============================================================================
 SELECT
-    al.log_id,
+    al.id,
     al.action_type,
     al.target_type,
     al.target_id,
     al.description,
     DATE_FORMAT(al.created_at, '%Y-%m-%d %H:%i') AS action_date,
-    u.display_name AS admin_name,
+    u.username     AS admin_name,
     CASE al.target_type
-        WHEN 'recipe' THEN (SELECT title FROM recipe WHERE recipe_id = al.target_id)
-        WHEN 'user'   THEN (SELECT display_name FROM user WHERE user_id = al.target_id)
+        WHEN 'recipe' THEN (SELECT title FROM recipe WHERE id = al.target_id)
+        WHEN 'user'   THEN (SELECT username FROM user WHERE id = al.target_id)
         ELSE NULL
     END AS target_name
 FROM activity_log al
-INNER JOIN user u ON al.admin_id = u.user_id
+INNER JOIN user u ON al.admin_id = u.id
 ORDER BY al.created_at DESC
 LIMIT 50;

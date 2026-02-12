@@ -65,11 +65,12 @@ USE cookhub;
 
 -- Generate INSERT statements for all users (useful for migration)
 SELECT CONCAT(
-    'INSERT INTO user (username, email, password_hash, display_name, role, status, bio, avatar_url) VALUES (',
+    'INSERT INTO user (username, first_name, last_name, email, password_hash, role, status, bio, avatar_url) VALUES (',
     QUOTE(username), ', ',
+    QUOTE(first_name), ', ',
+    QUOTE(last_name), ', ',
     QUOTE(email), ', ',
     QUOTE(password_hash), ', ',
-    QUOTE(display_name), ', ',
     QUOTE(role), ', ',
     QUOTE(status), ', ',
     IFNULL(QUOTE(bio), 'NULL'), ', ',

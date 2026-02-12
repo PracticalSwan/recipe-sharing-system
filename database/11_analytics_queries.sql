@@ -18,50 +18,50 @@ USE cookhub;
 
 -- Top 10 by views
 SELECT
-    r.recipe_id,
+    r.id,
     r.title,
-    r.cuisine,
-    u.display_name AS author_name,
-    COUNT(rv.view_id) AS total_views,
-    (SELECT COUNT(*) FROM like_record WHERE recipe_id = r.recipe_id)            AS like_count,
-    (SELECT ROUND(AVG(rating), 1) FROM review WHERE recipe_id = r.recipe_id)   AS avg_rating
+    r.category,
+    u.username AS author_name,
+    COUNT(rv.id) AS total_views,
+    (SELECT COUNT(*) FROM like_record WHERE recipe_id = r.id)            AS like_count,
+    (SELECT ROUND(AVG(rating), 1) FROM review WHERE recipe_id = r.id)   AS avg_rating
 FROM recipe r
-INNER JOIN user u        ON r.author_id = u.user_id
-LEFT JOIN recipe_view rv ON r.recipe_id = rv.recipe_id
+INNER JOIN user u        ON r.author_id = u.id
+LEFT JOIN recipe_view rv ON r.id = rv.recipe_id
 WHERE r.status = 'published'
-GROUP BY r.recipe_id, r.title, r.cuisine, u.display_name
+GROUP BY r.id, r.title, r.category, u.username
 ORDER BY total_views DESC
 LIMIT 10;
 
 -- Top 10 by likes
 SELECT
-    r.recipe_id,
+    r.id,
     r.title,
-    r.cuisine,
-    u.display_name AS author_name,
-    COUNT(lr.like_id) AS total_likes,
-    (SELECT ROUND(AVG(rating), 1) FROM review WHERE recipe_id = r.recipe_id) AS avg_rating
+    r.category,
+    u.username AS author_name,
+    COUNT(lr.id) AS total_likes,
+    (SELECT ROUND(AVG(rating), 1) FROM review WHERE recipe_id = r.id) AS avg_rating
 FROM recipe r
-INNER JOIN user u       ON r.author_id = u.user_id
-LEFT JOIN like_record lr ON r.recipe_id = lr.recipe_id
+INNER JOIN user u       ON r.author_id = u.id
+LEFT JOIN like_record lr ON r.id = lr.recipe_id
 WHERE r.status = 'published'
-GROUP BY r.recipe_id, r.title, r.cuisine, u.display_name
+GROUP BY r.id, r.title, r.category, u.username
 ORDER BY total_likes DESC
 LIMIT 10;
 
 -- Top 10 by average rating (minimum 2 reviews)
 SELECT
-    r.recipe_id,
+    r.id,
     r.title,
-    r.cuisine,
-    u.display_name AS author_name,
-    COUNT(rv.review_id)         AS review_count,
+    r.category,
+    u.username AS author_name,
+    COUNT(rv.id)                AS review_count,
     ROUND(AVG(rv.rating), 2)    AS avg_rating
 FROM recipe r
-INNER JOIN user u   ON r.author_id = u.user_id
-INNER JOIN review rv ON r.recipe_id = rv.recipe_id
+INNER JOIN user u   ON r.author_id = u.id
+INNER JOIN review rv ON r.id = rv.recipe_id
 WHERE r.status = 'published'
-GROUP BY r.recipe_id, r.title, r.cuisine, u.display_name
+GROUP BY r.id, r.title, r.category, u.username
 HAVING review_count >= 2
 ORDER BY avg_rating DESC, review_count DESC
 LIMIT 10;
@@ -72,20 +72,20 @@ LIMIT 10;
 -- Demonstrates: Subqueries, LEFT JOIN, complex aggregation
 -- ============================================================================
 SELECT
-    u.user_id,
-    u.display_name,
+    u.id,
+    u.username,
     u.status,
-    DATE_FORMAT(u.created_at, '%Y-%m-%d') AS joined_date,
-    (SELECT COUNT(*) FROM recipe WHERE author_id = u.user_id AND status = 'published') AS published_recipes,
-    (SELECT COUNT(*) FROM review WHERE user_id = u.user_id)                            AS reviews_written,
-    (SELECT ROUND(AVG(rating), 1) FROM review WHERE user_id = u.user_id)               AS avg_rating_given,
-    (SELECT COUNT(*) FROM like_record WHERE user_id = u.user_id)                       AS likes_given,
+    DATE_FORMAT(u.joined_date, '%Y-%m-%d') AS joined_date,
+    (SELECT COUNT(*) FROM recipe WHERE author_id = u.id AND status = 'published') AS published_recipes,
+    (SELECT COUNT(*) FROM review WHERE user_id = u.id)                            AS reviews_written,
+    (SELECT ROUND(AVG(rating), 1) FROM review WHERE user_id = u.id)               AS avg_rating_given,
+    (SELECT COUNT(*) FROM like_record WHERE user_id = u.id)                       AS likes_given,
     (SELECT COUNT(*) FROM like_record lr
-       INNER JOIN recipe r ON lr.recipe_id = r.recipe_id
-       WHERE r.author_id = u.user_id)                                                  AS likes_received,
-    (SELECT COUNT(*) FROM favorite WHERE user_id = u.user_id)                          AS favorites_count,
-    (SELECT COUNT(*) FROM recipe_view WHERE user_id = u.user_id)                       AS recipes_viewed,
-    (SELECT COUNT(*) FROM search_history WHERE user_id = u.user_id)                    AS searches_made
+       INNER JOIN recipe r ON lr.recipe_id = r.id
+       WHERE r.author_id = u.id)                                                  AS likes_received,
+    (SELECT COUNT(*) FROM favorite WHERE user_id = u.id)                          AS favorites_count,
+    (SELECT COUNT(*) FROM recipe_view WHERE user_id = u.id)                       AS recipes_viewed,
+    (SELECT COUNT(*) FROM search_history WHERE user_id = u.id)                    AS searches_made
 FROM user u
 WHERE u.role = 'user'
 ORDER BY published_recipes DESC, likes_received DESC;
@@ -134,26 +134,26 @@ ORDER BY month DESC;
 
 
 -- ============================================================================
--- QUERY 4: Cuisine distribution and popularity analysis
+-- QUERY 4: Category distribution and popularity analysis
 -- Demonstrates: GROUP BY, COUNT, SUM with CASE, LEFT JOIN multi-aggregate
 -- ============================================================================
 SELECT
-    r.cuisine,
+    r.category,
     COUNT(*)                                                  AS recipe_count,
     COUNT(CASE WHEN r.status = 'published' THEN 1 END)       AS published_count,
     SUM(CASE WHEN r.status = 'published' THEN 1 ELSE 0 END)
         / COUNT(*) * 100                                      AS publish_rate_pct,
     (SELECT COUNT(*) FROM recipe_view rv
-       INNER JOIN recipe r2 ON rv.recipe_id = r2.recipe_id
-       WHERE r2.cuisine = r.cuisine)                          AS total_views,
+       INNER JOIN recipe r2 ON rv.recipe_id = r2.id
+       WHERE r2.category = r.category)                        AS total_views,
     (SELECT COUNT(*) FROM like_record lr
-       INNER JOIN recipe r2 ON lr.recipe_id = r2.recipe_id
-       WHERE r2.cuisine = r.cuisine)                          AS total_likes,
+       INNER JOIN recipe r2 ON lr.recipe_id = r2.id
+       WHERE r2.category = r.category)                        AS total_likes,
     (SELECT ROUND(AVG(rev.rating), 2) FROM review rev
-       INNER JOIN recipe r2 ON rev.recipe_id = r2.recipe_id
-       WHERE r2.cuisine = r.cuisine)                          AS avg_rating
+       INNER JOIN recipe r2 ON rev.recipe_id = r2.id
+       WHERE r2.category = r.category)                        AS avg_rating
 FROM recipe r
-GROUP BY r.cuisine
+GROUP BY r.category
 ORDER BY recipe_count DESC;
 
 
@@ -195,7 +195,7 @@ SELECT
     ROUND(AVG(r.cook_time)) AS avg_cook_min,
     ROUND(AVG(r.prep_time + r.cook_time)) AS avg_total_min,
     ROUND(AVG(
-        (SELECT AVG(rating) FROM review WHERE recipe_id = r.recipe_id)
+        (SELECT AVG(rating) FROM review WHERE recipe_id = r.id)
     ), 2) AS avg_rating,
     CASE
         WHEN AVG(r.prep_time + r.cook_time) <= 30 THEN 'Quick (<=30 min)'
@@ -205,4 +205,4 @@ SELECT
 FROM recipe r
 WHERE r.status = 'published'
 GROUP BY r.difficulty
-ORDER BY FIELD(r.difficulty, 'easy', 'medium', 'hard');
+ORDER BY FIELD(r.difficulty, 'Easy', 'Medium', 'Hard');

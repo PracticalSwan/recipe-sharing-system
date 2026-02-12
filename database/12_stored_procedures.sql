@@ -18,17 +18,17 @@ DELIMITER //
 -- PROCEDURE: usp_CreateRecipe
 -- Purpose:   Create a complete recipe with ingredients and instructions
 --            in a single transaction
--- Params:    @pAuthorId, @pTitle, @pDescription, @pCuisine, @pDifficulty,
+-- Params:    @pAuthorId, @pTitle, @pDescription, @pCategory, @pDifficulty,
 --            @pPrepTime, @pCookTime, @pServings, @pImageUrl,
 --            @pIngredients (JSON array), @pInstructions (JSON array)
--- Returns:   The new recipe_id
+-- Returns:   The new recipe id
 -- ============================================================================
 CREATE PROCEDURE usp_CreateRecipe(
     IN pAuthorId    INT,
     IN pTitle       VARCHAR(200),
     IN pDescription TEXT,
-    IN pCuisine     VARCHAR(100),
-    IN pDifficulty  ENUM('easy', 'medium', 'hard'),
+    IN pCategory    VARCHAR(50),
+    IN pDifficulty  ENUM('Easy', 'Medium', 'Hard'),
     IN pPrepTime    INT,
     IN pCookTime    INT,
     IN pServings    INT,
@@ -53,30 +53,30 @@ BEGIN
     START TRANSACTION;
 
     -- Insert the recipe
-    INSERT INTO recipe (author_id, title, description, cuisine, difficulty,
+    INSERT INTO recipe (author_id, title, description, category, difficulty,
                         prep_time, cook_time, servings, status)
-    VALUES (pAuthorId, pTitle, pDescription, pCuisine, pDifficulty,
+    VALUES (pAuthorId, pTitle, pDescription, pCategory, pDifficulty,
             pPrepTime, pCookTime, pServings, 'pending');
 
     SET pRecipeId = LAST_INSERT_ID();
 
     -- Insert primary image if provided
     IF pImageUrl IS NOT NULL AND pImageUrl != '' THEN
-        INSERT INTO recipe_image (recipe_id, image_url, is_primary, caption)
-        VALUES (pRecipeId, pImageUrl, 1, CONCAT('Primary image for ', pTitle));
+        INSERT INTO recipe_image (recipe_id, image_url, display_order)
+        VALUES (pRecipeId, pImageUrl, 1);
     END IF;
 
     -- Insert ingredients from JSON array
-    -- Expected JSON format: [{"name":"...", "amount":"...", "unit":"..."},...]
+    -- Expected JSON format: [{"name":"...", "quantity":"...", "unit":"..."},...]
     SET v_ingredientCount = JSON_LENGTH(pIngredients);
     SET v_index = 0;
 
     WHILE v_index < v_ingredientCount DO
-        INSERT INTO ingredient (recipe_id, name, amount, unit, sort_order)
+        INSERT INTO ingredient (recipe_id, name, quantity, unit, sort_order)
         VALUES (
             pRecipeId,
             JSON_UNQUOTE(JSON_EXTRACT(pIngredients, CONCAT('$[', v_index, '].name'))),
-            JSON_UNQUOTE(JSON_EXTRACT(pIngredients, CONCAT('$[', v_index, '].amount'))),
+            JSON_UNQUOTE(JSON_EXTRACT(pIngredients, CONCAT('$[', v_index, '].quantity'))),
             JSON_UNQUOTE(JSON_EXTRACT(pIngredients, CONCAT('$[', v_index, '].unit'))),
             v_index + 1
         );
@@ -84,16 +84,16 @@ BEGIN
     END WHILE;
 
     -- Insert instructions from JSON array
-    -- Expected JSON format: [{"description":"Step 1 text"},...]
+    -- Expected JSON format: [{"instruction_text":"Step 1 text"},...]
     SET v_instructionCount = JSON_LENGTH(pInstructions);
     SET v_index = 0;
 
     WHILE v_index < v_instructionCount DO
-        INSERT INTO instruction (recipe_id, step_number, description)
+        INSERT INTO instruction (recipe_id, step_number, instruction_text)
         VALUES (
             pRecipeId,
             v_index + 1,
-            JSON_UNQUOTE(JSON_EXTRACT(pInstructions, CONCAT('$[', v_index, '].description')))
+            JSON_UNQUOTE(JSON_EXTRACT(pInstructions, CONCAT('$[', v_index, '].instruction_text')))
         );
         SET v_index = v_index + 1;
     END WHILE;
@@ -127,7 +127,7 @@ BEGIN
     SELECT title, author_id
     INTO v_recipeTitle, v_authorId
     FROM recipe
-    WHERE recipe_id = pRecipeId;
+    WHERE id = pRecipeId;
 
     IF v_recipeTitle IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -146,7 +146,7 @@ BEGIN
     DELETE FROM ingredient   WHERE recipe_id = pRecipeId;
 
     -- Delete the recipe itself
-    DELETE FROM recipe WHERE recipe_id = pRecipeId;
+    DELETE FROM recipe WHERE id = pRecipeId;
 
     -- Log the admin action
     INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
@@ -187,7 +187,7 @@ BEGIN
     SELECT status, title
     INTO v_currentStatus, v_recipeTitle
     FROM recipe
-    WHERE recipe_id = pRecipeId;
+    WHERE id = pRecipeId;
 
     IF v_currentStatus IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -224,7 +224,7 @@ BEGIN
     -- Update recipe status
     UPDATE recipe
     SET status = v_newStatus, updated_at = NOW()
-    WHERE recipe_id = pRecipeId;
+    WHERE id = pRecipeId;
 
     -- Log the admin action
     INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
@@ -245,10 +245,10 @@ CREATE PROCEDURE usp_GetRecipeStat(
 )
 BEGIN
     SELECT
-        r.recipe_id,
+        r.id AS recipe_id,
         r.title,
         r.status,
-        u.display_name AS author_name,
+        u.username AS author_name,
         DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_date,
         (SELECT COUNT(*) FROM recipe_view WHERE recipe_id = pRecipeId)                AS total_views,
         (SELECT COUNT(*) FROM like_record WHERE recipe_id = pRecipeId)                AS total_likes,
@@ -259,8 +259,8 @@ BEGIN
         (SELECT MAX(rating) FROM review WHERE recipe_id = pRecipeId)                  AS max_rating,
         (SELECT COUNT(DISTINCT user_id) FROM recipe_view WHERE recipe_id = pRecipeId) AS unique_viewers
     FROM recipe r
-    INNER JOIN user u ON r.author_id = u.user_id
-    WHERE r.recipe_id = pRecipeId;
+    INNER JOIN user u ON r.author_id = u.id
+    WHERE r.id = pRecipeId;
 END //
 
 
@@ -303,14 +303,14 @@ DELIMITER ;
 --     4,                                                    -- author_id (John)
 --     'Grilled Cheese Sandwich',                            -- title
 --     'Classic comfort food',                               -- description
---     'American',                                           -- cuisine
---     'easy',                                               -- difficulty
+--     'American',                                           -- category
+--     'Easy',                                               -- difficulty
 --     5,                                                    -- prep_time
 --     10,                                                   -- cook_time
 --     1,                                                    -- servings
 --     'https://images.unsplash.com/photo-grilled-cheese',   -- image_url
---     '[{"name":"Bread","amount":"2","unit":"slices"},{"name":"Cheese","amount":"2","unit":"slices"},{"name":"Butter","amount":"1","unit":"tbsp"}]',
---     '[{"description":"Butter one side of each bread slice."},{"description":"Place cheese between bread slices."},{"description":"Grill on medium heat until golden and cheese is melted."}]',
+--     '[{"name":"Bread","quantity":"2","unit":"slices"},{"name":"Cheese","quantity":"2","unit":"slices"},{"name":"Butter","quantity":"1","unit":"tbsp"}]',
+--     '[{"instruction_text":"Butter one side of each bread slice."},{"instruction_text":"Place cheese between bread slices."},{"instruction_text":"Grill on medium heat until golden and cheese is melted."}]',
 --     @new_recipe_id
 -- );
 -- SELECT @new_recipe_id;
