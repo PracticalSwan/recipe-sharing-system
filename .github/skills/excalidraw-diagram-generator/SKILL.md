@@ -37,6 +37,18 @@ Use this skill when users request:
 - Identification of key entities, steps, or concepts
 - Understanding of relationships or flow between elements
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple ASCII diagrams or text-based representations
+- Task is conceptual discussion without need for visual artifacts
+- User asks basic questions about diagram types (e.g., "what is a flowchart?")
+- Request is for drawings using other tools (e.g., draw.io, mermaid)
+- User wants quick sketch without formal diagram structure or Excalidraw JSON
+- Task doesn't involve programmatically generating or updating diagram files
+
+---
+
 ## Step-by-Step Workflow
 
 ### Step 1: Understand the Request

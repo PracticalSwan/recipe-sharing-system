@@ -27,6 +27,16 @@ Comprehensive toolkit for testing and debugging web applications using Playwrigh
 - Running JavaScript in page context, capturing console messages
 - Performance profiling and identifying bottlenecks
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple HTML/CSS inspection without testing/debugging
+- Task is basic web development guidance without browser automation
+- User asks general questions about web testing tools (e.g., "what is Playwright?")
+- Request is for manual browser usage or user testing (not automated)
+- User wants quick fix without needing Playwright scripts or DevTools analysis
+- Task doesn't involve actual testing, debugging, or browser automation
+
 ---
 
 ## Part 1: Playwright Testing

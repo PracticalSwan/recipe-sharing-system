@@ -30,6 +30,15 @@ Structured approach to software development ensuring requirements are clearly de
 - Managing project decisions and trade-offs documentation
 - Tracking progress and blockers
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple code fixes or small changes without needing full workflows
+- Task is purely about writing code without planning or documentation
+- User asks basic Git questions without contribution context (e.g., "how do I commit?")
+- Request is for a quick example or tutorial without development workflow
+- User needs help with a specific implementation detail rather than overall process
+- Task doesn't involve structured development or planning phases
 ---
 
 ## Part 1: Spec-Driven Development

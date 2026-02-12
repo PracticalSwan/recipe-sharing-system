@@ -38,6 +38,16 @@ Expert guidance for building high-quality React applications with React 19+, mod
 - Writing tests with React Testing Library
 - Ensuring accessibility compliance (ARIA, keyboard nav)
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple React examples or tutorials without implementing features
+- Task is basic JavaScript question without React context
+- User asks general questions about React (e.g., "what is React?")
+- Request is for other frameworks (e.g., Vue, Angular, Svelte)
+- User wants quick demo code without full component implementation context
+- Task is about plain HTML/CSS/JavaScript or other libraries
+
 ---
 
 ## Part 1: React Fundamentals

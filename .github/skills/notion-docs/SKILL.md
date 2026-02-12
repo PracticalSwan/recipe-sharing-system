@@ -16,7 +16,15 @@ Effective documentation and review workflows using Notion MCP tools for structur
 - Setting up review workflows with comments
 - Structuring team documentation and onboarding guides
 
----
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple text notes or markdown documents
+- Task is general productivity advice without Notion context
+- User asks basic questions about Notion (e.g., "what is Notion?")
+- Request is for note-taking using other tools (e.g., Obsidian, Evernote)
+- User wants quick list or memo without database/formatted content
+- Task doesn't involve Notion workspace, database, or page management
 
 ## Prerequisites
 

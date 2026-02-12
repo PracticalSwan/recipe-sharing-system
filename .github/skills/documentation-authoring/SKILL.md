@@ -19,9 +19,16 @@ Expert guidance for creating structured, high-quality documentation across all t
 - Translating vague ideas into concrete technical specifications
 - Stakeholders need unified "source of truth" for project scope
 
----
+## No-Activation Conditions
 
-## Part 1: Document Creation Workflow
+**Do NOT activate this skill when:**
+- User requests simple README updates or minor documentation tweaks
+- Task is adding comments to code rather than structured documentation
+- User asks basic questions about documentation formats (e.g., "what is markdown?")
+- Request is for quick notes or temporary documentation without formal structure
+- Task doesn't involve creating structured docs, proposals, or specifications
+- User needs help with something that requires writing but not formal documentation
+
 
 ### Structured Co-Authoring Approach
 

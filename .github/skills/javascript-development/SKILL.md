@@ -38,6 +38,16 @@ Expert guidance for writing modern JavaScript code with ES2024+ features, async 
 - Authentication with JWT tokens
 - CORS and error handling
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple JavaScript examples or tutorials (e.g., "show me a loop")
+- Task is basic syntax question without implementation context
+- User asks general JavaScript questions (e.g., "what is a callback?")
+- Request is for a different language (e.g., Python, PHP, SQL)
+- User wants quick code snippet without full implementation or best practice guidance
+- Task is about a framework or library outside modern JavaScript (e.g., React, Vue)
+
 ---
 
 ## Part 1: Modern JavaScript (ES2024+)

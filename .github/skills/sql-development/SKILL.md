@@ -16,7 +16,15 @@ Comprehensive SQL development guidelines combining SQL coding standards, stored 
 - Performance tuning and query optimization
 - Database backup, restore, and security configuration
 - SQL Server 2025+ feature adoption and migration
+## No-Activation Conditions
 
+**Do NOT activate this skill when:**
+- User requests simple SQL SELECT examples without implementation context
+- Task is for other databases (e.g., PostgreSQL, MySQL) when not using MS SQL Server
+- User asks basic conceptual questions about databases (e.g., "what is SQL?")
+- Request is for ORM usage (e.g., ActiveRecord, Entity Framework) without raw SQL
+- User wants quick query example without DBA or optimization context
+- Task is about data modeling/design without SQL implementation detail
 ---
 
 ## Part 1: Database Schema Design

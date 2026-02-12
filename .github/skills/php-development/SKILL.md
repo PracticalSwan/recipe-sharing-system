@@ -38,6 +38,16 @@ Expert guidance for building high-quality PHP applications with PHP 8.0+, PDO fo
 - Error handling and logging
 - Rate limiting and API versioning
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple PHP code examples without implementation context
+- Task is basic PHP syntax question without building features
+- User asks generic questions about PHP (e.g., "what is a PHP array?")
+- Request is for a different language (e.g., JavaScript, Python, SQL)
+- User wants quick tutorial code without framework or best practice context
+- Task is about non-PHP technologies (e.g., MySQL administration, Apache config without PHP)
+
 ---
 
 ## Part 1: PHP 8.0+ Fundamentals

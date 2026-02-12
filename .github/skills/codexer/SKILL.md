@@ -17,6 +17,16 @@ Expert Python researcher with 10+ years of software development experience. Cond
 - Evaluating dependencies for maintenance, security, and performance
 - Implementing production-ready Python code with proper error handling
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple Python code snippets or examples without research context
+- Task is basic Python coding without need for library research or Context7
+- User asks general questions about Python (e.g., "what is Python?")
+- Request is for non-Python tasks (e.g., JavaScript, SQL)
+- User wants quick tutorial-style code without research or documentation lookup
+- Task doesn't involve comparing, evaluating, or selecting Python libraries
+
 ---
 
 ## Available Tools Configuration

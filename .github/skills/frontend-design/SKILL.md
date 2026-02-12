@@ -33,6 +33,15 @@ Expert guidance for creating beautiful, accessible, and responsive frontend desi
 - Fixing accessibility violations
 - "Review website design", "check UI", "fix layout", "find design problems"
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple CSS changes without design context
+- Task is basic styling (e.g., "change this button color") without design principles
+- User asks generic design questions (e.g., "what is accessible design?")
+- Request is for functionality implementation rather than UI/UX design
+- User wants quick fix that doesn't need comprehensive design review
+- Task is about backend logic, API, or database without frontend design
 ---
 
 ## Part 1: Color Theory & Palettes

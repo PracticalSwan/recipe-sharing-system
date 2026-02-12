@@ -30,6 +30,16 @@ Comprehensive skill for improving code quality through code review, surgical ref
 - Adding iterative improvement to agent outputs (code, reports, analysis)
 - Measuring and improving agent response quality
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests basic code examples or tutorials without implementing or reviewing
+- User asks purely informational questions about code quality (e.g., "what is refactoring?")
+- Request is for a simple one-off task that doesn't benefit from rigorous quality processes
+- User wants quick help without detailed code review or refactoring guidance
+- Task is simple enough that standard coding practices suffice (no complex refactoring needed)
+- Request is about language syntax or learning basics rather than code improvement
+
 ---
 
 ## Part 1: Code Review

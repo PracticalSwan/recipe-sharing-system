@@ -16,7 +16,15 @@ Effective usage of the Serena MCP Server for project memory management, code int
 - Setting up Serena onboarding for new projects
 - Using Serena's memory system for project context preservation
 
----
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests general programming help without Serena context
+- Task is in a workspace not Serena-enabled
+- User asks basic questions about VS Code or AI tools without Serena
+- Request is for regular development tasks without Serena tool usage
+- User wants simple file operations without Serena workspace context
+- Task involves Serena documentation but not using Serena tools in workflow
 
 ## Prerequisites
 

@@ -34,6 +34,16 @@ Expert guidance for using Vite 6+ as the build tool for React and other web appl
 - Writing custom Vite plugins
 - Configuring plugin options and hooks
 
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User requests simple Vite commands without configuration context
+- Task is for other build tools (e.g., Webpack, Rollup) without Vite
+- User asks basic questions about build tools (e.g., "what is Vite?")
+- Request is for framework-specific help not involving Vite configuration
+- User wants to run a basic dev command without setup or optimization
+- Task involves building but Vite configuration is straightforward/unchanged
+
 ---
 
 ## Part 1: Project Configuration
