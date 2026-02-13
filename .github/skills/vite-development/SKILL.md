@@ -1,7 +1,7 @@
 ---
 name: vite-development
 description: Vite 6+ tooling expertise for fast builds, HMR, and optimized production assets. Use when configuring Vite, optimizing build performance, or setting up React/Vue projects.
-license: See repository root LICENSE.
+license: Complete terms in LICENSE.txt
 ---
 
 # Vite Development
