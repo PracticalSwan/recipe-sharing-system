@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: Comprehensive code quality management including code review, refactoring techniques, and self-improvement loops for agent outputs. Covers surgical code refactoring, code review prioritization, evaluation rubrics, and iterative improvement workflows. Use when reviewing code, refactoring existing implementations, implementing self-critique systems, or improving code maintainability and quality.
+description: Comprehensive code quality management including code review, refactoring techniques, and self-improvement loops for agent outputs. Covers surgical code refactoring, code review prioritization, evaluation rubrics, and iterative improvement workflows. Use when reviewing code, refactoring existing implementations, implementing self-critique systems, or improving code maintainability and quality. Triggered by keywords like code review, refactor code, improve code quality, code smell, technical debt, code cleanup, code optimization, maintainability.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Comprehensive skill for improving code quality through code review, surgical refactoring, and self-evaluation loops.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Code Review:**
 - Performing code reviews, analyzing pull requests
@@ -30,7 +35,7 @@ Comprehensive skill for improving code quality through code review, surgical ref
 - Adding iterative improvement to agent outputs (code, reports, analysis)
 - Measuring and improving agent response quality
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests basic code examples or tutorials without implementing or reviewing

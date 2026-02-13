@@ -1,6 +1,6 @@
 ---
 name: react-development
-description: Comprehensive React development expertise with React 19+, modern hooks, TypeScript, custom hooks, Tailwind CSS integration, state management patterns, and performance optimization. Use when building React components, implementing custom hooks, managing state (useState, useReducer, useContext), data fetching (React Query, SWR), or optimizing React app performance. Covers component design, hooks patterns, form handling, routing, testing, and accessibility.
+description: Comprehensive React development expertise with React 19+, modern hooks, TypeScript, custom hooks, Tailwind CSS integration, state management patterns, and performance optimization. Use when building React components, implementing custom hooks, managing state (useState, useReducer, useContext), data fetching (React Query, SWR), or optimizing React app performance. Covers component design, hooks patterns, form handling, routing, testing, and accessibility. Triggered by keywords like React component, React hooks, useState, useEffect, custom hook, React state management, React Query, SWR, React testing, React performance.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Expert guidance for building high-quality React applications with React 19+, modern hooks, TypeScript, and best practices following official React documentation at https://react.dev.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Core React Development:**
 - Building React components with hooks and TypeScript
@@ -38,7 +43,7 @@ Expert guidance for building high-quality React applications with React 19+, mod
 - Writing tests with React Testing Library
 - Ensuring accessibility compliance (ARIA, keyboard nav)
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple React examples or tutorials without implementing features

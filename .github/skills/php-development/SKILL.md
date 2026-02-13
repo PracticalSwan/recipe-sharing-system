@@ -1,6 +1,6 @@
 ---
 name: php-development
-description: Comprehensive PHP development expertise for XAMPP environment, RESTful API development, PDO database integration, and modern PHP 8.0+ best practices. Use when building PHP backends, creating API endpoints, working with MySQL/MariaDB, implementing authentication, or configuring XAMPP environments.
+description: Comprehensive PHP development expertise for XAMPP environment, RESTful API development, PDO database integration, and modern PHP 8.0+ best practices. Use when building PHP backends, creating API endpoints, working with MySQL/MariaDB, implementing authentication, or configuring XAMPP environments. Triggered by keywords like PHP development, XAMPP, RESTful API, PDO, MySQL, MariaDB, PHP authentication, backend development, API endpoints.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Expert guidance for building high-quality PHP applications with PHP 8.0+, PDO for secure database access, RESTful API design, and XAMPP environment configuration following official PHP documentation at https://php.net.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Core PHP Development:**
 - Building PHP RESTful APIs with proper HTTP methods
@@ -38,7 +43,7 @@ Expert guidance for building high-quality PHP applications with PHP 8.0+, PDO fo
 - Error handling and logging
 - Rate limiting and API versioning
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple PHP code examples without implementation context

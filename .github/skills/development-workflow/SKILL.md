@@ -1,6 +1,6 @@
 ---
 name: development-workflow
-description: Structured software development workflow combining spec-driven development, repository contribution guidelines, and project lifecycle management. Covers EARS notation for requirements, technical design documentation, implementation tracking, contribution guidelines, project planning, quality assurance processes, and Git/GitHub workflows. Use when starting new features, defining requirements, creating technical designs, managing implementation plans, ensuring thorough documentation, or contributing to repositories.
+description: Structured software development workflow combining spec-driven development, repository contribution guidelines, and project lifecycle management. Covers EARS notation for requirements, technical design documentation, implementation tracking, contribution guidelines, project planning, quality assurance processes, and Git/GitHub workflows. Use when starting new features, defining requirements, creating technical designs, managing implementation plans, ensuring thorough documentation, or contributing to repositories. Triggered by keywords like development workflow, project planning, feature development, requirements gathering, technical design, code review process, Git workflow, repository management.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Structured approach to software development ensuring requirements are clearly defined, designs are meticulously planned, and implementations are thoroughly documented with proper contribution practices.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Project Planning & Requirements:**
 - Starting new features or phases of work
@@ -30,7 +35,7 @@ Structured approach to software development ensuring requirements are clearly de
 - Managing project decisions and trade-offs documentation
 - Tracking progress and blockers
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple code fixes or small changes without needing full workflows

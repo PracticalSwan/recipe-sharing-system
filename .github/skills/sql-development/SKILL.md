@@ -1,6 +1,6 @@
 ---
 name: sql-development
-description: SQL development standards combining stored procedure generation and MS SQL Server DBA best practices. Use when writing SQL queries, generating stored procedures, designing database schemas, performing DBA tasks, tuning SQL Server performance, managing backups, configuring security, or working with SQL Server 2025+ features.
+description: SQL development standards combining stored procedure generation and MS SQL Server DBA best practices. Use when writing SQL queries, generating stored procedures, designing database schemas, performing DBA tasks, tuning SQL Server performance, managing backups, configuring security, or working with SQL Server 2025+ features. Triggered by keywords like SQL query, stored procedure, database schema, DBA tasks, SQL Server performance, backup management, SQL security, database design, T-SQL.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Comprehensive SQL development guidelines combining SQL coding standards, stored procedure generation, and MS SQL Server DBA best practices.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 - Writing SQL queries and stored procedures
 - Designing database schemas and table structures
@@ -16,7 +21,7 @@ Comprehensive SQL development guidelines combining SQL coding standards, stored 
 - Performance tuning and query optimization
 - Database backup, restore, and security configuration
 - SQL Server 2025+ feature adoption and migration
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple SQL SELECT examples without implementation context

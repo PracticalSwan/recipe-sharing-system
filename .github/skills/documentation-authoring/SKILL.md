@@ -1,6 +1,6 @@
 ---
 name: documentation-authoring
-description: Master the art of structured documentation creation including PRDs, technical specs, design docs, decision records, and knowledge bases. Comprehensive workflow for context gathering, iterative refinement, and reader testing to ensure documentation works well for its audience. Use when writing documentation, creating proposals, drafting specs, defining requirements, or planning features.
+description: Master the art of structured documentation creation including PRDs, technical specs, design docs, decision records, and knowledge bases. Comprehensive workflow for context gathering, iterative refinement, and reader testing to ensure documentation works well for its audience. Use when writing documentation, creating proposals, drafting specs, defining requirements, or planning features. Triggered by keywords like documentation writing, technical writing, PRD creation, specification document, design document, knowledge base, decision record, API documentation.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Expert guidance for creating structured, high-quality documentation across all types of technical and business documents.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Trigger Conditions:**
 - User mentions writing documentation: "write a doc", "draft a proposal", "create a spec", "write up"
@@ -19,7 +24,7 @@ Expert guidance for creating structured, high-quality documentation across all t
 - Translating vague ideas into concrete technical specifications
 - Stakeholders need unified "source of truth" for project scope
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple README updates or minor documentation tweaks

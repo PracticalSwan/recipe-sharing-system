@@ -1,6 +1,6 @@
 ---
 name: javascript-development
-description: Comprehensive JavaScript development expertise with ES2024+, modern async/await patterns, DOM manipulation, Node.js, and API integration. Use when writing JavaScript code, creating React components, working with APIs, implementing frontend functionality, or configuring build tools.
+description: Comprehensive JavaScript development expertise with ES2024+, modern async/await patterns, DOM manipulation, Node.js, and API integration. Use when writing JavaScript code, creating React components, working with APIs, implementing frontend functionality, or configuring build tools. Triggered by keywords like JavaScript code, ES2024, async await, DOM manipulation, Node.js, API integration, React components, frontend functionality, build tools.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Expert guidance for writing modern JavaScript code with ES2024+ features, async programming patterns, DOM manipulation, API integration, and best practices following official JavaScript resources at https://developer.mozilla.org/en-US/docs/Web/JavaScript.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Core JavaScript Development:**
 - Writing modern JavaScript with ES2024+ features
@@ -38,7 +43,7 @@ Expert guidance for writing modern JavaScript code with ES2024+ features, async 
 - Authentication with JWT tokens
 - CORS and error handling
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple JavaScript examples or tutorials (e.g., "show me a loop")

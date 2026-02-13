@@ -1,6 +1,6 @@
 ---
 name: notion-docs
-description: Notion documentation and workspace management using Notion MCP tools for creating databases, pages, comments, and structured knowledge bases. Use when creating Notion pages, building Notion databases, managing documentation in Notion, organizing project wikis, adding comments for review workflows, or integrating Notion into development documentation processes.
+description: Notion documentation and workspace management using Notion MCP tools for creating databases, pages, comments, and structured knowledge bases. Use when creating Notion pages, building Notion databases, managing documentation in Notion, organizing project wikis, adding comments for review workflows, or integrating Notion into development documentation processes. Triggered by keywords like Notion documentation, Notion database, Notion workspace, documentation management, knowledge base, project wiki, review workflows, Notion integration.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Effective documentation and review workflows using Notion MCP tools for structured knowledge management.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 - Creating and organizing documentation in Notion
 - Building Notion databases for project tracking
@@ -16,7 +21,7 @@ Effective documentation and review workflows using Notion MCP tools for structur
 - Setting up review workflows with comments
 - Structuring team documentation and onboarding guides
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple text notes or markdown documents

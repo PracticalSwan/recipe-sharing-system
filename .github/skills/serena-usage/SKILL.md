@@ -1,6 +1,6 @@
 ---
 name: serena-usage
-description: Serena MCP Server usage for project memory management, code navigation, and intelligent refactoring. Use when working with Serena memories, managing project context across sessions, performing symbol-based code navigation, executing safe code refactoring, or maintaining continuity between AI agent sessions using Serena's memory system.
+description: Serena MCP Server usage for project memory management, code navigation, and intelligent refactoring. Use when working with Serena memories, managing project context across sessions, performing symbol-based code navigation, executing safe code refactoring, or maintaining continuity between AI agent sessions using Serena's memory system. Triggered by keywords like Serena MCP, project memory, code navigation, symbol navigation, intelligent refactoring, memory management, AI session continuity, Serena memory system.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Effective usage of the Serena MCP Server for project memory management, code intelligence, and maintaining continuity across AI agent sessions.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 - Managing project memories for AI session continuity
 - Navigating codebases using symbol-based tools
@@ -16,7 +21,7 @@ Effective usage of the Serena MCP Server for project memory management, code int
 - Setting up Serena onboarding for new projects
 - Using Serena's memory system for project context preservation
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests general programming help without Serena context

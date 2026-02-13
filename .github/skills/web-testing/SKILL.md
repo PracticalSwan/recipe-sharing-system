@@ -1,6 +1,6 @@
 ---
 name: web-testing
-description: Comprehensive web application testing toolkit combining Playwright automation, Chrome DevTools debugging, and browser interaction. Supports verifying frontend functionality, debugging UI behavior, capturing screenshots, viewing browser logs, network traffic analysis, console inspection, and user flow validation. Covers local web applications and remote sites.
+description: Comprehensive web application testing toolkit combining Playwright automation, Chrome DevTools debugging, and browser interaction. Supports verifying frontend functionality, debugging UI behavior, capturing screenshots, viewing browser logs, network traffic analysis, console inspection, and user flow validation. Covers local web applications and remote sites. Triggered by keywords like web testing, Playwright, browser automation, UI testing, screenshot capture, DevTools debugging, network analysis, console inspection, user flow testing.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Comprehensive toolkit for testing and debugging web applications using Playwright automation and Chrome DevTools.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Playwright Testing:**
 - Testing frontend functionality in a real browser
@@ -27,7 +32,7 @@ Comprehensive toolkit for testing and debugging web applications using Playwrigh
 - Running JavaScript in page context, capturing console messages
 - Performance profiling and identifying bottlenecks
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple HTML/CSS inspection without testing/debugging

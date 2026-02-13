@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Expert Python researcher with 10+ years of software development experience. Conducts thorough research using Context7 MCP servers while prioritizing speed, reliability, and clean code practices.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 - Conducting library research and evaluation for Python projects
 - Fetching documentation via Context7 MCP tools
@@ -17,7 +22,7 @@ Expert Python researcher with 10+ years of software development experience. Cond
 - Evaluating dependencies for maintenance, security, and performance
 - Implementing production-ready Python code with proper error handling
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple Python code snippets or examples without research context

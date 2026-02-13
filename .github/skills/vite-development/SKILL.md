@@ -1,6 +1,6 @@
 ---
 name: vite-development
-description: Vite 6+ tooling expertise for fast builds, HMR, and optimized production assets. Use when configuring Vite, optimizing build performance, or setting up React/Vue projects.
+description: Vite 6+ tooling expertise for fast builds, HMR, and optimized production assets. Use when configuring Vite, optimizing build performance, or setting up React/Vue projects. Triggered by keywords like Vite configuration, Vite build, hot module replacement, Vite plugin, frontend build tool, Vite performance, Vite HMR, Vite setup.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Expert guidance for using Vite 6+ as the build tool for React and other web applications with modern frontend development patterns. Documentation grounded in the official Vite docs at https://vite.dev/.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Project Setup & Configuration:**
 - Initializing new Vite projects
@@ -34,7 +39,7 @@ Expert guidance for using Vite 6+ as the build tool for React and other web appl
 - Writing custom Vite plugins
 - Configuring plugin options and hooks
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple Vite commands without configuration context

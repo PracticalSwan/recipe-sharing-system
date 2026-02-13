@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: Comprehensive frontend design expertise combining color theory, responsive design principles, React component design with Tailwind CSS, and visual UI review. Covers the 60-30-10 color rule, accessibility compliance (WCAG), responsive layouts, UI component patterns, and design quality assessment. Use when creating UI designs, choosing color palettes, building responsive layouts, ensuring accessibility, or reviewing and fixing frontend design issues.
+description: Comprehensive frontend design expertise combining color theory, responsive design principles, React component design with Tailwind CSS, and visual UI review. Covers the 60-30-10 color rule, accessibility compliance (WCAG), responsive layouts, UI component patterns, and design quality assessment. Use when creating UI designs, choosing color palettes, building responsive layouts, ensuring accessibility, or reviewing and fixing frontend design issues. Triggered by keywords like UI design, frontend design, responsive design, color palette, accessibility, WCAG, component design, Tailwind CSS, visual design.
 license: Complete terms in LICENSE.txt
 ---
 
@@ -8,7 +8,12 @@ license: Complete terms in LICENSE.txt
 
 Expert guidance for creating beautiful, accessible, and responsive frontend designs using modern UI principles, color theory, and React+Tailwind CSS patterns.
 
-## When to Use This Skill
+## Skill Paths
+
+- Workspace skills: `.github/skills/`
+- Global skills: `C:/Users/LOQ/.copilot/skills/`
+
+## Activation Conditions
 
 **Color & Design:**
 - Choosing color palettes for applications
@@ -33,7 +38,7 @@ Expert guidance for creating beautiful, accessible, and responsive frontend desi
 - Fixing accessibility violations
 - "Review website design", "check UI", "fix layout", "find design problems"
 
-## No-Activation Conditions
+## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
 - User requests simple CSS changes without design context
