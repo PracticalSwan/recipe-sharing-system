@@ -72,6 +72,7 @@ The migration will transform the current React+Vite application into a three-tie
 - **REQ-API-006**: Support CORS for React frontend communication
 - **REQ-API-007**: Implement session-based authentication using the `session` table and HTTP cookies
 - **REQ-API-008**: Include input validation and sanitization for all endpoints
+- **REQ-API-009**: Application data endpoints require authenticated sessions (only `/api/auth/register` and `/api/auth/login` are public)
 
 ### Frontend Integration Requirements
 - **REQ-FE-001**: Maintain all existing React components without breaking changes
@@ -93,7 +94,7 @@ The migration will transform the current React+Vite application into a three-tie
 ### Data Migration Requirements
 - **REQ-MIG-001**: Preserve existing seed data structure from storage.js
 - **REQ-MIG-002**: Maintain data relationships (users, recipes, reviews, etc.)
-- **REQ-MIG-003**: All recipe views must be associated with authenticated users only (no guest tracking)
+- **REQ-MIG-003**: All recipe views must be associated with authenticated non-admin users only (no guest tracking, no admin view tracking)
 
 ### Constraints
 - **CON-001**: Must work with XAMPP environment (Apache + MySQL + PHP)
@@ -121,7 +122,7 @@ The migration will transform the current React+Vite application into a three-tie
 - **GUD-014**: Function names must use 'fn_' prefix and PascalCase (e.g., fn_CalculateAvgRating)
 - **GUD-015**: View names must use 'vw_' prefix and snake_case (e.g., vw_recipe_with_stat)
 - **GUD-016**: Trigger names must use 'trg_' prefix followed by TableName_Action (e.g., trg_Recipe_DeleteCleanup)
-- **GUD-017**: Stored procedure parameters must use '@' prefix with camelCase (e.g., @recipeId, @authorId)
+- **GUD-017**: Stored procedure parameters must use `p_` prefix with snake_case (e.g., `p_recipe_id`, `p_author_id`)
 - **GUD-018**: Provide default values for optional stored procedure parameters
 - **GUD-019**: Document stored procedures with header comment blocks including description, parameters, and return values
 - **GUD-020**: Temporary tables must use 'tmp_' prefix
@@ -256,21 +257,21 @@ backend/
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-067 | `GET /api/recipes` - Return published recipes with optional filters: `?category=`, `?difficulty=`, `?search=`, `?sort=`, `?page=`, `?limit=`. JOIN with user for author info, include like_count/view_count/avg_rating from aggregation | | |
-| TASK-068 | `GET /api/recipes/{id}` - Return full recipe with nested: ingredients (ORDER BY sort_order), instructions (ORDER BY step_number), images (ORDER BY display_order), author info, stats (likes, views, avg_rating), user-specific flags (isLiked, isFavorited) | | |
+| TASK-067 | `GET /api/recipes` - requireAuth, return published recipes with optional filters: `?category=`, `?difficulty=`, `?search=`, `?sort=`, `?page=`, `?limit=`. JOIN with user for author info, include like_count/view_count/avg_rating from aggregation | | |
+| TASK-068 | `GET /api/recipes/{id}` - requireAuth, return full recipe with nested: ingredients (ORDER BY sort_order), instructions (ORDER BY step_number), images (ORDER BY display_order), author info, stats (likes, views, avg_rating), user-specific flags (isLiked, isFavorited) | | |
 | TASK-069 | `POST /api/recipes` - requireAuth, validate fields, INSERT recipe with status='pending', INSERT ingredients array, INSERT instructions array with step_numbers, return created recipe with ID | | |
 | TASK-070 | `PUT /api/recipes/{id}` - requireAuth, verify ownership (author_id = current user OR admin), UPDATE recipe fields, replace ingredients (DELETE old + INSERT new), replace instructions, return updated recipe | | |
 | TASK-071 | `DELETE /api/recipes/{id}` - requireAuth, verify ownership or admin role, DELETE recipe (CASCADE handles related data), return success | | |
 | TASK-072 | `PUT /api/recipes/{id}/status` - requireAuth + requireAdmin, validate status ('published'/'rejected'), UPDATE recipe.status, INSERT activity_log entry, return updated recipe | | |
 | TASK-073 | `POST /api/recipes/{id}/like` - requireAuth, toggle: check if like_record exists for user+recipe → DELETE if yes, INSERT if no. Return { liked: bool, likeCount: int } | | |
 | TASK-074 | `POST /api/recipes/{id}/favorite` - requireAuth, toggle: check if favorite exists for user+recipe → DELETE if yes, INSERT if no. Return { favorited: bool } | | |
-| TASK-075 | `POST /api/recipes/{id}/view` - requireAuth, INSERT into recipe_view (user_id, recipe_id). Triggers handle daily_stat update. Return success | | |
+| TASK-075 | `POST /api/recipes/{id}/view` - requireAuth, INSERT into recipe_view (user_id, recipe_id) only when current user role = 'user'. Skip tracking for admin role and return success. Triggers handle daily_stat update. | | |
 
 **Review API Endpoints (`api/reviews.php`):**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-076 | `GET /api/reviews?recipe_id={id}` - Return all reviews for recipe, JOIN with user for reviewer info (username, avatar_url), ORDER BY created_at DESC | | |
+| TASK-076 | `GET /api/reviews?recipe_id={id}` - requireAuth, return all reviews for recipe, JOIN with user for reviewer info (username, avatar_url), ORDER BY created_at DESC | | |
 | TASK-077 | `POST /api/reviews` - requireAuth, validate rating (1-5) and recipe_id, enforce unique constraint (one review per user per recipe), INSERT review, return created review with user info | | |
 | TASK-078 | `PUT /api/reviews/{id}` - requireAuth, verify ownership (review.user_id = current user), UPDATE rating and/or comment, return updated review | | |
 | TASK-079 | `DELETE /api/reviews/{id}` - requireAuth, verify ownership or admin role, DELETE review, return success | | |
@@ -289,7 +290,7 @@ backend/
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-085 | `GET /api/search?q={query}` - Search published recipes by title and description using LIKE or FULLTEXT, return matching recipes with author info and stats | | |
+| TASK-085 | `GET /api/search?q={query}` - requireAuth, search published recipes by title and description using LIKE or FULLTEXT, return matching recipes with author info and stats | | |
 | TASK-086 | `POST /api/search/history` - requireAuth, INSERT search query into search_history table with user_id and current timestamp | | |
 | TASK-087 | `GET /api/search/history` - requireAuth, return current user's search history ordered by searched_at DESC, limit 20 | | |
 | TASK-088 | `DELETE /api/search/history` - requireAuth, DELETE all search_history rows for current user | | |
@@ -447,7 +448,7 @@ backend/
 - Required for modern PHP features (typed properties, named arguments, `str_contains()`)
 - Included with XAMPP
 
-**DEP-003**: **MySQL 5.7+ or MariaDB 10.3+**
+**DEP-003**: **MySQL 8.0+ or MariaDB 10.4+**
 - Required for database features (CHECK constraints, triggers, stored procedures)
 - Included with XAMPP
 
@@ -557,7 +558,7 @@ backend/
 | FILE-050 | `README.md` | TASK-137 | ~800 | TO MODIFY |
 | FILE-051 | `postman/recipe_api_collection.json` | TASK-119 | ~500 | TO CREATE |
 
-**File Summary:** 51 tracked files total (14 existing SQL + 12 new PHP + 4 new frontend + 11 modified frontend + 1 deleted + 7 docs + 1 Postman + 1 new DB script)
+**File Summary:** 52 tracked files total (14 existing SQL + 2 new DB files + 12 new PHP + 4 new frontend + 11 modified frontend + 1 deleted + 7 docs + 1 Postman)
 
 ## 6. Testing
 
@@ -612,7 +613,7 @@ backend/
 |------|-------------|-----------|
 | TEST-026 | Toggle Like - Verify like added if not exists, removed if exists (idempotent toggle) | REQ-DB-003 |
 | TEST-027 | Toggle Favorite - Verify favorite added/removed correctly | REQ-DB-003 |
-| TEST-028 | Recipe View Tracking - Verify view recorded for authenticated user with user_id FK | REQ-MIG-003 |
+| TEST-028 | Recipe View Tracking - Verify view recorded only for authenticated non-admin users with user_id FK | REQ-MIG-003 |
 | TEST-029 | Multiple Views Tracking - Verify same user viewing same recipe creates multiple view records | REQ-DB-010 |
 | TEST-030 | Daily Stats Update - Verify trg_RecipeView_UpdateStat trigger increments daily_stat | REQ-SQL-006 |
 
@@ -673,7 +674,7 @@ backend/
 | ASSUMPTION-002 | Student has basic knowledge of SQL (SELECT, INSERT, UPDATE, DELETE) |
 | ASSUMPTION-003 | Student has access to course materials (PHPWebApp.pdf) for PHP reference |
 | ASSUMPTION-004 | Development on Windows with XAMPP (alternative: LAMP on Linux, MAMP on macOS) |
-| ASSUMPTION-005 | MySQL 5.7+ or MariaDB 10.3+ features available (CHECK constraints, CTEs) |
+| ASSUMPTION-005 | MySQL 8.0+ or MariaDB 10.4+ features available in target XAMPP environment (CTEs, CHECK constraints behavior) |
 | ASSUMPTION-006 | Frontend React code structure is familiar (existing project) |
 | ASSUMPTION-007 | Application tested locally before any production deployment |
 | ASSUMPTION-008 | Database handles typical usage (100 users, 1000 recipes, 5000 reviews) |
@@ -690,8 +691,8 @@ Quick reference of all RESTful endpoints:
 | POST | `/api/auth/login` | No | No | Login, create session | TASK-064 |
 | POST | `/api/auth/logout` | Yes | No | Logout, destroy session | TASK-065 |
 | GET | `/api/auth/me` | Yes | No | Get current user | TASK-066 |
-| GET | `/api/recipes` | No | No | List published recipes (filters) | TASK-067 |
-| GET | `/api/recipes/{id}` | No | No | Get recipe details | TASK-068 |
+| GET | `/api/recipes` | Yes | No | List published recipes (filters) | TASK-067 |
+| GET | `/api/recipes/{id}` | Yes | No | Get recipe details | TASK-068 |
 | POST | `/api/recipes` | Yes | No | Create recipe (pending) | TASK-069 |
 | PUT | `/api/recipes/{id}` | Yes | No | Update recipe (owner) | TASK-070 |
 | DELETE | `/api/recipes/{id}` | Yes | No | Delete recipe (owner/admin) | TASK-071 |
@@ -699,7 +700,7 @@ Quick reference of all RESTful endpoints:
 | POST | `/api/recipes/{id}/like` | Yes | No | Toggle like | TASK-073 |
 | POST | `/api/recipes/{id}/favorite` | Yes | No | Toggle favorite | TASK-074 |
 | POST | `/api/recipes/{id}/view` | Yes | No | Record view | TASK-075 |
-| GET | `/api/reviews?recipe_id={id}` | No | No | Get recipe reviews | TASK-076 |
+| GET | `/api/reviews?recipe_id={id}` | Yes | No | Get recipe reviews | TASK-076 |
 | POST | `/api/reviews` | Yes | No | Create review | TASK-077 |
 | PUT | `/api/reviews/{id}` | Yes | No | Update review (owner) | TASK-078 |
 | DELETE | `/api/reviews/{id}` | Yes | No | Delete review (owner/admin) | TASK-079 |
@@ -708,7 +709,7 @@ Quick reference of all RESTful endpoints:
 | PUT | `/api/users/{id}` | Yes | No | Update user (owner/admin) | TASK-082 |
 | DELETE | `/api/users/{id}` | Yes | Yes | Delete user | TASK-083 |
 | PUT | `/api/users/{id}/status` | Yes | Yes | Update user status | TASK-084 |
-| GET | `/api/search?q={query}` | No | No | Search recipes | TASK-085 |
+| GET | `/api/search?q={query}` | Yes | No | Search recipes | TASK-085 |
 | POST | `/api/search/history` | Yes | No | Save search query | TASK-086 |
 | GET | `/api/search/history` | Yes | No | Get search history | TASK-087 |
 | DELETE | `/api/search/history` | Yes | No | Clear search history | TASK-088 |
@@ -716,7 +717,7 @@ Quick reference of all RESTful endpoints:
 | GET | `/api/stats/daily` | Yes | No | Daily stats for charts | TASK-090 |
 | GET | `/api/activity` | Yes | Yes | Activity logs | TASK-091 |
 
-**Total: 31 endpoints across 7 API files**
+**Total: 29 endpoints across 7 API files**
 
 ## 9. Database Reference
 
@@ -823,3 +824,4 @@ Quick reference of all RESTful endpoints:
 *Document Version History:*
 - **v1.0** (2026-02-04): Initial plan with 170 tasks, MVC backend structure, axios dependency
 - **v2.0** (2026-02-08): Merged plan — simplified backend (flat PHP, no frameworks), native fetch(), session-based auth only, fixed task numbering (138 tasks), added API reference table, database reference section
+
