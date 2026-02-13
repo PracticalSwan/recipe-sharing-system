@@ -8,8 +8,10 @@
 | **Project** | Recipe Sharing System - MySQL Database Integration |
 | **Course** | CSX3006 Database Systems |
 | **Created** | 2026-02-04 |
+| **Last Updated** | 2026-02-14 |
 | **Author** | AI Assistant (GitHub Copilot) |
-| **Related Plan** | [upgrade-database-integration-1.md](./upgrade-database-integration-1.md) |
+| **Related Plan** | [upgrade-database-integration-1.md](../plan/upgrade-database-integration-1.md) |
+| **Current Progress** | Phase 1-3 complete (53/138 tasks), Phase 4-6 pending |
 
 ---
 

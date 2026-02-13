@@ -2,7 +2,8 @@
 
 > **Project:** Recipe Sharing System - CSX3006 Database Systems  
 > **Created:** 2026-02-13  
-> **Purpose:** Complete the missing SQL queries needed to power the frontend application
+> **Last Updated:** 2026-02-14  
+> **Purpose:** Complete SQL query designs for Phase 4 backend implementation
 
 ---
 
@@ -20,9 +21,14 @@
 ## Authentication Queries
 
 ### Where to Put These Queries
-Create a new file: **`database/15_api_queries.sql`**
 
-**Why:** All frontend authentication flow relies on these queries to function. The frontend `AuthContext.jsx` calls login/signup/logout functions, but there's no backend SQL to execute them.
+**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. The frontend currently uses localStorage (storage.js). When Phase 4 begins, these queries will be implemented in PHP backend files.  
+
+**Backend Implementation Location:**
+When Phase 4 begins, authentication queries will be implemented in:
+- **File:** `backend/api/auth.php`
+- **Methods:** POST /api/auth/register, POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me
+- **Uses:** PDO prepared statements for security
 
 ---
 
@@ -406,10 +412,13 @@ SELECT ROW_COUNT() AS sessions_deleted;
 
 ## Recipe Management Queries
 
-### Where to Put These Queries
-Add to existing: **`database/09_common_queries.sql`**
+**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. Some queries already exist in `09_common_queries.sql` and `12_stored_procedures.sql`. Additional queries will be implemented in PHP backend.
 
-**Why:** These are user-facing recipe operations that the frontend needs to function properly.
+### Backend Implementation Location
+When Phase 4 begins, recipe queries will be implemented in:
+- **File:** `backend/api/recipes.php`
+- **Methods:** GET /api/recipes, GET /api/recipes/{id}, POST /api/recipes, PUT /api/recipes/{id}, DELETE /api/recipes/{id}
+- **Existing:** `usp_CreateRecipe` and `usp_DeleteRecipe` in `12_stored_procedures.sql`
 
 ---
 
@@ -1196,10 +1205,12 @@ DELIMITER ;
 
 ## User Profile Management Queries
 
-### Where to Put These Queries
-Add to: **`database/12_stored_procedures.sql`**
+**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. User operations will be implemented with PDO in PHP backend.
 
-**Why:** Profile management requires update operations with validation.
+### Backend Implementation Location
+When Phase 4 begins, user queries will be implemented in:
+- **File:** `backend/api/users.php`
+- **Methods:** GET /api/users, GET /api/users/{id}, PUT /api/users/{id}, DELETE /api/users/{id}, PUT /api/users/{id}/status
 
 ---
 
@@ -1415,10 +1426,11 @@ WHERE user_id = @pUserId;
 
 ## Admin Management Queries
 
-### Where to Put These Queries
-Add to: **`database/10_admin_queries.sql`**
+**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. Admin queries already exist in `10_admin_queries.sql`. Additional status management will be implemented in PHP backend.
 
-**Why:** Admin dashboard requires user management operations.
+### Backend Implementation Location
+When Phase 4 begins, admin queries will be implemented in:
+- **File:** `backend/api/users.php` (status endpoints), `backend/api/activity.php` (activity logs)
 
 ---
 
@@ -1586,10 +1598,12 @@ ORDER BY last_active DESC;
 
 ## Advanced Features Queries
 
-### Where to Put These Queries
-Add to existing: **`database/09_common_queries.sql`** or create new **`database/17_advanced_queries.sql`**
+**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. Search and analytics queries exist in `11_analytics_queries.sql`. Additional features will be implemented in PHP backend.
 
-**Why:** These add UX enhancements for better user experience.
+### Backend Implementation Location
+When Phase 4 begins, these queries will be implemented in:
+- **File:** `backend/api/search.php`, `backend/api/stats.php`
+- **Existing:** Search and analytics queries in `11_analytics_queries.sql`
 
 ---
 
@@ -1864,46 +1878,50 @@ The frontend React components already call these functions through the `AuthCont
 
 ## Summary Table
 
-| Query | Type | Priority | Frontend Component | Database File |
-|--------|------|----------|-------------------|----------------|
-| 1. Get User by Email | 🔴 CRITICAL | Login.jsx | `15_api_queries.sql` |
-| 2. Login (SP) | 🔴 CRITICAL | Login.jsx / AuthContext | `15_api_queries.sql` |
-| 3. Register User (SP) | 🔴 CRITICAL | Signup.jsx / AuthContext | `15_api_queries.sql` |
-| 4. Get User by ID | 🔴 CRITICAL | Profile.jsx | `15_api_queries.sql` |
-| 5. Validate Session | 🔴 CRITICAL | All protected routes | `15_api_queries.sql` |
-| 6. Logout | 🔴 CRITICAL | All logout actions | `15_api_queries.sql` |
-| 7. Clean Expired Sessions | 🔴 CRITICAL | Maintenance | `15_api_queries.sql` |
-| 8. Update Recipe (SP) | 🟡 IMPORTANT | CreateRecipe.jsx (edit) | `12_stored_procedures.sql` or `15_api_queries.sql` |
-| 9. Get Published Recipes | 🟡 IMPORTANT | Home.jsx | `15_api_queries.sql` |
-| 10. Search with Filters | 🟡 IMPORTANT | Search.jsx | `15_api_queries.sql` |
-| 11. Get by Category | 🟡 IMPORTANT | Home.jsx, Search.jsx | `15_api_queries.sql` |
-| 12. Get Recipe by ID | 🟡 IMPORTANT | RecipeDetail.jsx | `15_api_queries.sql` |
-| 13. Create Review (SP) | 🟮 IMPORTANT | RecipeDetail.jsx | `15_api_queries.sql` |
-| 14. Delete Review (SP) | 🟮 IMPORTANT | RecipeDetail.jsx | `15_api_queries.sql` |
-| 15. Toggle Like (SP) | 🟮 IMPORTANT | RecipeCard.jsx, RecipeDetail.jsx | `15_api_queries.sql` |
-| 16. Toggle Favorite (SP) | 🟮 IMPORTANT | RecipeCard.jsx, RecipeDetail.jsx | `15_api_queries.sql` |
-| 17. Record View (SP) | 🟮 IMPORTANT | RecipeDetail.jsx | `15_api_queries.sql` |
-| 18. Update Profile (SP) | 🟢 SUGGESTION | Profile.jsx | `12_stored_procedures.sql` |
-| 19. Get User Recipes | 🟢 SUGGESTION | Profile.jsx | `15_api_queries.sql` |
-| 20. Get User Reviews | 🟢 SUGGESTION | Profile.jsx | `15_api_queries.sql` |
-| 21. Update User Status (SP) | 🟢 SUGGESTION | UserList.jsx (admin) | `10_admin_queries.sql` |
-| 22. Get Pending Users | 🟢 SUGGESTION | Admin dashboard | `10_admin_queries.sql` |
-| 23. Get Suspended Users | 🟢 SUGGESTION | Admin dashboard | `10_admin_queries.sql` |
-| 24. User Search History | �️ OPTIONAL | Search.jsx | `15_api_queries.sql` |
-| 25. Trending Recipes | 💎️ OPTIONAL | Home enhancement | `15_api_queries.sql` |
-| 26. Similar Recipes | 💎️ OPTIONAL | Recipe detail enhancement | `15_api_queries.sql` |
-| 27. Search Autocomplete | 💎️ OPTIONAL | Search enhancement | `15_api_queries.sql` |
+| Query Group | Priority | Frontend Consumer | Planned Backend Location |
+|-------------|----------|-------------------|--------------------------|
+| Authentication (login, register, logout, session) | 🔴 CRITICAL | Auth pages + route guards | `backend/api/auth.php`, `backend/helpers/auth.php` |
+| Recipe CRUD + publish workflow | 🟡 IMPORTANT | Home, Create, Detail, Admin Recipes | `backend/api/recipes.php` |
+| Reviews + likes + favorites + views | 🟡 IMPORTANT | Recipe cards/detail | `backend/api/reviews.php`, `backend/api/recipes.php` |
+| User profile and status management | 🟢 SUGGESTION | Profile, Admin User List | `backend/api/users.php` |
+| Search history + analytics endpoints | 💎 OPTIONAL | Search, Admin Stats | `backend/api/search.php`, `backend/api/stats.php` |
 
 ---
 
 ## Related Files
 
-- `database/01_create_database.sql` - Database structure creation
-- `database/02_create_tables.sql` - Table definitions
-- `database/03_create_indexes.sql` - Performance indexes
-- `database/04_create_views.sql` - Prepared views
-- `database/12_stored_procedures.sql` - Existing SPs
-- `src/context/AuthContext.jsx` - Frontend auth context
-- `src/lib/storage.js` - Frontend data abstraction layer
-- `src/pages/Auth/Login.jsx` - Login component
-- `src/pages/Auth/Signup.jsx` - Registration component
+### SQL Foundation (✅ Completed)
+- `database/01_create_database.sql`
+- `database/02_create_tables.sql`
+- `database/03_create_indexes.sql`
+- `database/04_create_views.sql`
+- `database/05_seed_users.sql`
+- `database/06_seed_recipes.sql`
+- `database/07_seed_reviews.sql`
+- `database/08_seed_stats.sql`
+- `database/09_common_queries.sql`
+- `database/10_admin_queries.sql`
+- `database/11_analytics_queries.sql`
+- `database/12_stored_procedures.sql`
+- `database/13_triggers.sql`
+- `database/14_backup_restore.sql`
+
+### Planned Backend Integration (⏳ Not Started)
+- `backend/config/database.php`
+- `backend/helpers/cors.php`
+- `backend/helpers/auth.php`
+- `backend/helpers/response.php`
+- `backend/api/auth.php`
+- `backend/api/recipes.php`
+- `backend/api/reviews.php`
+- `backend/api/users.php`
+- `backend/api/search.php`
+- `backend/api/stats.php`
+- `backend/api/activity.php`
+
+### Frontend Integration (⏳ Not Started)
+- `src/lib/api.js` (to create)
+- `src/lib/storage.js` (to remove after migration)
+- `src/context/AuthContext.jsx`
+- `src/pages/Auth/Login.jsx`
+- `src/pages/Auth/Signup.jsx`

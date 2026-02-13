@@ -2,8 +2,11 @@
 
 > **Project:** Recipe Sharing System - CSX3006 Database Systems  
 > **Generated:** 2026-02-07  
+> **Last Updated:** 2026-02-14  
 > **Database:** MySQL / MariaDB (XAMPP)  
 > **Character Set:** UTF8MB4 with `utf8mb4_unicode_ci` collation
+
+> **Current Status:** SQL foundation complete (Phase 1-3). Backend API integration starts in Phase 4.
 
 ---
 
