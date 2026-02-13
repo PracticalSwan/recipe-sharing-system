@@ -211,7 +211,7 @@ recipe-sharing-system/
 │   ├── 09_common_queries.sql       # Common SELECT queries
 │   ├── 10_admin_queries.sql        # Admin management queries
 │   ├── 11_analytics_queries.sql     # Analytics & trends
-│   ├── 12_stored_procedures.sql   # 5 procedures + 1 function
+│   ├── 12_stored_procedures.sql   # 4 procedures + 1 function
 │   ├── 13_triggers.sql            # 6 triggers for automation
 │   └── 14_backup_restore.sql      # Backup & restore commands
 ├── guides/                    # Documentation guides
@@ -281,7 +281,8 @@ Target Storage: MySQL/MariaDB Database + PHP RESTful API. A comprehensive databa
 **Database Features:**
 - 13 normalized tables (3NF design) with proper constraints
 - 2 views for complex queries (recipe statistics, user dashboard)
-- 5 stored procedures for complex operations
+- 4 stored procedures + 1 function for complex operations
+- Stored procedure parameters follow `p_` snake_case naming
 - 6 triggers for automatic logging and statistics updates
 - Complete seed data matching current localStorage structure
 - Full RESTful API in plain PHP with PDO
@@ -305,7 +306,7 @@ Target Storage: MySQL/MariaDB Database + PHP RESTful API. A comprehensive databa
 | `activity_log` | Admin action audit trail |
 | `session` | Server-side session tokens |
 
-> **Progress:** View detailed implementation plan at [plan/upgrade-database-integration-1.md](plan/upgrade-database-integration-1.md) (62% complete — SQL scripts done, backend integration in progress)
+> **Progress:** View detailed implementation plan at [plan/upgrade-database-integration-1.md](plan/upgrade-database-integration-1.md) (38% complete — SQL scripts done, backend integration pending)
 
 <a id="available-scripts"></a>
 ## Available Scripts

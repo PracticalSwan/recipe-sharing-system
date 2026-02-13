@@ -102,28 +102,38 @@ END //
 
 -- ============================================================================
 -- TRIGGER: trg_Recipe_SetTimestamp
--- Purpose: Before updating a recipe, automatically set updated_at to NOW()
+-- Purpose: Before inserting a recipe, set created_at and updated_at when NULL
 -- ============================================================================
 CREATE TRIGGER trg_Recipe_SetTimestamp
-BEFORE UPDATE ON recipe
+BEFORE INSERT ON recipe
 FOR EACH ROW
 BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
-        SET NEW.updated_at = NOW();
+        IF NEW.created_at IS NULL THEN
+            SET NEW.created_at = NOW();
+        END IF;
+        IF NEW.updated_at IS NULL THEN
+            SET NEW.updated_at = NOW();
+        END IF;
     END IF;
 END //
 
 
 -- ============================================================================
 -- TRIGGER: trg_User_SetTimestamp
--- Purpose: Before updating a user, automatically set updated_at to NOW()
+-- Purpose: Before inserting a user, set created_at and updated_at when NULL
 -- ============================================================================
 CREATE TRIGGER trg_User_SetTimestamp
-BEFORE UPDATE ON user
+BEFORE INSERT ON user
 FOR EACH ROW
 BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
-        SET NEW.updated_at = NOW();
+        IF NEW.created_at IS NULL THEN
+            SET NEW.created_at = NOW();
+        END IF;
+        IF NEW.updated_at IS NULL THEN
+            SET NEW.updated_at = NOW();
+        END IF;
     END IF;
 END //
 

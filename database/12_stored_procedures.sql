@@ -6,7 +6,7 @@
 -- Created:     2026-02-07
 -- ============================================================================
 -- Naming: usp_ prefix for stored procedures, fn_ prefix for functions
--- Params: @p prefix with camelCase (e.g., @pAuthorId)
+-- Params: p_ prefix with snake_case (e.g., p_author_id)
 -- All SPs use transaction handling with ROLLBACK on error
 -- ============================================================================
 
@@ -18,24 +18,24 @@ DELIMITER //
 -- PROCEDURE: usp_CreateRecipe
 -- Purpose:   Create a complete recipe with ingredients and instructions
 --            in a single transaction
--- Params:    @pAuthorId, @pTitle, @pDescription, @pCategory, @pDifficulty,
---            @pPrepTime, @pCookTime, @pServings, @pImageUrl,
---            @pIngredients (JSON array), @pInstructions (JSON array)
+-- Params:    p_author_id, p_title, p_description, p_category, p_difficulty,
+--            p_prep_time, p_cook_time, p_servings, p_image_url,
+--            p_ingredients (JSON array), p_instructions (JSON array)
 -- Returns:   The new recipe id
 -- ============================================================================
 CREATE PROCEDURE usp_CreateRecipe(
-    IN pAuthorId    INT,
-    IN pTitle       VARCHAR(200),
-    IN pDescription TEXT,
-    IN pCategory    VARCHAR(50),
-    IN pDifficulty  ENUM('Easy', 'Medium', 'Hard'),
-    IN pPrepTime    INT,
-    IN pCookTime    INT,
-    IN pServings    INT,
-    IN pImageUrl    VARCHAR(500),
-    IN pIngredients JSON,
-    IN pInstructions JSON,
-    OUT pRecipeId   INT
+    IN p_author_id    INT,
+    IN p_title        VARCHAR(200),
+    IN p_description  TEXT,
+    IN p_category     VARCHAR(50),
+    IN p_difficulty   ENUM('Easy', 'Medium', 'Hard'),
+    IN p_prep_time    INT,
+    IN p_cook_time    INT,
+    IN p_servings     INT,
+    IN p_image_url    VARCHAR(500),
+    IN p_ingredients  JSON,
+    IN p_instructions JSON,
+    OUT p_recipe_id   INT
 )
 BEGIN
     DECLARE v_ingredientCount INT DEFAULT 0;
@@ -45,7 +45,7 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
-        SET pRecipeId = NULL;
+        SET p_recipe_id = NULL;
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Error creating recipe. Transaction rolled back.';
     END;
@@ -55,29 +55,29 @@ BEGIN
     -- Insert the recipe
     INSERT INTO recipe (author_id, title, description, category, difficulty,
                         prep_time, cook_time, servings, status)
-    VALUES (pAuthorId, pTitle, pDescription, pCategory, pDifficulty,
-            pPrepTime, pCookTime, pServings, 'pending');
+    VALUES (p_author_id, p_title, p_description, p_category, p_difficulty,
+            p_prep_time, p_cook_time, p_servings, 'pending');
 
-    SET pRecipeId = LAST_INSERT_ID();
+    SET p_recipe_id = LAST_INSERT_ID();
 
     -- Insert primary image if provided
-    IF pImageUrl IS NOT NULL AND pImageUrl != '' THEN
+    IF p_image_url IS NOT NULL AND p_image_url != '' THEN
         INSERT INTO recipe_image (recipe_id, image_url, display_order)
-        VALUES (pRecipeId, pImageUrl, 1);
+        VALUES (p_recipe_id, p_image_url, 1);
     END IF;
 
     -- Insert ingredients from JSON array
     -- Expected JSON format: [{"name":"...", "quantity":"...", "unit":"..."},...]
-    SET v_ingredientCount = JSON_LENGTH(pIngredients);
+    SET v_ingredientCount = JSON_LENGTH(p_ingredients);
     SET v_index = 0;
 
     WHILE v_index < v_ingredientCount DO
         INSERT INTO ingredient (recipe_id, name, quantity, unit, sort_order)
         VALUES (
-            pRecipeId,
-            JSON_UNQUOTE(JSON_EXTRACT(pIngredients, CONCAT('$[', v_index, '].name'))),
-            JSON_UNQUOTE(JSON_EXTRACT(pIngredients, CONCAT('$[', v_index, '].quantity'))),
-            JSON_UNQUOTE(JSON_EXTRACT(pIngredients, CONCAT('$[', v_index, '].unit'))),
+            p_recipe_id,
+            JSON_UNQUOTE(JSON_EXTRACT(p_ingredients, CONCAT('$[', v_index, '].name'))),
+            JSON_UNQUOTE(JSON_EXTRACT(p_ingredients, CONCAT('$[', v_index, '].quantity'))),
+            JSON_UNQUOTE(JSON_EXTRACT(p_ingredients, CONCAT('$[', v_index, '].unit'))),
             v_index + 1
         );
         SET v_index = v_index + 1;
@@ -85,15 +85,15 @@ BEGIN
 
     -- Insert instructions from JSON array
     -- Expected JSON format: [{"instruction_text":"Step 1 text"},...]
-    SET v_instructionCount = JSON_LENGTH(pInstructions);
+    SET v_instructionCount = JSON_LENGTH(p_instructions);
     SET v_index = 0;
 
     WHILE v_index < v_instructionCount DO
         INSERT INTO instruction (recipe_id, step_number, instruction_text)
         VALUES (
-            pRecipeId,
+            p_recipe_id,
             v_index + 1,
-            JSON_UNQUOTE(JSON_EXTRACT(pInstructions, CONCAT('$[', v_index, '].instruction_text')))
+            JSON_UNQUOTE(JSON_EXTRACT(p_instructions, CONCAT('$[', v_index, '].instruction_text')))
         );
         SET v_index = v_index + 1;
     END WHILE;
@@ -106,11 +106,11 @@ END //
 -- PROCEDURE: usp_DeleteRecipe
 -- Purpose:   Delete a recipe and all related data with cascade,
 --            logging the action in activity_log
--- Params:    @pRecipeId, @pAdminId (the admin performing the deletion)
+-- Params:    p_recipe_id, p_admin_id (the admin performing the deletion)
 -- ============================================================================
 CREATE PROCEDURE usp_DeleteRecipe(
-    IN pRecipeId INT,
-    IN pAdminId  INT
+    IN p_recipe_id INT,
+    IN p_admin_id  INT
 )
 BEGIN
     DECLARE v_recipeTitle VARCHAR(200);
@@ -127,7 +127,7 @@ BEGIN
     SELECT title, author_id
     INTO v_recipeTitle, v_authorId
     FROM recipe
-    WHERE id = pRecipeId;
+    WHERE id = p_recipe_id;
 
     IF v_recipeTitle IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -137,20 +137,20 @@ BEGIN
     START TRANSACTION;
 
     -- Delete child records (FK CASCADE handles most, but explicit for clarity)
-    DELETE FROM recipe_view  WHERE recipe_id = pRecipeId;
-    DELETE FROM review       WHERE recipe_id = pRecipeId;
-    DELETE FROM like_record  WHERE recipe_id = pRecipeId;
-    DELETE FROM favorite     WHERE recipe_id = pRecipeId;
-    DELETE FROM recipe_image WHERE recipe_id = pRecipeId;
-    DELETE FROM instruction  WHERE recipe_id = pRecipeId;
-    DELETE FROM ingredient   WHERE recipe_id = pRecipeId;
+    DELETE FROM recipe_view  WHERE recipe_id = p_recipe_id;
+    DELETE FROM review       WHERE recipe_id = p_recipe_id;
+    DELETE FROM like_record  WHERE recipe_id = p_recipe_id;
+    DELETE FROM favorite     WHERE recipe_id = p_recipe_id;
+    DELETE FROM recipe_image WHERE recipe_id = p_recipe_id;
+    DELETE FROM instruction  WHERE recipe_id = p_recipe_id;
+    DELETE FROM ingredient   WHERE recipe_id = p_recipe_id;
 
     -- Delete the recipe itself
-    DELETE FROM recipe WHERE id = pRecipeId;
+    DELETE FROM recipe WHERE id = p_recipe_id;
 
     -- Log the admin action
     INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
-    VALUES (pAdminId, 'recipe_delete', 'recipe', pRecipeId,
+    VALUES (p_admin_id, 'recipe_delete', 'recipe', p_recipe_id,
             CONCAT('Deleted recipe: ', v_recipeTitle, ' (author_id: ', v_authorId, ')'));
 
     COMMIT;
@@ -160,14 +160,14 @@ END //
 -- ============================================================================
 -- PROCEDURE: usp_ApproveRecipe
 -- Purpose:   Approve or reject a pending recipe, logging the decision
--- Params:    @pRecipeId, @pAdminId, @pAction ('approve' or 'reject'),
---            @pReason (optional reason for rejection)
+-- Params:    p_recipe_id, p_admin_id, p_action ('approve' or 'reject'),
+--            p_reason (optional reason for rejection)
 -- ============================================================================
 CREATE PROCEDURE usp_ApproveRecipe(
-    IN pRecipeId INT,
-    IN pAdminId  INT,
-    IN pAction   VARCHAR(10),
-    IN pReason   VARCHAR(500)
+    IN p_recipe_id INT,
+    IN p_admin_id  INT,
+    IN p_action    VARCHAR(10),
+    IN p_reason    VARCHAR(500)
 )
 BEGIN
     DECLARE v_currentStatus VARCHAR(20);
@@ -187,7 +187,7 @@ BEGIN
     SELECT status, title
     INTO v_currentStatus, v_recipeTitle
     FROM recipe
-    WHERE id = pRecipeId;
+    WHERE id = p_recipe_id;
 
     IF v_currentStatus IS NULL THEN
         SIGNAL SQLSTATE '45000'
@@ -200,13 +200,13 @@ BEGIN
     END IF;
 
     -- Validate action
-    IF pAction NOT IN ('approve', 'reject') THEN
+    IF p_action NOT IN ('approve', 'reject') THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Invalid action. Must be "approve" or "reject".';
     END IF;
 
     -- Determine new status and log details
-    IF pAction = 'approve' THEN
+    IF p_action = 'approve' THEN
         SET v_newStatus = 'published';
         SET v_actionType = 'recipe_approve';
         SET v_description = CONCAT('Approved recipe: ', v_recipeTitle);
@@ -214,8 +214,8 @@ BEGIN
         SET v_newStatus = 'rejected';
         SET v_actionType = 'recipe_reject';
         SET v_description = CONCAT('Rejected recipe: ', v_recipeTitle);
-        IF pReason IS NOT NULL AND pReason != '' THEN
-            SET v_description = CONCAT(v_description, ' - ', pReason);
+        IF p_reason IS NOT NULL AND p_reason != '' THEN
+            SET v_description = CONCAT(v_description, ' - ', p_reason);
         END IF;
     END IF;
 
@@ -224,11 +224,11 @@ BEGIN
     -- Update recipe status
     UPDATE recipe
     SET status = v_newStatus, updated_at = NOW()
-    WHERE id = pRecipeId;
+    WHERE id = p_recipe_id;
 
     -- Log the admin action
     INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
-    VALUES (pAdminId, v_actionType, 'recipe', pRecipeId, v_description);
+    VALUES (p_admin_id, v_actionType, 'recipe', p_recipe_id, v_description);
 
     COMMIT;
 END //
@@ -237,11 +237,11 @@ END //
 -- ============================================================================
 -- PROCEDURE: usp_GetRecipeStat
 -- Purpose:   Get aggregated statistics for a specific recipe
--- Params:    @pRecipeId
+-- Params:    p_recipe_id
 -- Returns:   Single-row result set with all recipe stats
 -- ============================================================================
 CREATE PROCEDURE usp_GetRecipeStat(
-    IN pRecipeId INT
+    IN p_recipe_id INT
 )
 BEGIN
     SELECT
@@ -250,28 +250,28 @@ BEGIN
         r.status,
         u.username AS author_name,
         DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_date,
-        (SELECT COUNT(*) FROM recipe_view WHERE recipe_id = pRecipeId)                AS total_views,
-        (SELECT COUNT(*) FROM like_record WHERE recipe_id = pRecipeId)                AS total_likes,
-        (SELECT COUNT(*) FROM favorite    WHERE recipe_id = pRecipeId)                AS total_favorites,
-        (SELECT COUNT(*) FROM review      WHERE recipe_id = pRecipeId)                AS total_reviews,
-        (SELECT ROUND(AVG(rating), 2) FROM review WHERE recipe_id = pRecipeId)        AS avg_rating,
-        (SELECT MIN(rating) FROM review WHERE recipe_id = pRecipeId)                  AS min_rating,
-        (SELECT MAX(rating) FROM review WHERE recipe_id = pRecipeId)                  AS max_rating,
-        (SELECT COUNT(DISTINCT user_id) FROM recipe_view WHERE recipe_id = pRecipeId) AS unique_viewers
+        (SELECT COUNT(*) FROM recipe_view WHERE recipe_id = p_recipe_id)                AS total_views,
+        (SELECT COUNT(*) FROM like_record WHERE recipe_id = p_recipe_id)                AS total_likes,
+        (SELECT COUNT(*) FROM favorite    WHERE recipe_id = p_recipe_id)                AS total_favorites,
+        (SELECT COUNT(*) FROM review      WHERE recipe_id = p_recipe_id)                AS total_reviews,
+        (SELECT ROUND(AVG(rating), 2) FROM review WHERE recipe_id = p_recipe_id)        AS avg_rating,
+        (SELECT MIN(rating) FROM review WHERE recipe_id = p_recipe_id)                  AS min_rating,
+        (SELECT MAX(rating) FROM review WHERE recipe_id = p_recipe_id)                  AS max_rating,
+        (SELECT COUNT(DISTINCT user_id) FROM recipe_view WHERE recipe_id = p_recipe_id) AS unique_viewers
     FROM recipe r
     INNER JOIN user u ON r.author_id = u.id
-    WHERE r.id = pRecipeId;
+    WHERE r.id = p_recipe_id;
 END //
 
 
 -- ============================================================================
 -- FUNCTION: fn_CalculateAvgRating
 -- Purpose:  Calculate average rating for a recipe, returning 0.0 if no reviews
--- Params:   @pRecipeId
+-- Params:   p_recipe_id
 -- Returns:  DECIMAL(3,2) average rating
 -- ============================================================================
 CREATE FUNCTION fn_CalculateAvgRating(
-    pRecipeId INT
+    p_recipe_id INT
 )
 RETURNS DECIMAL(3, 2)
 DETERMINISTIC
@@ -282,7 +282,7 @@ BEGIN
     SELECT ROUND(AVG(rating), 2)
     INTO v_avgRating
     FROM review
-    WHERE recipe_id = pRecipeId;
+    WHERE recipe_id = p_recipe_id;
 
     IF v_avgRating IS NULL THEN
         SET v_avgRating = 0.00;

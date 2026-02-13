@@ -46,6 +46,8 @@
 
 **SQL Fixes:** Full review of all 14 SQL scripts vs authoritative schema (02_create_tables.sql). Fixed column name mismatches in scripts 09-14: parent table PK corrections, column renames, ENUM case fixes, removed non-existent columns.
 
+**Plan-Alignment Patch (February 13, 2026):** Updated `12_stored_procedures.sql` to use `p_` snake_case parameter naming and corrected timestamp triggers in `13_triggers.sql` to run on `BEFORE INSERT` per TASK-053/TASK-054.
+
 **Plan v2.0 (February 8, 2026):** Merged implementation plan from 181 to 138 tasks. Simplified backend from 23 files (MVC) to 12 files (flat procedural), switched from axios to native fetch(), removed JWT option.
 
 ---
