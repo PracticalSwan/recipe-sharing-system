@@ -25,6 +25,8 @@ Effective usage of the Serena MCP Server for project memory management, code int
 - Setting up Serena onboarding for new projects
 - Using Serena's memory system for project context preservation
 
+**Critical: Always verify project activation FIRST with `get_current_config` before any Serena operations**
+
 ## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
@@ -39,18 +41,22 @@ Effective usage of the Serena MCP Server for project memory management, code int
 ## Prerequisites
 
 - Serena MCP Server configured and running
+- Project activated (use `get_current_config` to verify, or `activate_project` if not activated)
 - Onboarding completed for the target project (use `check_onboarding_performed` first)
-- If not onboarded, run `onboarding` tool before any operations
+- If not activated, run `activate_project` with project name or path
+- If not onboarded, run `onboarding` tool after activation
 
 ---
 
 ## Onboarding Workflow
 
 ### First-Time Project Setup
-1. Call `check_onboarding_performed` to verify status
-2. If not performed, call `initial_instructions` to read the Serena Instructions Manual
-3. Call `onboarding` to initialize the project
-4. Serena analyzes the project structure and creates initial context
+1. **Check activation**: Call `get_current_config` to verify if project is activated
+2. **Activate if needed**: If not activated, call `activate_project` with project name or path
+3. **Check onboarding**: Call `check_onboarding_performed` to verify onboarding status
+4. **Read manual**: If not onboarded, call `initial_instructions` to read the Serena Instructions Manual
+5. **Initialize**: Call `onboarding` to complete project setup
+6. Serena analyzes the project structure and creates initial context
 
 ### What Onboarding Captures
 - Project language and framework detection
@@ -58,6 +64,38 @@ Effective usage of the Serena MCP Server for project memory management, code int
 - Key file identification
 - Symbol index creation
 - Initial memory scaffolding
+
+### Activation Check Pattern
+```bash
+# Always verify activation first
+get_current_config
+# If no active project, activate it
+activate_project project="path/to/project"
+# Then proceed with onboarding check
+check_onboarding_performed
+```
+
+## Project Activation
+
+### Why Activation Matters
+Project activation is the first step when working with Serena. It tells Serena which project to work with and initializes the workspace context.
+
+### Activation Workflow
+1. **Check current status**: Call `get_current_config` to see if a project is already activated
+2. **Activate if needed**: If no active project, call:
+   ```
+   activate_project project="project-name"
+   # OR with path:
+   activate_project project="path/to/project/directory"
+   ```
+3. **Verify activation**: Call `get_current_config` again to confirm activation succeeded
+4. **Proceed with onboarding**: Once activated, check if onboarding is needed
+
+### Activation Best Practices
+- Always check `get_current_config` before attempting any Serena operations
+- Use the workspace root path when activating
+- Activation is session-specific — you may need to reactivate in new sessions
+- After activation, the project context is available for all subsequent Serena operations
 
 ---
 
@@ -319,14 +357,18 @@ Serena provides reflection tools to maintain focus:
 ## Session Workflow
 
 ### Starting a Session
-1. `list_memories` → review all 10 available project memories
-2. `read_memory` → load relevant memories for current work phase:
+1. **Verify activation**: `get_current_config` → check if project is activated
+2. **Activate if needed**: If no active project, `activate_project` → activate the workspace
+3. **Check onboarding**: `check_onboarding_performed` → verify onboarding status
+4. Complete onboarding if needed using onboarding workflow
+5. `list_memories` → review all 10 available project memories
+6. `read_memory` → load relevant memories for current work phase:
    - **Always:** Read `project-overview` (current status, tech stack, next steps)
    - **Phase 4 (Backend):** Read `database-integration-implementation-plan-task` (TASK-057 to TASK-092)
    - **Feature work:** Read specific feature memory (admin-features, recipe-features, auth-context)
    - **SQL work:** Read `csx3006-sql-fixes-2026-02-13.md` (column conventions, FK patterns)
    - **Notion sync:** Read `notion-implementation-tracking.md` (update protocol)
-3. Begin work with current phase context
+7. Begin work with current phase context
 
 ### During a Session
 - **SQL/database work:** Create `{topic}-fixes-{date}.md` memory for bug fixes (e.g., column name corrections)
@@ -339,7 +381,9 @@ Serena provides reflection tools to maintain focus:
 
 ## Best Practices
 
-- Always check onboarding before first use on a project
+- **ALWAYS check activation before any Serena operations using `get_current_config`**
+- Activate project first if not already activated using `activate_project`
+- Check onboarding after activation, before first use on a project
 - Keep memories concise — prefer structured data over prose
 - Update memories incrementally, not in bulk rewrites
 - Use consistent naming for memories across projects (Memory Bank convention)
@@ -353,7 +397,8 @@ Serena provides reflection tools to maintain focus:
 
 | Issue | Solution |
 |-------|----------|
-| Onboarding not detected | Run `onboarding` tool explicitly |
+| Project not activated | Run `get_current_config` to verify, then `activate_project` with project path |
+| Onboarding not detected | After activation, run `onboarding` tool explicitly |
 | Memory not found | Check exact name with `list_memories` |
 | Symbol not found | Ensure file is indexed; try broader name |
 | Stale memories | Use `edit_memory` to update with current state |
@@ -385,10 +430,14 @@ Serena provides reflection tools to maintain focus:
 | `ui-components-and-styling` | Component library and Tailwind v4 | Reusable components |
 
 **Session-Start Pattern (Phase 4 — Backend Pending):**
-1. `list_memories` → verify 10 memories available
-2. Read `project-overview` → current status (38% complete, Phases 1-3 done)
-3. Read `database-integration-implementation-plan-task` → Phase 4 tasks (TASK-057 to TASK-092)
-4. Begin PHP backend development: `backend/config/database.php`, `backend/helpers/`, then `backend/api/`
+1. `get_current_config` → verify project is activated
+2. If not activated, `activate_project` with current workspace path
+3. `check_onboarding_performed` → verify onboarding status
+4. Complete onboarding if needed using standard workflow
+5. `list_memories` → verify 10 memories available
+6. Read `project-overview` → current status (38% complete, Phases 1-3 done)
+7. Read `database-integration-implementation-plan-task` → Phase 4 tasks (TASK-057 to TASK-092)
+8. Begin PHP backend development: `backend/config/database.php`, `backend/helpers/`, then `backend/api/`
 
 **Project-Specific Best Practices:**
 
