@@ -13,7 +13,12 @@ license: Complete terms in LICENSE.txt
 
 ## Activation Conditions
 
-Use this skill when:
+**SHOULD activate when task contains:**
+- Repetitive or boilerplate subtasks
+- Scanning or transformation subtasks
+- Documentation-helper subtasks
+
+**SHOULD activate when:**
 - Creating repetitive code structures or boilerplate
 - Performing data transformation tasks
 - Analyzing codebase for patterns or information
@@ -24,6 +29,9 @@ Use this skill when:
 ## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
+- Task involves core architecture decisions (planning must stay in main agent)
+- Task involves security-critical logic (must keep in main agent)
+- Task is a trivial one-shot task where delegation overhead is wasteful
 - Task requires complex architectural decisions or critical security implementations
 - User wants to learn how to implement the feature themselves
 - Project documentation and context are insufficient for delegation

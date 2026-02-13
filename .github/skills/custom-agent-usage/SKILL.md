@@ -13,7 +13,12 @@ license: Complete terms in LICENSE.txt
 
 ## Activation Conditions
 
-Use this skill when:
+**SHOULD activate when delegation requires:**
+- Picking a specific custom agent
+- Discovering `.agent.md` files
+- Verifying invocability (`disable-model-invocation`)
+
+**SHOULD activate when:**
 - Discovering available custom agents in workspace
 - Understanding .agent.md file structure and frontmatter
 - Checking if an agent can be invoked as a subagent
@@ -23,6 +28,7 @@ Use this skill when:
 ## Non-Activation Conditions
 
 **Do NOT activate this skill when:**
+- No custom-agent discovery/selection is needed
 - Using purpose-built agents with clear documentation and usage patterns
 - Task requires directly implementing solution rather than delegation
 - Need to consult documentation about core agents (not custom agents)

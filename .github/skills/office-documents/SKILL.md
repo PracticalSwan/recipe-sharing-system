@@ -1,0 +1,592 @@
+---
+name: office-documents
+description: Comprehensive Microsoft Office document manipulation using MCP servers for Word (.docx), PowerPoint (.pptx), and Excel (.xlsx) files. Use this any time an office document is involved - as input, output, or both. Activate MCP servers: word-document-server for Word, presentation-server for PowerPoint, excel-server for Excel. Covers reading, editing, creating, formatting, analyzing, and converting documents with professional standards.
+license: Complete terms in LICENSE.txt
+---
+
+# Microsoft Office Documents (MCP-Based)
+
+Comprehensive skill for working with Microsoft Office documents using MCP servers - Word, PowerPoint, and Excel files.
+
+## When to Use This Skill
+
+- Any task where .docx, .pptx, or .xlsx is an input, output, or transformation target
+- Creating, editing, formatting, or analyzing Word, PowerPoint, or Excel files
+- Converting data/content into polished Office deliverables
+- Applying document structure, table/chart formatting, formulas, or slide content updates
+- Automating Office document workflows via MCP tools
+
+### Typical Activation Triggers
+- .docx work: reports, contracts, memos, template generation, search/replace, comments, formatting
+- .pptx work: slide creation/editing, deck updates, layout changes, text extraction
+- .xlsx work: spreadsheet creation/editing, formulas, charting, cleanup, tabular transformations
+
+## No-Activation Conditions
+
+**Do NOT activate this skill when:**
+- User asks general document questions without Office format needs
+- Request is for text documents, not Word/Excel/PowerPoint
+- Task doesn't involve .docx, .xlsx, or .pptx files
+- User wants web-based document solutions (Google Docs/Sheets/Slides)
+- Plain text, markdown-only, or unrelated coding tasks
+
+---
+
+## Part 1: Word Documents (.docx) via MCP
+
+## Quick Reference
+
+| Task | MCP Tool |
+|------|-----------|
+| Create new document | `mcp_word-document_create_document` |
+| Add heading/paragraph | `mcp_word-document_add_heading`, `mcp_word-document_add_paragraph` |
+| Add table | `mcp_word-document_add_table` |
+| Add image | `mcp_word-document_insert_image` |
+| Add page break | `mcp_word-document_insert_page_break` |
+| Search & replace | `mcp_word-document_search_and_replace` |
+| Convert to PDF | `mcp_word-document_convert_to_pdf` |
+| Password protect | `mcp_word-document_protect_document` |
+| Copy document | `mcp_word-document_copy_document` |
+
+### Creating Word Documents
+
+#### Create New Document
+
+```javascript
+mcp_word-document_create_document({
+  filename: "report.docx",
+  title: "Annual Report 2025",
+  author: "John Smith"
+})
+```
+
+#### Add Content Structure
+
+```javascript
+// Add heading
+mcp_word-document_add_heading({
+  filename: "report.docx",
+  text: "Executive Summary",
+  level: 1,
+  font_name: "Arial",
+  font_size: 16,
+  bold: true
+})
+
+// Add paragraph
+mcp_word-document_add_paragraph({
+  filename: "report.docx",
+  text: "This is introduction paragraph with important information about the report.",
+  font_name: "Arial",
+  font_size: 11,
+  alignment: "left"
+})
+
+// Add table
+mcp_word-document_add_table({
+  filename: "report.docx",
+  rows: 4,
+  cols: 3,
+  data: [
+    ["Quarter", "Revenue", "Growth"],
+    ["Q1", "$1.2M", "12%"],
+    ["Q2", "$1.5M", "15%"],
+    ["Q3", "$1.8M", "13%"]
+  ]
+})
+
+// Add page break
+mcp_word-document_insert_page_break({
+  filename: "report.docx"
+})
+```
+
+### Advanced Word Operations
+
+#### Custom Styling
+
+```javascript
+mcp_word-document_create_custom_style({
+  filename: "report.docx",
+  style_name: "CustomHeading",
+  bold: true,
+  italic: false,
+  font_size: 18,
+  font_name: "Arial",
+  color: "003366",
+  base_style: "Heading 1"
+})
+```
+
+#### Document Management
+
+```javascript
+// Search and replace
+mcp_word-document_search_and_replace({
+  filename: "contract.docx",
+  find_text: "[CLIENT_NAME]",
+  replace_text: "ABC Corporation"
+})
+
+// Convert to PDF
+mcp_word-document_convert_to_pdf({
+  filename: "report.docx",
+  output_filename: "report.pdf"
+})
+
+// Copy from template
+mcp_word-document_copy_document({
+  source_filename: "template.docx",
+  destination_filename: "new_document.docx"
+})
+
+// Password protection
+mcp_word-document_protect_document({
+  filename: "confidential.docx",
+  password: "SecurePass123"
+})
+
+// Remove protection
+mcp_word-document_unprotect_document({
+  filename: "confidential.docx",
+  password: "SecurePass123"
+})
+```
+
+#### Contextual Insertions
+
+For inserting content relative to existing text or document sections, use contextual insertion tools.
+
+---
+
+## Part 2: PowerPoint Presentations (.pptx) via MCP
+
+## Quick Reference
+
+| Task | MCP Tool |
+|------|-----------|
+| Create presentation | Presentation server creation tools |
+| Manage slides | Slide management MCP tools |
+| Text content | `mcp_ppt_manage_text` |
+| Apply templates | `mcp_ppt_apply_template` |
+| Manage content | Content management (images, fonts) |
+| Information extraction | Document analysis and extraction tools |
+
+### Creating Presentations
+
+#### Basic Presentation Structure
+
+Activate presentation creation and management tools to create presentations from scratch.
+
+```javascript
+// Create new presentation
+// Use presentation server tools to initialize presentation
+
+// Add slides and content
+// Slide management allows adding different slide types
+
+// Add text content
+mcp_ppt_manage_text({
+  slide_index: 0,
+  operation: "add",
+  text: "Presentation Title",
+  font_size: 44,
+  bold: true,
+  alignment: "center",
+  top: 2,
+  left: 1,
+  width: 8,
+  height: 1.2
+})
+```
+
+#### Managing Text Content
+
+```javascript
+// Update existing shape text
+mcp_ppt_manage_text({
+  slide_index: 1,
+  shape_index: 0,
+  operation: "edit",
+  text: "Updated content goes here",
+  font_size: 18,
+  alignment: "left"
+})
+
+// Add bullet points
+mcp_ppt_manage_text({
+  slide_index: 2,
+  operation: "add",
+  text: "First bullet point",
+  font_size: 24
+})
+
+// Format text in shape
+mcp_ppt_manage_text({
+  slide_index: 3,
+  shape_index: 1,
+  operation: "edit",
+  text_runs: [
+    { text: "Bold text", bold: true },
+    { text: "Normal text " },
+    { text: "Italic text", italics: true }
+  ]
+})
+```
+
+### Template Application
+
+```javascript
+mcp_ppt_apply_template({
+  presentation_id: null,  // or specific presentation ID
+  template_name: "CorporateTemplate.pptx",
+  background: true
+})
+```
+
+### Content Management
+
+#### Images and Media
+
+Use content management tools to add and manipulate images in presentations.
+
+#### Font Management
+
+Font management tools allow analyzing, optimizing, and managing presentation fonts.
+
+### Information Extraction
+
+```javascript
+// Extract text from all slides
+// Use extraction tools to get presentation content
+
+// Extract from specific slides
+// Get slide-by-slide content for analysis
+```
+
+---
+
+## Part 3: Excel Spreadsheets (.xlsx) via MCP
+
+## Quick Reference
+
+| Task | MCP Tool Category |
+|------|-------------------|
+| Workbook operations | Workbook management tools |
+| Worksheet operations | Worksheet management tools |
+| Cell/range operations | Cell management tools |
+| Column operations | Column management tools |
+| Data formatting | Formatting tools |
+
+### Workbook Management
+
+```javascript
+// Create new workbook
+// Use workbook creation tools
+
+// Open existing workbook
+// Use workbook access tools to read and modify .xlsx files
+
+// Save workbook
+// Use workbook save operations
+```
+
+### Worksheet Operations
+
+```javascript
+// Create new worksheet
+// Worksheet management allows creating named worksheets
+
+// Copy worksheet
+// Duplicate sheets within workbook
+
+// Delete worksheet
+// Remove unnecessary sheets
+
+// Rename worksheet
+// Update sheet names for clarity
+
+// Add sheets from template
+// Apply consistent structure
+```
+
+### Cell Content Management
+
+#### Reading Cell Values
+
+Use cell management tools to read individual cell values.
+
+#### Writing Cell Content
+
+```javascript
+// Add or update cells
+// Set cell values, formulas, and content
+
+// Copy cell ranges
+// Duplicate cell content to other locations
+
+// Delete cells/ranges
+// Remove cell content as needed
+
+// Merge cells
+// Create header cells spanning multiple columns
+
+// Unmerge cells
+// Restore merged cells to individual cells
+```
+
+### Cell Formatting
+
+```javascript
+// Format cells
+// Apply fonts, colors, borders, and alignment
+
+// Format multiple cells
+// Apply consistent formatting across ranges
+```
+
+### Column Management
+
+```javascript
+// Insert columns
+// Add new columns at specified positions
+
+// Delete columns
+// Remove unnecessary columns
+```
+
+### Advanced Excel Operations
+
+#### Charts and Pivot Tables
+
+Use worksheet management tools to add charts and pivot tables for data visualization and analysis.
+
+#### Data Validation
+
+Set up dropdown lists and validation rules through cell operations.
+
+---
+
+## Part 4: Common Office Document Patterns
+
+### Document Structure Standards
+
+#### Word Documents
+1. **Title Page**: Document title, subtitle, date, author
+2. **Table of Contents**: Auto-generated with page numbers
+3. **Executive Summary**: Key points overview
+4. **Main Content**: Structured with headers
+5. **Appendices**: Supporting materials
+
+#### PowerPoint Presentations
+1. **Title Slide**: Hook, topic, presenter
+2. **Agenda/Overview**: What will be covered
+3. **Content Slides**: Main information (1 idea per slide)
+4. **Conclusion Summary**: Key takeaways
+5. **Q&A / Next Steps**: What audience should do
+
+#### Excel Workbooks
+1. **Summary Sheet**: Key metrics and insights
+2. **Data Source Sheet**: Raw data
+3. **Calculations Sheet**: Formulas and logic
+4. **Analysis Sheets**: Pivot tables, charts
+5. **Documentation Sheet**: Assumptions and notes
+
+### Formatting Standards
+
+#### Fonts
+- **Headings**: Bold, larger (16-24pt)
+- **Body**: Readable size (11-12pt)
+- **Code**: Monospace font (Consolas, Monaco)
+- **Consistency**: Use same font families throughout
+
+#### Colors
+- **Primary**: Main brand or accent color (use 60-70%)
+- **Secondary**: Supporting colors (20-30%)
+- **Neutral**: Headers, borders, backgrounds (remaining %)
+
+#### Spacing
+- **Consistent margins**: Standard settings (e.g., 1" margins)
+- **White space**: Don't crowd content
+- **Alignment**: Use grid-based spacing
+- **Visual hierarchy**: Size and weight guide eye
+
+---
+
+## Part 5: Quality Checklist
+
+### Word Documents
+```markdown
+## Word Document Quality Checklist
+
+### Structure
+- [ ] Title page with required metadata
+- [ ] Table of contents (auto-generated)
+- [ ] Clear heading hierarchy (H1 > H2 > H3)
+- [ ] Logical content flow
+- [ ] Appendices for supporting material
+
+### Content
+- [ ] Executive summary for long documents
+- [ ] Clear problem/solution structure
+- [ ] Concrete examples or scenarios
+- [ ] Appropriate depth for audience
+
+### Formatting
+- [ ] Consistent fonts and sizes
+- [ ] Proper paragraph spacing
+- [ ] Numbered/bulleted lists where appropriate
+- [ ] Tables and figures with captions
+- [ ] Page numbers in consistent location
+
+### Visual Elements
+- [ ] Images are high resolution
+- [ ] Diagrams are readable when printed
+- [ ] Colors are accessible
+- [ ] Captions and alt text included
+```
+
+### PowerPoint Presentations
+```markdown
+## Presentation Quality Checklist
+
+### Content
+- [ ] Clear opening hook
+- [ ] 1 main idea per slide
+- [ ] ≤50 words per slide
+- [ ] Visuals over bullets when possible
+- [ ] Logical flow between slides
+
+### Design
+- [ ] Consistent template or theme
+- [ ] High-quality graphics and images
+- [ ] Appropriate color contrast
+- [ ] Readable fonts (minimum 24pt body)
+- [ ] White space present
+
+### Structure
+- [ ] Title slide with key info
+- [ ] Agenda/overview early
+- [ ] Summary or conclusion at end
+- [ ] Q&A or next steps slide
+
+### Professionalism
+- [ ] Speaker notes added
+- [ ] No template placeholder text remains
+- [ ] Animations used purposefully
+- [ ] Transitions are consistent
+- [ ] Timing considered (≈1 min per slide)
+```
+
+### Excel Workbooks
+```markdown
+## Excel Quality Checklist
+
+### Data Integrity
+- [ ] Raw data in separate sheet
+- [ ] Formulas used, not hardcoded values
+- [ ] Consistent data types per column
+- [ ] No merged cells in data ranges
+
+### Organization
+- [ ] Summary sheet with key metrics
+- [ ] Clear sheet names
+- [ ] Filters and sorting enabled where useful
+- [ ] Data validation for input cells
+
+### Analysis
+- [ ] Pivot tables for large datasets
+- [ ] Charts visualize key insights
+- [ ] Conditional formatting highlights anomalies
+- [ ] Comments explain complex formulas
+
+### Documentation
+- [ ] Data source sheet explains origin
+- [ ] Assumptions documented
+- [ ] Formula sheet explains logic
+- [ ] Legend or data dictionary included
+```
+
+---
+
+## Part 6: MCP Tool Activation Guide
+
+### Activation Commands
+
+When working with any Office document type, use these MCP activation patterns:
+
+```javascript
+// Word documents
+activate_basic_document_editing_tools();      // Basic operations
+activate_advanced_footnote_management();      // Advanced footnotes
+activate_document_structure_tools();          // Headings, paragraphs, TOC
+activate_table_management_tools();            // Tables
+activate_document_security_and_conversion(); // PDF conversion, password
+
+// PowerPoint documents
+activate_presentation_creation_and_management(); // Create/open presentations
+activate_content_management_tools();          // Images, fonts, text
+activate_template_application_tools();        // Apply templates
+activate_information_extraction_and_management(); // Extract content
+
+// Excel documents
+activate_workbook_management();              // Workbooks
+activate_worksheet_management();            // Worksheets
+activate_cell_management_tools();            // Cell/range operations
+activate_column_management_tools();         // Column operations
+```
+
+### Workflow Examples
+
+#### Generate Report from Data
+
+1. **Create Excel workbook** with source data using Excel MCP
+2. **Analyze data** with Excel aggregation and formula tools
+3. **Generate PowerPoint slides** summarizing key findings
+4. **Create Word document** with detailed analysis
+5. **Convert summary to PDF** for distribution
+
+#### Template-Based Document Generation
+
+1. **Start with template** (Word/PPT/Excel)
+2. **Copy template** to new filename
+3. **Search and replace** placeholders with actual data
+4. **Customize content** with domain-specific information
+5. **Apply styling** consistently across document sections
+6. **Export final version** in required format
+
+---
+
+## Part 7: Best Practices
+
+### Cross-Document Workflow
+
+When working across multiple Office document types:
+
+1. **Maintain consistent branding**: Use same fonts, colors, and styles across Word, PowerPoint, and Excel
+2. **Link data sources**: Reference Excel data in Word documents, embed charts from Excel in PowerPoint
+3. **Version control**: Use clear naming conventions (e.g., `report_v2025-03-15.docx`)
+4. **Review before distribution**: Check all documents for consistency, formatting, and accuracy
+
+### MCP-Specific Best Practices
+
+- **Activate tools as needed**: Enable MCP tool groups only when required to avoid unnecessary overhead
+- **Validate operations**: Confirm operations completed successfully, especially for batch operations
+- **Handle errors gracefully**: Catch and report MCP tool errors with context for troubleshooting
+- **Batch operations**: Use array-based operations when available for efficiency
+- **Document file paths**: Use clear, relative paths and maintain documentation of file locations
+
+---
+
+## References & Resources
+
+### Documentation
+- [DOCX Formatting Reference](./references/docx-formatting-reference.md) — Word document formatting with docx-js API
+- [Excel Formulas Reference](./references/excel-formulas-reference.md) — Excel formula patterns and Power Query M basics
+
+### Scripts
+- [CSV to XLSX Converter](./scripts/csv-to-xlsx.py) — Python script to convert CSV files to formatted Excel workbooks
+
+### Examples
+- [Report Generation Example](./examples/report-generation-example.md) — Professional Word report generation workflow
+
