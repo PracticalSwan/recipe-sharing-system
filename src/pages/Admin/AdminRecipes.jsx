@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { storage } from '../../lib/storage';
+import React, { useState, useEffect, useCallback } from 'react';
+import api from '../../lib/api';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -8,7 +9,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Eye, Check, X, Trash2 } from 'lucide-react';
 import { normalizeCategories } from '../../lib/utils';
 
-const RecipeTable = ({ statusFilter, recipes, getAuthorName, handlePreview, updateStatus, handleDelete }) => {
+const RecipeTable = ({ statusFilter, recipes, handlePreview, updateStatus, handleDelete }) => {
     const filtered = recipes.filter(r => r.status === statusFilter);
 
     return (
@@ -36,14 +37,14 @@ const RecipeTable = ({ statusFilter, recipes, getAuthorName, handlePreview, upda
                             <TableCell className="font-mono text-xs text-cool-gray-60">{recipe.id}</TableCell>
                             <TableCell>
                                 <img 
-                                    src={recipe.images?.[0] || 'https://via.placeholder.com/40'} 
+                                    src={recipe.image || recipe.images?.[0]?.url || 'https://via.placeholder.com/40'} 
                                     alt={recipe.title} 
                                     className="w-10 h-10 rounded object-cover cursor-pointer hover:opacity-80"
                                     onClick={() => handlePreview(recipe)}
                                 />
                             </TableCell>
                             <TableCell className="font-medium">{recipe.title}</TableCell>
-                            <TableCell>{getAuthorName(recipe.authorId)}</TableCell>
+                            <TableCell>{recipe.author?.username || '-'}</TableCell>
                             <TableCell>{normalizeCategories(recipe.categories ?? recipe.category).join(', ') || '-'}</TableCell>
                             <TableCell>
                                 <Badge variant={recipe.status === 'published' ? 'success' : recipe.status === 'rejected' ? 'error' : 'warning'}>
@@ -80,37 +81,32 @@ const RecipeTable = ({ statusFilter, recipes, getAuthorName, handlePreview, upda
 };
 
 export function AdminRecipes() {
-    const [recipes, setRecipes] = useState(() => storage.getRecipes());
-    const [users, setUsers] = useState(() => storage.getUsers());
+    const [recipes, setRecipes] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [selectedRecipe, setSelectedRecipe] = useState(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [deleteRecipeId, setDeleteRecipeId] = useState(null);
 
-    const loadRecipes = () => {
-        setRecipes(storage.getRecipes());
-        setUsers(storage.getUsers());
-    };
+    const loadRecipes = useCallback(async () => {
+        try {
+            const data = await api.recipes.list({ status: 'all', limit: 50 });
+            setRecipes(data.recipes || []);
+        } catch (err) {
+            console.error('Failed to load recipes:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    // Helper to get author username from ID
-    const getAuthorName = (authorId) => {
-        const author = users.find(u => u.id === authorId);
-        return author?.username || authorId;
-    };
+    useEffect(() => { loadRecipes(); }, [loadRecipes]);
 
-    const updateStatus = (id, status) => {
-        const recipe = recipes.find(r => r.id === id);
-        if (recipe) {
-            storage.saveRecipe({ ...recipe, status });
-            const adminName = storage.getCurrentUser()?.username || 'Admin';
-            const actionLabel = status === 'published' ? 'approved' : status === 'rejected' ? 'rejected' : 'updated';
-            storage.addActivity({
-                type: 'admin-recipe',
-                text: `${adminName} ${actionLabel} "${recipe.title}"`
-            });
-            loadRecipes();
+    const updateStatus = async (id, status) => {
+        try {
+            await api.recipes.updateStatus(id, status);
+            await loadRecipes();
             setIsPreviewOpen(false);
-            window.dispatchEvent(new CustomEvent('recipeUpdated'));
-            window.dispatchEvent(new CustomEvent('statsUpdated'));
+        } catch (err) {
+            console.error('Failed to update recipe status:', err);
         }
     };
 
@@ -118,30 +114,28 @@ export function AdminRecipes() {
         setDeleteRecipeId(id);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (!deleteRecipeId) return;
-        const recipe = recipes.find(r => r.id === deleteRecipeId);
-        storage.deleteRecipe(deleteRecipeId);
-        const adminName = storage.getCurrentUser()?.username || 'Admin';
-        if (recipe) {
-            storage.addActivity({
-                type: 'admin-recipe',
-                text: `${adminName} removed "${recipe.title}"`
-            });
+        try {
+            await api.recipes.delete(deleteRecipeId);
+            await loadRecipes();
+        } catch (err) {
+            console.error('Failed to delete recipe:', err);
         }
-        loadRecipes();
         setDeleteRecipeId(null);
-        window.dispatchEvent(new CustomEvent('recipeUpdated'));
-        window.dispatchEvent(new CustomEvent('statsUpdated'));
     };
 
-    const handlePreview = (recipe) => {
-        const latest = storage.getRecipeById(recipe.id) || recipe;
-        setSelectedRecipe(latest);
+    const handlePreview = async (recipe) => {
+        try {
+            const full = await api.recipes.get(recipe.id);
+            setSelectedRecipe(full);
+        } catch {
+            setSelectedRecipe(recipe);
+        }
         setIsPreviewOpen(true);
     };
 
-
+    if (loading) return <LoadingSpinner className="py-20" />;
     return (
         <div className="space-y-6">
             <div>
@@ -159,7 +153,6 @@ export function AdminRecipes() {
                     <RecipeTable
                         statusFilter="pending"
                         recipes={recipes}
-                        getAuthorName={getAuthorName}
                         handlePreview={handlePreview}
                         updateStatus={updateStatus}
                         handleDelete={handleDelete}
@@ -169,7 +162,6 @@ export function AdminRecipes() {
                     <RecipeTable
                         statusFilter="published"
                         recipes={recipes}
-                        getAuthorName={getAuthorName}
                         handlePreview={handlePreview}
                         updateStatus={updateStatus}
                         handleDelete={handleDelete}
@@ -179,7 +171,6 @@ export function AdminRecipes() {
                     <RecipeTable
                         statusFilter="rejected"
                         recipes={recipes}
-                        getAuthorName={getAuthorName}
                         handlePreview={handlePreview}
                         updateStatus={updateStatus}
                         handleDelete={handleDelete}
@@ -195,7 +186,7 @@ export function AdminRecipes() {
             >
                 {selectedRecipe ? (
                     <div className="space-y-4 max-h-[70vh] overflow-auto">
-                        <img src={selectedRecipe.images?.[0]} alt="" className="w-full h-48 object-cover rounded-lg" />
+                        <img src={selectedRecipe.images?.[0]?.url || selectedRecipe.image || ''} alt="" className="w-full h-48 object-cover rounded-lg" />
                         <p className="text-cool-gray-60">{selectedRecipe.description}</p>
 
                         <div className="flex flex-wrap gap-2 text-xs text-cool-gray-70">
@@ -224,7 +215,7 @@ export function AdminRecipes() {
                                 <h4 className="font-semibold mb-2">Instructions</h4>
                                 <ol className="list-decimal list-inside text-sm">
                                     {selectedRecipe.instructions?.map((step, i) => (
-                                        <li key={i}>{step}</li>
+                                        <li key={i}>{typeof step === 'string' ? step : step.text}</li>
                                     ))}
                                 </ol>
                             </div>

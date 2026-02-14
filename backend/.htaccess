@@ -1,0 +1,17 @@
+RewriteEngine On
+
+# Handle CORS preflight OPTIONS requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ - [R=200,L]
+
+# Do not rewrite existing files or directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route /api/{resource}/{path...} to api/{resource}.php?route={path}
+RewriteRule ^api/([a-zA-Z_]+)/(.+)$ api/$1.php?route=$2 [QSA,L]
+
+# Route /api/{resource} to api/{resource}.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/([a-zA-Z_]+)/?$ api/$1.php [QSA,L]

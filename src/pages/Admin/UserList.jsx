@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useReducer } from 'react';
-import { storage } from '../../lib/storage';
+import React, { useEffect, useState, useCallback } from 'react';
+import api from '../../lib/api';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -10,29 +11,33 @@ import { Search, Trash2, Ban, ShieldCheck } from 'lucide-react';
 // Session timeout in milliseconds (5 minutes)
 const SESSION_TIMEOUT = 5 * 60 * 1000;
 
-// Reducer to force re-render for time updates
-const forceUpdateReducer = (x) => x + 1;
-
 export function UserList() {
-    const [users, setUsers] = useState(() => storage.getUsers());
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const [deleteId, setDeleteId] = useState(null);
-    const [, forceUpdate] = useReducer(forceUpdateReducer, 0);
+
+    const loadUsers = useCallback(async () => {
+        try {
+            const data = await api.users.list();
+            setUsers(data.users || data);
+        } catch (err) {
+            console.error('Failed to load users:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { loadUsers(); }, [loadUsers]);
 
     // Refresh periodically to update online status display
     useEffect(() => {
-        const interval = setInterval(() => {
-            forceUpdate();
-        }, 30000);
+        const interval = setInterval(loadUsers, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [loadUsers]);
 
-    const refreshUsers = () => {
-        setUsers(storage.getUsers());
-    };
-
-    // Check if user was active within the session timeout (session-based activity)
+    // Check if user was active within the session timeout
     const isUserOnline = (user) => {
         if (!user.lastActive) return false;
         const lastActiveTime = new Date(user.lastActive).getTime();
@@ -40,7 +45,6 @@ export function UserList() {
         return (now - lastActiveTime) < SESSION_TIMEOUT;
     };
 
-    // Derive display status: 'active' if online session, otherwise use stored status or 'inactive'
     const getDisplayStatus = (user) => {
         if (user.status === 'suspended') return 'suspended';
         if (user.status === 'pending') return 'pending';
@@ -48,19 +52,12 @@ export function UserList() {
         return isUserOnline(user) ? 'active' : 'inactive';
     };
 
-    const handleStatusChange = (userId, newStatus) => {
-        const user = users.find(u => u.id === userId);
-        if (user) {
-            storage.saveUser({ ...user, status: newStatus });
-            const adminName = storage.getCurrentUser()?.username || 'Admin';
-            const actionLabel = newStatus === 'active' ? 'approved' : newStatus === 'suspended' ? 'suspended' : 'updated';
-            storage.addActivity({
-                type: 'admin-user',
-                text: `${adminName} ${actionLabel} ${user.username}`
-            });
-            refreshUsers();
-            window.dispatchEvent(new CustomEvent('userUpdated'));
-            window.dispatchEvent(new CustomEvent('statsUpdated'));
+    const handleStatusChange = async (userId, newStatus) => {
+        try {
+            await api.users.updateStatus(userId, newStatus);
+            await loadUsers();
+        } catch (err) {
+            console.error('Failed to update user status:', err);
         }
     };
 
@@ -68,18 +65,14 @@ export function UserList() {
         setDeleteId(userId);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deleteId) {
-            const userToDelete = users.find(u => u.id === deleteId);
-            storage.deleteUser(deleteId);
-            const adminName = storage.getCurrentUser()?.username || 'Admin';
-            if (userToDelete) {
-                storage.addActivity({
-                    type: 'admin-user',
-                    text: `${adminName} removed ${userToDelete.username}`
-                });
+            try {
+                await api.users.delete(deleteId);
+                await loadUsers();
+            } catch (err) {
+                console.error('Failed to delete user:', err);
             }
-            refreshUsers();
             setDeleteId(null);
         }
     };
@@ -90,6 +83,8 @@ export function UserList() {
         const matchesRole = roleFilter === 'all' || user.role === roleFilter;
         return matchesSearch && matchesRole;
     });
+
+    if (loading) return <LoadingSpinner className="py-20" />;
 
     return (
         <div className="space-y-6">
@@ -137,7 +132,7 @@ export function UserList() {
                             <TableRow key={user.id}>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
-                                        <img src={user.avatar} className="h-8 w-8 rounded-full" alt="" />
+                                        <img src={user.avatarUrl} className="h-8 w-8 rounded-full" alt="" />
                                         <div className="font-medium">{user.username}</div>
                                     </div>
                                 </TableCell>

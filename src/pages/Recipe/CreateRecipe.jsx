@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { storage } from '../../lib/storage';
+import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -36,11 +36,15 @@ export function CreateRecipe() {
     // Load recipe data if in edit mode
     useEffect(() => {
         if (!canInteract || isBlocked) return;
-        if (isEditMode) {
-            const recipe = storage.getRecipeById(id);
-            if (recipe) {
-                // Check if user owns this recipe
-                if (recipe.authorId !== user?.id) {
+        if (!isEditMode) return;
+
+        let cancelled = false;
+        async function loadRecipe() {
+            try {
+                const data = await api.recipes.get(id);
+                if (cancelled) return;
+                const recipe = data.recipe;
+                if (recipe.author?.id !== user?.id) {
                     navigate('/profile?tab=recipes');
                     return;
                 }
@@ -58,14 +62,17 @@ export function CreateRecipe() {
                     cookTime: recipe.cookTime || 15,
                     servings: recipe.servings || 2,
                     difficulty: recipe.difficulty || 'Medium',
-                    image: recipe.images?.[0] || '',
+                    image: recipe.images?.[0]?.url || '',
                 });
                 setIngredients(recipe.ingredients?.length ? recipe.ingredients : [{ name: '', quantity: '', unit: '' }]);
-                setInstructions(recipe.instructions?.length ? recipe.instructions : ['']);
-            } else {
+                setInstructions(recipe.instructions?.length ? recipe.instructions.map(i => typeof i === 'string' ? i : i.text) : ['']);
+            } catch {
                 navigate('/profile?tab=recipes');
             }
         }
+
+        loadRecipe();
+        return () => { cancelled = true; };
     }, [id, isEditMode, user, navigate, canInteract, isBlocked]);
 
     const handleChange = (e) => {
@@ -209,41 +216,23 @@ export function CreateRecipe() {
         setIsLoading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 800));
+            const recipeData = {
+                title: formData.title,
+                description: formData.description,
+                categories: formData.categories,
+                prepTime: Number(formData.prepTime),
+                cookTime: Number(formData.cookTime),
+                servings: Number(formData.servings),
+                difficulty: formData.difficulty,
+                ingredients,
+                instructions,
+                images: [formData.image || 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?auto=format&fit=crop&q=80'],
+            };
 
             if (isEditMode && originalRecipe) {
-                // Update existing recipe
-                const updatedRecipe = {
-                    ...originalRecipe,
-                    ...formData,
-                    prepTime: Number(formData.prepTime),
-                    cookTime: Number(formData.cookTime),
-                    servings: Number(formData.servings),
-                    ingredients,
-                    instructions,
-                    images: [formData.image || originalRecipe.images?.[0] || 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?auto=format&fit=crop&q=80'],
-                    // Keep original status, or set to pending if it was rejected (re-submit for review)
-                    status: originalRecipe.status === 'rejected' ? 'pending' : originalRecipe.status
-                };
-                storage.saveRecipe(updatedRecipe);
+                await api.recipes.update(id, recipeData);
             } else {
-                // Create new recipe
-                const newRecipe = {
-                    id: `recipe-${Date.now()}`,
-                    ...formData,
-                    prepTime: Number(formData.prepTime),
-                    cookTime: Number(formData.cookTime),
-                    servings: Number(formData.servings),
-                    ingredients,
-                    instructions,
-                    images: [formData.image || 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?auto=format&fit=crop&q=80'],
-                    authorId: user.id,
-                    status: 'pending',
-                    createdAt: new Date().toISOString(),
-                    likedBy: [],
-                    viewedBy: []
-                };
-                storage.saveRecipe(newRecipe);
+                await api.recipes.create(recipeData);
             }
             
             window.dispatchEvent(new CustomEvent('recipeUpdated'));

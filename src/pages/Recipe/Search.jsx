@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { storage } from '../../lib/storage';
+import api from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Search as SearchIcon, X, Clock } from 'lucide-react';
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES, normalizeCategories } from '../../lib/utils';
 
@@ -14,13 +16,10 @@ export function Search() {
     const urlDifficulty = searchParams.get('difficulty') || 'All';
     const urlSort = searchParams.get('sort') || 'rating';
 
-    // Helper to get current user ID (including guest)
-    const getCurrentUserId = () => {
-        const user = storage.getCurrentUser();
-        return user?.id || (storage.getOrCreateGuestId ? `guest:${storage.getOrCreateGuestId()}` : null);
-    };
+    const { user } = useAuth();
 
-    const [recipes, setRecipes] = useState(() => storage.getRecipes().filter(r => r.status === 'published'));
+    const [recipes, setRecipes] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const [filters, setFilters] = useState({
         keyword: query,
@@ -30,10 +29,7 @@ export function Search() {
     });
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     
-    const [searchHistory, setSearchHistory] = useState(() => {
-        const userId = getCurrentUserId();
-        return userId ? storage.getSearchHistory(userId).slice(0, 5) : [];
-    });
+    const [searchHistory, setSearchHistory] = useState([]);
     const [debouncedKeyword, setDebouncedKeyword] = useState(query);
 
     const hasMountedRef = useRef(false);
@@ -80,10 +76,16 @@ export function Search() {
     }, [filters.keyword, filters.category, filters.difficulty, filters.sort, searchParams, setSearchParams]);
 
     useEffect(() => {
-        const refreshRecipes = () => {
-            const all = storage.getRecipes().filter(r => r.status === 'published');
-            setRecipes(all);
+        const loadRecipes = async () => {
+            try {
+                setLoading(true);
+                const data = await api.recipes.list({ status: 'published' });
+                setRecipes(data.recipes || []);
+            } catch (err) { console.error('Failed to load recipes:', err); }
+            finally { setLoading(false); }
         };
+        loadRecipes();
+        const refreshRecipes = () => loadRecipes();
         window.addEventListener('recipeUpdated', refreshRecipes);
         window.addEventListener('favoriteToggled', refreshRecipes);
         return () => {
@@ -91,6 +93,14 @@ export function Search() {
             window.removeEventListener('favoriteToggled', refreshRecipes);
         };
     }, []);
+
+    // Load search history from API
+    useEffect(() => {
+        if (!user) return;
+        api.search.getHistory()
+            .then(data => setSearchHistory((data.history || []).slice(0, 5)))
+            .catch(() => {});
+    }, [user]);
 
     useEffect(() => {
         if (!hasMountedRef.current) {
@@ -101,20 +111,14 @@ export function Search() {
         const trimmedKeyword = (debouncedKeyword || '').trim();
         if (!trimmedKeyword) return;
         if (lastLoggedKeywordRef.current === trimmedKeyword) return;
+        if (!user) return;
 
-        storage.addSearchHistory({
-            query: trimmedKeyword
-        });
+        api.search.saveHistory({ query: trimmedKeyword })
+            .then(() => api.search.getHistory())
+            .then(data => setSearchHistory((data.history || []).slice(0, 5)))
+            .catch(() => {});
         lastLoggedKeywordRef.current = trimmedKeyword;
-        
-        // Refresh local history state
-        setTimeout(() => {
-            const userId = getCurrentUserId();
-            if (userId) {
-                setSearchHistory(storage.getSearchHistory(userId).slice(0, 5));
-            }
-        }, 0);
-    }, [debouncedKeyword]);
+    }, [debouncedKeyword, user]);
 
     const filteredRecipes = useMemo(() => {
         let result = [...recipes];
@@ -141,7 +145,7 @@ export function Search() {
         // Sort
         result.sort((a, b) => {
             if (filters.sort === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
-            if (filters.sort === 'rating') return storage.getLikeCount(b.id) - storage.getLikeCount(a.id);
+            if (filters.sort === 'rating') return (b.likeCount || 0) - (a.likeCount || 0);
             if (filters.sort === 'difficulty-asc') return ['Easy', 'Medium', 'Hard'].indexOf(a.difficulty) - ['Easy', 'Medium', 'Hard'].indexOf(b.difficulty);
             return 0;
         });
@@ -174,14 +178,10 @@ export function Search() {
         setShowCategoryDropdown(false);
     };
 
-    const clearHistory = () => {
-        const userId = getCurrentUserId();
-        if (userId && storage.clearSearchHistory) {
-            storage.clearSearchHistory(userId);
-        } else if (storage.clearSearchHistory) {
-            // fallback: clear for current guest
-            storage.clearSearchHistory();
-        }
+    const clearHistory = async () => {
+        try {
+            await api.search.clearHistory();
+        } catch (err) { console.error('Failed to clear history:', err); }
         setSearchHistory([]);
     };
 
@@ -320,7 +320,9 @@ export function Search() {
             <div className="space-y-4">
                 <h2 className="text-xl font-bold text-cool-gray-90">Results ({filteredRecipes.length})</h2>
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {filteredRecipes.length > 0 ? (
+                    {loading ? (
+                        <div className="col-span-full"><LoadingSpinner className="py-12" /></div>
+                    ) : filteredRecipes.length > 0 ? (
                         filteredRecipes.map(r => <RecipeCard key={r.id} recipe={r} />)
                     ) : (
                         <div className="col-span-full py-12 text-center text-cool-gray-60">

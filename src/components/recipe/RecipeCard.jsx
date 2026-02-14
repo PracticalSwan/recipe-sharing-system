@@ -1,73 +1,49 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, User, Heart, Eye, Bookmark } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '../ui/Card';
 import { Badge } from '../ui/Badge';
-import { storage } from '../../lib/storage';
+import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { cn, normalizeCategories } from '../../lib/utils';
 
 export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
     const { user, canInteract } = useAuth();
-    const [isLiked, setIsLiked] = useState(false);
-    const [isFavorited, setIsFavorited] = useState(false);
-    const [likeCount, setLikeCount] = useState(recipe.likedBy?.length || 0);
-    const [viewCount, setViewCount] = useState(recipe.viewedBy?.length || 0);
-    
-    // Calculate rating
-    const reviews = storage.getReviews(recipe.id) || [];
-    const averageRating = Math.round(storage.getAverageRating(recipe.id));
+
+    // Use data directly from the API-provided recipe object
+    const [isLiked, setIsLiked] = useState(recipe.isLiked || false);
+    const [isFavorited, setIsFavorited] = useState(recipe.isFavorited || false);
+    const [likeCount, setLikeCount] = useState(recipe.likeCount || 0);
+    const viewCount = recipe.viewCount || 0;
+    const reviewCount = recipe.reviewCount || 0;
+    const averageRating = Math.round(recipe.avgRating || 0);
 
     const categories = normalizeCategories(recipe.categories ?? recipe.category);
+    const authorName = recipe.author?.username || `User ${recipe.author?.id || recipe.authorId}`;
 
-    // Fetch author name from storage
-    const author = storage.getUsers().find(u => u.id === recipe.authorId);
-    const authorName = author ? author.username : `User ${recipe.authorId}`;
-
-    useEffect(() => {
-        const syncState = () => {
-            const latestRecipe = storage.getRecipeById(recipe.id);
-            setLikeCount(latestRecipe?.likedBy?.length || 0);
-            setViewCount(latestRecipe?.viewedBy?.length || 0);
-
-            if (!user) {
-                setIsLiked(false);
-                setIsFavorited(false);
-                return;
-            }
-
-            setIsLiked(storage.hasUserLiked(user.id, recipe.id));
-            setIsFavorited(storage.hasUserFavorited(user.id, recipe.id));
-        };
-
-        syncState();
-        window.addEventListener('recipeUpdated', syncState);
-        window.addEventListener('favoriteToggled', syncState);
-        return () => {
-            window.removeEventListener('recipeUpdated', syncState);
-            window.removeEventListener('favoriteToggled', syncState);
-        };
-    }, [recipe.id, user]);
-
-    const handleLikeClick = (e) => {
+    const handleLikeClick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (!user || !canInteract) return;
-        const result = storage.toggleLike(user.id, recipe.id);
-        setIsLiked(result.liked);
-        setLikeCount(result.count);
-        if (onFavoriteToggle) onFavoriteToggle();
-        window.dispatchEvent(new CustomEvent('recipeUpdated')); // Generic update event
+        try {
+            const result = await api.recipes.toggleLike(recipe.id);
+            setIsLiked(result.liked);
+            setLikeCount(result.likeCount);
+            if (onFavoriteToggle) onFavoriteToggle();
+            window.dispatchEvent(new CustomEvent('recipeUpdated'));
+        } catch { /* ignore */ }
     };
 
-    const handleSaveClick = (e) => {
+    const handleSaveClick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (!user || !canInteract) return;
-        const result = storage.toggleFavorite(user.id, recipe.id);
-        setIsFavorited(result);
-        if (onFavoriteToggle) onFavoriteToggle();
-        window.dispatchEvent(new CustomEvent('favoriteToggled'));
+        try {
+            const result = await api.recipes.toggleFavorite(recipe.id);
+            setIsFavorited(result.favorited);
+            if (onFavoriteToggle) onFavoriteToggle();
+            window.dispatchEvent(new CustomEvent('favoriteToggled'));
+        } catch { /* ignore */ }
     };
 
     return (
@@ -75,7 +51,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
             <Card className="h-full flex flex-col overflow-hidden transition-all hover:shadow-lg border-cool-gray-20 hover-lift cursor-pointer">
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-cool-gray-10">
                     <img
-                        src={recipe.images?.[0] || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=400"}
+                        src={recipe.image || recipe.images?.[0]?.url || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=400"}
                         alt={recipe.title}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
@@ -153,7 +129,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                                 ★
                             </span>
                         ))}
-                        <span className="text-[10px] text-cool-gray-60 ml-1" aria-label={`${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'}`}>({reviews.length})</span>
+                        <span className="text-[10px] text-cool-gray-60 ml-1" aria-label={`${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}`}>({reviewCount})</span>
                     </div>
 
                     <p className="text-[11px] text-cool-gray-60 line-clamp-2 mb-1.5 h-8">
@@ -167,7 +143,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                window.location.hash = `/users/${recipe.authorId}`;
+                                window.location.hash = `/users/${recipe.author?.id || recipe.authorId}`;
                             }}
                         >
                             {authorName}

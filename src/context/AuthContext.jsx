@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { storage } from '../lib/storage';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import api from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -7,75 +7,52 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Check session on mount
     useEffect(() => {
-        // Initialize storage handling (seeding if empty)
-        storage.initialize();
+        let cancelled = false;
+        api.auth.me()
+            .then((data) => {
+                if (!cancelled) setUser(data.user);
+            })
+            .catch(() => {
+                // No active session – stay logged out
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, []);
 
-        // Check for active session
+    // Heartbeat interval while logged in
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const heartbeat = setInterval(() => {
+            api.auth.heartbeat().catch(() => {});
+        }, 60 * 1000);
+
+        return () => clearInterval(heartbeat);
+    }, [user?.id]);
+
+    // Re-fetch user to sync favorites after toggle
+    const refreshUser = useCallback(async () => {
         try {
-            const currentUser = storage.getCurrentUser();
-            if (currentUser) {
-                setUser(currentUser);
-            }
-        } catch (error) {
-            console.error("Failed to load user session", error);
-        } finally {
-            setLoading(false);
-        }
+            const data = await api.auth.me();
+            setUser(data.user);
+        } catch { /* ignore */ }
     }, []);
 
     useEffect(() => {
         if (!user?.id) return;
 
-        const handleExit = () => {
-            // No strict need to set inactive here, let timeout or logout handle it
-            // ensuring lastActive is up to date on exit
-            storage.updateLastActive(user.id);
-        };
-
-        const handleDailyActive = () => storage.recordActiveUser(user.id);
-        handleDailyActive();
-
-        // Initial heartbeat
-        storage.updateLastActive(user.id);
-
-        const dailyInterval = setInterval(handleDailyActive, 60 * 60 * 1000);
-        // Heartbeat every minute
-        const heartbeatInterval = setInterval(() => {
-            storage.updateLastActive(user.id);
-        }, 60 * 1000);
-
-        window.addEventListener('beforeunload', handleExit);
-        window.addEventListener('pagehide', handleExit);
-
-        return () => {
-            clearInterval(dailyInterval);
-            clearInterval(heartbeatInterval);
-            window.removeEventListener('beforeunload', handleExit);
-            window.removeEventListener('pagehide', handleExit);
-        };
-    }, [user]);
-
-    useEffect(() => {
-        if (!user?.id) return;
-
-        const syncCurrentUser = () => {
-            const current = storage.getCurrentUser();
-            if (current?.id === user.id) {
-                setUser(current);
-            }
-        };
-
+        const syncCurrentUser = () => refreshUser();
         window.addEventListener('favoriteToggled', syncCurrentUser);
+        return () => window.removeEventListener('favoriteToggled', syncCurrentUser);
+    }, [user?.id, refreshUser]);
 
-        return () => {
-            window.removeEventListener('favoriteToggled', syncCurrentUser);
-        };
-    }, [user?.id]);
-
-    const login = (email, password) => {
+    const login = async (email, password) => {
         try {
-            const loggedUser = storage.login(email, password);
+            const loggedUser = await api.auth.login(email, password);
             setUser(loggedUser);
             return { success: true };
         } catch (error) {
@@ -83,39 +60,21 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const logout = () => {
-        storage.logout(user?.id);
+    const logout = async () => {
+        try {
+            await api.auth.logout();
+        } catch { /* ignore */ }
         setUser(null);
     };
 
-    const signup = (userData) => {
-        // Basic signup logic - in a real app check email dupe
-        const newUser = {
-            id: `user-${Date.now()}`,
-            role: 'user',
-            status: 'pending',
-            joinedDate: new Date().toISOString(),
-            favorites: [],
-            viewedRecipes: [],
-            ...userData
-        };
-        storage.saveUser(newUser);
-        storage.addActivity({
-            type: 'user',
-            text: `${newUser.username} joined the platform`
-        });
-        // Record new user for daily stats tracking
-        storage.recordNewUser(newUser.id, newUser.role);
-        // Auto login
-        const loggedInUser = storage.login(userData.email, userData.password);
-        setUser(loggedInUser);
+    const signup = async (userData) => {
+        const registeredUser = await api.auth.register(userData);
+        setUser(registeredUser);
     };
 
-    const updateProfile = (updates) => {
+    const updateProfile = async (updates) => {
         if (!user) return;
-        const updatedUser = { ...user, ...updates };
-        storage.saveUser(updatedUser);
-        storage.setCurrentUser(updatedUser);
+        const updatedUser = await api.users.update(user.id, updates);
         setUser(updatedUser);
     };
 
@@ -134,7 +93,8 @@ export function AuthProvider({ children }) {
         login,
         logout,
         signup,
-        updateProfile
+        updateProfile,
+        refreshUser,
     };
 
     return (

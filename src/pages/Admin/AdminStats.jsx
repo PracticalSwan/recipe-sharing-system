@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { storage } from '../../lib/storage';
+import api from '../../lib/api';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Users, FileText, Activity, UserPlus, ChefHat, Eye } from 'lucide-react';
 
 // StatCard component moved outside to prevent recreation on each render
@@ -23,53 +24,42 @@ const StatCard = ({ title, value, icon, subtext }) => {
 };
 
 export function AdminStats() {
-    const [stats, setStats] = useState({
-        totalUsers: 0,
-        newUsersToday: 0,
-        contributors: 0,
-        newContributorsToday: 0,
-        publishedRecipes: 0,
-        pendingRecipes: 0,
-        dailyViews: 0,
-        dailyActiveUsers: 0,
-        recentActivity: []
-    });
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const loadStats = () => {
-            const users = storage.getUsers();
-            const recipes = storage.getRecipes();
-            const newUsersToday = storage.getNewUsersToday();
-            const newContributorsToday = storage.getNewContributorsToday();
-            const dailyActiveUsers = storage.getDailyActiveUsers();
-            // Contributors should exclude users with 'pending' status
-            setStats({
-                totalUsers: users.filter(u => u.role !== 'admin').length,
-                newUsersToday: newUsersToday.length,
-                contributors: users.filter(u => u.role === 'user' && u.status !== 'pending').length,
-                newContributorsToday: newContributorsToday.filter(u => u.status !== 'pending').length,
-                publishedRecipes: recipes.filter(r => r.status === 'published').length,
-                pendingRecipes: recipes.filter(r => r.status === 'pending').length,
-                dailyViews: storage.getDailyViews(),
-                dailyActiveUsers: dailyActiveUsers.length,
-                recentActivity: storage.getRecentActivity(5)
-            });
+        const loadStats = async () => {
+            try {
+                const data = await api.stats.dashboard();
+                setStats({
+                    totalUsers: data.totals?.users || 0,
+                    newUsersToday: data.today?.newUsers || 0,
+                    contributors: data.contributors || 0,
+                    newContributorsToday: data.today?.newContributors || 0,
+                    publishedRecipes: data.recipesByStatus?.published || 0,
+                    pendingRecipes: data.recipesByStatus?.pending || 0,
+                    dailyViews: data.today?.dailyViews || 0,
+                    dailyActiveUsers: data.today?.dailyActiveUsers || 0,
+                    recentActivity: (data.recentActivity || []).map(a => ({
+                        type: a.actionType,
+                        text: a.description,
+                        time: a.createdAt,
+                    })),
+                });
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            } finally {
+                setLoading(false);
+            }
         };
 
         loadStats();
         const interval = setInterval(loadStats, 30000);
-        const handleStatsUpdate = () => loadStats();
-        window.addEventListener('statsUpdated', handleStatsUpdate);
-        window.addEventListener('recipeUpdated', handleStatsUpdate);
-        window.addEventListener('userUpdated', handleStatsUpdate);
-
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('statsUpdated', handleStatsUpdate);
-            window.removeEventListener('recipeUpdated', handleStatsUpdate);
-            window.removeEventListener('userUpdated', handleStatsUpdate);
-        };
+        return () => clearInterval(interval);
     }, []);
+
+    if (loading) return <LoadingSpinner className="py-20" />;
+    if (!stats) return <div className="p-10 text-center text-cool-gray-60">Failed to load stats.</div>;
 
     return (
         <div className="space-y-6">

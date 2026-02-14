@@ -1,26 +1,34 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { storage } from '../../lib/storage';
+import api from '../../lib/api';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function Home() {
-    const [recipes, setRecipes] = useState(() => {
-        const allRecipes = storage.getRecipes();
-        return allRecipes.filter(r => r.status === 'published');
-    });
+    const [recipes, setRecipes] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
-    const loadRecipes = useCallback(() => {
-        const allRecipes = storage.getRecipes();
-        setRecipes(allRecipes.filter(r => r.status === 'published'));
+    const loadRecipes = useCallback(async () => {
+        try {
+            const data = await api.recipes.list({ status: 'published', sort: 'newest' });
+            setRecipes(data.recipes || []);
+        } catch {
+            console.error('Failed to load recipes');
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     useEffect(() => {
-        // Listen for updates to refresh
+        loadRecipes();
+    }, [loadRecipes]);
+
+    useEffect(() => {
         const handleRefresh = () => loadRecipes();
         window.addEventListener('favoriteToggled', handleRefresh);
         window.addEventListener('recipeUpdated', handleRefresh);
@@ -76,7 +84,9 @@ export function Home() {
                 </div>
 
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {recipes.length > 0 ? (
+                    {loading ? (
+                        <div className="col-span-full"><LoadingSpinner className="py-10" /></div>
+                    ) : recipes.length > 0 ? (
                         recipes.map(recipe => (
                             <RecipeCard key={recipe.id} recipe={recipe} onFavoriteToggle={loadRecipes} />
                         ))

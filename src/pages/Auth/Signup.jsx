@@ -44,17 +44,15 @@ export function Signup() {
         setIsLoading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 500));
-
             const username = `${formData.firstName} ${formData.lastName}`;
-            signup({
+            await signup({
                 username,
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 email: formData.email,
                 birthday: formData.birthday,
                 password: formData.password,
-                avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.firstName}`
+                avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.firstName}`
             });
 
             navigate('/');

@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { storage, DEFAULT_AVATARS } from '../../lib/storage';
+import api, { DEFAULT_AVATARS } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { MapPin, Calendar, Settings, Check, Edit, Trash2 } from 'lucide-react';
 
 export function Profile() {
@@ -17,20 +18,16 @@ export function Profile() {
     const [searchParams, setSearchParams] = useSearchParams();
     const defaultTab = searchParams.get('tab') || 'recipes';
 
-    const isOwnProfile = !userId || (currentUser && currentUser.id === userId);
+    const isOwnProfile = !userId || (currentUser && String(currentUser.id) === String(userId));
 
-    const profileUser = useMemo(() => {
-        if (isOwnProfile) {
-            return currentUser;
-        }
-        const users = storage.getUsers();
-        return users.find(u => u.id === userId) || null;
-    }, [userId, currentUser, isOwnProfile]);
+    const [profileUser, setProfileUser] = useState(isOwnProfile ? currentUser : null);
+    const [loading, setLoading] = useState(!isOwnProfile);
 
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({});
     const [deleteRecipeId, setDeleteRecipeId] = useState(null);
-    const [refreshKey, setRefreshKey] = useState(0);
+    const [myRecipes, setMyRecipes] = useState([]);
+    const [favorites, setFavorites] = useState([]);
 
     const buildEditForm = (user) => ({
         username: user?.username || '',
@@ -40,45 +37,76 @@ export function Profile() {
         bio: user?.bio || '',
         location: user?.location || '',
         cookingLevel: user?.cookingLevel || 'Beginner',
-        avatar: user?.avatar || DEFAULT_AVATARS[0]
+        avatarUrl: user?.avatarUrl || DEFAULT_AVATARS[0]
     });
 
-    const triggerRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+    // Load profile user for other users
+    useEffect(() => {
+        if (isOwnProfile) {
+            setProfileUser(currentUser);
+            return;
+        }
+        if (!userId) return;
+        setLoading(true);
+        api.users.get(userId)
+            .then(data => setProfileUser(data.user))
+            .catch(() => setProfileUser(null))
+            .finally(() => setLoading(false));
+    }, [userId, currentUser, isOwnProfile]);
+
+    // Load recipes
+    const loadRecipes = useCallback(async () => {
+        if (!profileUser) return;
+        try {
+            const data = await api.recipes.list({ authorId: profileUser.id });
+            const all = data.recipes || [];
+            setMyRecipes(isOwnProfile ? all : all.filter(r => r.status === 'published'));
+        } catch { setMyRecipes([]); }
+    }, [profileUser, isOwnProfile]);
+
+    // Load favorites
+    const loadFavorites = useCallback(async () => {
+        if (!profileUser?.favorites?.length) {
+            setFavorites([]);
+            return;
+        }
+        try {
+            const data = await api.recipes.list({ status: 'published' });
+            const all = data.recipes || [];
+            const favIds = profileUser.favorites.map(id => Number(id));
+            setFavorites(all.filter(r => favIds.includes(r.id)));
+        } catch { setFavorites([]); }
+    }, [profileUser]);
+
+    useEffect(() => { loadRecipes(); }, [loadRecipes]);
+    useEffect(() => { loadFavorites(); }, [loadFavorites]);
+
+    const triggerRefresh = useCallback(() => {
+        loadRecipes();
+        loadFavorites();
+    }, [loadRecipes, loadFavorites]);
 
     useEffect(() => {
-        const handleFavoriteToggle = () => triggerRefresh();
-        window.addEventListener('favoriteToggled', handleFavoriteToggle);
-        window.addEventListener('recipeUpdated', handleFavoriteToggle);
+        const handleRefresh = () => triggerRefresh();
+        window.addEventListener('favoriteToggled', handleRefresh);
+        window.addEventListener('recipeUpdated', handleRefresh);
         return () => {
-            window.removeEventListener('favoriteToggled', handleFavoriteToggle);
-            window.removeEventListener('recipeUpdated', handleFavoriteToggle);
+            window.removeEventListener('favoriteToggled', handleRefresh);
+            window.removeEventListener('recipeUpdated', handleRefresh);
         };
     }, [triggerRefresh]);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const allRecipes = useMemo(() => storage.getRecipes(), [refreshKey]);
-
-    const myRecipes = useMemo(() => {
-        if (!profileUser) return [];
-        const userRecipes = allRecipes.filter(r => r.authorId === profileUser.id);
-        return isOwnProfile ? userRecipes : userRecipes.filter(r => r.status === 'published');
-    }, [allRecipes, profileUser, isOwnProfile]);
-
-    const favorites = useMemo(() => {
-        if (!profileUser?.favorites?.length) return [];
-        const favoriteRecipes = allRecipes.filter(r => profileUser.favorites.includes(r.id));
-        return isOwnProfile ? favoriteRecipes : favoriteRecipes.filter(r => r.status === 'published');
-    }, [allRecipes, profileUser, isOwnProfile]);
 
     const handleDeleteRecipe = (recipeId) => {
         setDeleteRecipeId(recipeId);
     };
 
-    const confirmDeleteRecipe = () => {
+    const confirmDeleteRecipe = async () => {
         if (deleteRecipeId) {
-            storage.deleteRecipe(deleteRecipeId);
-            triggerRefresh();
-            window.dispatchEvent(new CustomEvent('recipeUpdated'));
+            try {
+                await api.recipes.delete(deleteRecipeId);
+                triggerRefresh();
+                window.dispatchEvent(new CustomEvent('recipeUpdated'));
+            } catch { /* ignore */ }
             setDeleteRecipeId(null);
         }
     };
@@ -100,9 +128,10 @@ export function Profile() {
     };
 
     const handleAvatarSelect = (avatarUrl) => {
-        setEditForm(prev => ({ ...prev, avatar: avatarUrl }));
+        setEditForm(prev => ({ ...prev, avatarUrl }));
     };
 
+    if (loading) return <LoadingSpinner className="py-20" />;
     if (!profileUser) return <div className="p-10 text-center">User not found</div>;
 
     return (
@@ -110,7 +139,7 @@ export function Profile() {
             {/* Profile Header */}
             <div className="bg-white p-6 rounded-2xl border border-cool-gray-20 shadow-sm">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-5">
-                    <img src={profileUser.avatar} alt={profileUser.username} className="h-20 w-20 rounded-full border-4 border-cool-gray-10" />
+                    <img src={profileUser.avatarUrl} alt={profileUser.username} className="h-20 w-20 rounded-full border-4 border-cool-gray-10" />
 
                     <div className="flex-1 space-y-1.5">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
@@ -159,12 +188,12 @@ export function Profile() {
                                     key={i}
                                     type="button"
                                     onClick={() => handleAvatarSelect(avatar)}
-                                    className={`relative h-12 w-12 rounded-full overflow-hidden border-2 transition-all hover:scale-105 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-2 ${editForm.avatar === avatar ? 'border-cool-gray-90 ring-2 ring-cool-gray-90/20' : 'border-cool-gray-20 hover:border-cool-gray-40'}`}
+                                    className={`relative h-12 w-12 rounded-full overflow-hidden border-2 transition-all hover:scale-105 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-2 ${editForm.avatarUrl === avatar ? 'border-cool-gray-90 ring-2 ring-cool-gray-90/20' : 'border-cool-gray-20 hover:border-cool-gray-40'}`}
                                     aria-label={`Select avatar ${i + 1}`}
-                                    aria-pressed={editForm.avatar === avatar}
+                                    aria-pressed={editForm.avatarUrl === avatar}
                                 >
                                     <img src={avatar} alt={`Avatar ${i + 1}`} className="h-full w-full object-cover" />
-                                    {editForm.avatar === avatar && (
+                                    {editForm.avatarUrl === avatar && (
                                         <div className="absolute inset-0 bg-cool-gray-90/30 flex items-center justify-center">
                                             <Check className="h-5 w-5 text-white" />
                                         </div>
@@ -174,8 +203,8 @@ export function Profile() {
                         </div>
                         <Input
                             placeholder="Or paste custom avatar URL..."
-                            value={editForm.avatar}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, avatar: e.target.value }))}
+                            value={editForm.avatarUrl}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, avatarUrl: e.target.value }))}
                             className="mt-2"
                         />
                     </div>

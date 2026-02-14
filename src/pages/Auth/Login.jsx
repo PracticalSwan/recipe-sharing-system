@@ -18,10 +18,7 @@ export function Login() {
         setIsLoading(true);
 
         try {
-            // Small artificial delay to show loader
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            const result = login(email, password);
+            const result = await login(email, password);
             if (result.success) {
                 navigate('/');
             } else {

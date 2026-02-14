@@ -2,15 +2,15 @@
 goal: Integrate MySQL Database Backend into Recipe Sharing System
 version: 2.0
 date_created: 2026-02-04
-last_updated: 2026-02-08
+last_updated: 2026-02-14
 owner: CSX3006 Database Systems Course Project
-status: 'In Progress'
+status: 'In Progress (83% Complete — Phases 1-5 Done)'
 tags: [database, backend, php, mysql, api, migration, architecture, xampp]
 ---
 
 # Introduction
 
-![Status: In Progress](https://img.shields.io/badge/status-In%20Progress-yellow)
+![Status: In Progress](https://img.shields.io/badge/status-83%25%20Complete-blue)
 
 This implementation plan outlines the complete migration of the Recipe Sharing System from a localStorage-based frontend-only application to a full-stack web application with MySQL database backend and PHP RESTful API. The plan maintains all existing frontend functionality while demonstrating comprehensive database design, SQL scripting, and backend development skills required for the CSX3006 Database Systems course.
 
@@ -237,77 +237,77 @@ backend/
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-057 | Create backend folder structure: `backend/` with subdirs: `config/`, `helpers/`, `api/` | | |
-| TASK-058 | Create `backend/config/database.php` - PDO connection class using singleton pattern, charset utf8mb4, error mode EXCEPTION, default fetch ASSOC | | |
-| TASK-059 | Create `backend/.htaccess` - mod_rewrite rules to route `/api/{resource}` to `api/{resource}.php`, pass path info via query string | | |
-| TASK-060 | Create `backend/helpers/cors.php` - Set CORS headers: `Access-Control-Allow-Origin: http://localhost:5173`, `Access-Control-Allow-Credentials: true`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, handle OPTIONS preflight | | |
-| TASK-061 | Create `backend/helpers/auth.php` - `getCurrentUser($pdo)` function: read session token from cookie, validate against `session` table, check `expires_at`, return user row or null; `requireAuth($pdo)` function: call getCurrentUser, return 401 if null | | |
-| TASK-062 | Create `backend/helpers/response.php` - Helper functions: `jsonResponse($data, $status)`, `errorResponse($message, $status)`, `paginatedResponse($data, $total, $page, $limit)` | | |
+| TASK-057 | Create backend folder structure: `backend/` with subdirs: `config/`, `helpers/`, `api/` | ✅ | 2026-02-14 |
+| TASK-058 | Create `backend/config/database.php` - PDO connection class using singleton pattern, charset utf8mb4, error mode EXCEPTION, default fetch ASSOC | ✅ | 2026-02-14 |
+| TASK-059 | Create `backend/.htaccess` - mod_rewrite rules to route `/api/{resource}` to `api/{resource}.php`, pass path info via query string | ✅ | 2026-02-14 |
+| TASK-060 | Create `backend/helpers/cors.php` - Set CORS headers: `Access-Control-Allow-Origin: http://localhost:5173`, `Access-Control-Allow-Credentials: true`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, handle OPTIONS preflight | ✅ | 2026-02-14 |
+| TASK-061 | Create `backend/helpers/auth.php` - `getCurrentUser($pdo)` function: read session token from cookie, validate against `session` table, check `expires_at`, return user row or null; `requireAuth($pdo)` function: call getCurrentUser, return 401 if null | ✅ | 2026-02-14 |
+| TASK-062 | Create `backend/helpers/response.php` - Helper functions: `jsonResponse($data, $status)`, `errorResponse($message, $status)`, `paginatedResponse($data, $total, $page, $limit)` | ✅ | 2026-02-14 |
 
 **Auth API Endpoints (`api/auth.php`):**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-063 | `POST /api/auth/register` - Validate required fields (username, email, password, first_name, last_name), check email uniqueness, `password_hash()` with BCRYPT, INSERT into user table, create session, set HttpOnly cookie, return user data | | |
-| TASK-064 | `POST /api/auth/login` - Validate email + password, `password_verify()`, create session row with `bin2hex(random_bytes(32))` token, set HttpOnly/SameSite=Lax cookie, update user.last_active, return user data | | |
-| TASK-065 | `POST /api/auth/logout` - Read session token from cookie, DELETE from session table, clear cookie | | |
-| TASK-066 | `GET /api/auth/me` - Call `requireAuth()`, return current user data from session (exclude password_hash) | | |
+| TASK-063 | `POST /api/auth/register` - Validate required fields (username, email, password, first_name, last_name), check email uniqueness, `password_hash()` with BCRYPT, INSERT into user table, create session, set HttpOnly cookie, return user data | ✅ | 2026-02-14 |
+| TASK-064 | `POST /api/auth/login` - Validate email + password, `password_verify()`, create session row with `bin2hex(random_bytes(32))` token, set HttpOnly/SameSite=Lax cookie, update user.last_active, return user data | ✅ | 2026-02-14 |
+| TASK-065 | `POST /api/auth/logout` - Read session token from cookie, DELETE from session table, clear cookie | ✅ | 2026-02-14 |
+| TASK-066 | `GET /api/auth/me` - Call `requireAuth()`, return current user data from session (exclude password_hash) | ✅ | 2026-02-14 |
 
 **Recipe API Endpoints (`api/recipes.php`):**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-067 | `GET /api/recipes` - requireAuth, return published recipes with optional filters: `?category=`, `?difficulty=`, `?search=`, `?sort=`, `?page=`, `?limit=`. JOIN with user for author info, include like_count/view_count/avg_rating from aggregation | | |
-| TASK-068 | `GET /api/recipes/{id}` - requireAuth, return full recipe with nested: ingredients (ORDER BY sort_order), instructions (ORDER BY step_number), images (ORDER BY display_order), author info, stats (likes, views, avg_rating), user-specific flags (isLiked, isFavorited) | | |
-| TASK-069 | `POST /api/recipes` - requireAuth, validate fields, INSERT recipe with status='pending', INSERT ingredients array, INSERT instructions array with step_numbers, return created recipe with ID | | |
-| TASK-070 | `PUT /api/recipes/{id}` - requireAuth, verify ownership (author_id = current user OR admin), UPDATE recipe fields, replace ingredients (DELETE old + INSERT new), replace instructions, return updated recipe | | |
-| TASK-071 | `DELETE /api/recipes/{id}` - requireAuth, verify ownership or admin role, DELETE recipe (CASCADE handles related data), return success | | |
-| TASK-072 | `PUT /api/recipes/{id}/status` - requireAuth + requireAdmin, validate status ('published'/'rejected'), UPDATE recipe.status, INSERT activity_log entry, return updated recipe | | |
-| TASK-073 | `POST /api/recipes/{id}/like` - requireAuth, toggle: check if like_record exists for user+recipe → DELETE if yes, INSERT if no. Return { liked: bool, likeCount: int } | | |
-| TASK-074 | `POST /api/recipes/{id}/favorite` - requireAuth, toggle: check if favorite exists for user+recipe → DELETE if yes, INSERT if no. Return { favorited: bool } | | |
-| TASK-075 | `POST /api/recipes/{id}/view` - requireAuth, INSERT into recipe_view (user_id, recipe_id) only when current user role = 'user'. Skip tracking for admin role and return success. Triggers handle daily_stat update. | | |
+| TASK-067 | `GET /api/recipes` - requireAuth, return published recipes with optional filters: `?category=`, `?difficulty=`, `?search=`, `?sort=`, `?page=`, `?limit=`. JOIN with user for author info, include like_count/view_count/avg_rating from aggregation | ✅ | 2026-02-14 |
+| TASK-068 | `GET /api/recipes/{id}` - requireAuth, return full recipe with nested: ingredients (ORDER BY sort_order), instructions (ORDER BY step_number), images (ORDER BY display_order), author info, stats (likes, views, avg_rating), user-specific flags (isLiked, isFavorited) | ✅ | 2026-02-14 |
+| TASK-069 | `POST /api/recipes` - requireAuth, validate fields, INSERT recipe with status='pending', INSERT ingredients array, INSERT instructions array with step_numbers, return created recipe with ID | ✅ | 2026-02-14 |
+| TASK-070 | `PUT /api/recipes/{id}` - requireAuth, verify ownership (author_id = current user OR admin), UPDATE recipe fields, replace ingredients (DELETE old + INSERT new), replace instructions, return updated recipe | ✅ | 2026-02-14 |
+| TASK-071 | `DELETE /api/recipes/{id}` - requireAuth, verify ownership or admin role, DELETE recipe (CASCADE handles related data), return success | ✅ | 2026-02-14 |
+| TASK-072 | `PUT /api/recipes/{id}/status` - requireAuth + requireAdmin, validate status ('published'/'rejected'), UPDATE recipe.status, INSERT activity_log entry, return updated recipe | ✅ | 2026-02-14 |
+| TASK-073 | `POST /api/recipes/{id}/like` - requireAuth, toggle: check if like_record exists for user+recipe → DELETE if yes, INSERT if no. Return { liked: bool, likeCount: int } | ✅ | 2026-02-14 |
+| TASK-074 | `POST /api/recipes/{id}/favorite` - requireAuth, toggle: check if favorite exists for user+recipe → DELETE if yes, INSERT if no. Return { favorited: bool } | ✅ | 2026-02-14 |
+| TASK-075 | `POST /api/recipes/{id}/view` - requireAuth, INSERT into recipe_view (user_id, recipe_id) only when current user role = 'user'. Skip tracking for admin role and return success. Triggers handle daily_stat update. | ✅ | 2026-02-14 |
 
 **Review API Endpoints (`api/reviews.php`):**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-076 | `GET /api/reviews?recipe_id={id}` - requireAuth, return all reviews for recipe, JOIN with user for reviewer info (username, avatar_url), ORDER BY created_at DESC | | |
-| TASK-077 | `POST /api/reviews` - requireAuth, validate rating (1-5) and recipe_id, enforce unique constraint (one review per user per recipe), INSERT review, return created review with user info | | |
-| TASK-078 | `PUT /api/reviews/{id}` - requireAuth, verify ownership (review.user_id = current user), UPDATE rating and/or comment, return updated review | | |
-| TASK-079 | `DELETE /api/reviews/{id}` - requireAuth, verify ownership or admin role, DELETE review, return success | | |
+| TASK-076 | `GET /api/reviews?recipe_id={id}` - requireAuth, return all reviews for recipe, JOIN with user for reviewer info (username, avatar_url), ORDER BY created_at DESC | ✅ | 2026-02-14 |
+| TASK-077 | `POST /api/reviews` - requireAuth, validate rating (1-5) and recipe_id, enforce unique constraint (one review per user per recipe), INSERT review, return created review with user info | ✅ | 2026-02-14 |
+| TASK-078 | `PUT /api/reviews/{id}` - requireAuth, verify ownership (review.user_id = current user), UPDATE rating and/or comment, return updated review | ✅ | 2026-02-14 |
+| TASK-079 | `DELETE /api/reviews/{id}` - requireAuth, verify ownership or admin role, DELETE review, return success | ✅ | 2026-02-14 |
 
 **User API Endpoints (`api/users.php`):**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-080 | `GET /api/users` - requireAuth + requireAdmin, return all users with pagination (?page=, ?limit=), exclude password_hash from response, include user counts by status | | |
-| TASK-081 | `GET /api/users/{id}` - requireAuth, return user profile (exclude password_hash), include recipe count, review count, favorite count from aggregation | | |
-| TASK-082 | `PUT /api/users/{id}` - requireAuth, verify ownership or admin, UPDATE allowed fields (first_name, last_name, bio, location, cooking_level, avatar_url, birthday), return updated user | | |
-| TASK-083 | `DELETE /api/users/{id}` - requireAuth + requireAdmin, DELETE user (CASCADE handles recipes/reviews), INSERT activity_log entry, return success | | |
-| TASK-084 | `PUT /api/users/{id}/status` - requireAuth + requireAdmin, validate status ENUM, UPDATE user.status, INSERT activity_log entry, return updated user | | |
+| TASK-080 | `GET /api/users` - requireAuth + requireAdmin, return all users with pagination (?page=, ?limit=), exclude password_hash from response, include user counts by status | ✅ | 2026-02-14 |
+| TASK-081 | `GET /api/users/{id}` - requireAuth, return user profile (exclude password_hash), include recipe count, review count, favorite count from aggregation | ✅ | 2026-02-14 |
+| TASK-082 | `PUT /api/users/{id}` - requireAuth, verify ownership or admin, UPDATE allowed fields (first_name, last_name, bio, location, cooking_level, avatar_url, birthday), return updated user | ✅ | 2026-02-14 |
+| TASK-083 | `DELETE /api/users/{id}` - requireAuth + requireAdmin, DELETE user (CASCADE handles recipes/reviews), INSERT activity_log entry, return success | ✅ | 2026-02-14 |
+| TASK-084 | `PUT /api/users/{id}/status` - requireAuth + requireAdmin, validate status ENUM, UPDATE user.status, INSERT activity_log entry, return updated user | ✅ | 2026-02-14 |
 
 **Search API Endpoints (`api/search.php`):**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-085 | `GET /api/search?q={query}` - requireAuth, search published recipes by title and description using LIKE or FULLTEXT, return matching recipes with author info and stats | | |
-| TASK-086 | `POST /api/search/history` - requireAuth, INSERT search query into search_history table with user_id and current timestamp | | |
-| TASK-087 | `GET /api/search/history` - requireAuth, return current user's search history ordered by searched_at DESC, limit 20 | | |
-| TASK-088 | `DELETE /api/search/history` - requireAuth, DELETE all search_history rows for current user | | |
+| TASK-085 | `GET /api/search?q={query}` - requireAuth, search published recipes by title and description using LIKE or FULLTEXT, return matching recipes with author info and stats | ✅ | 2026-02-14 |
+| TASK-086 | `POST /api/search/history` - requireAuth, INSERT search query into search_history table with user_id and current timestamp | ✅ | 2026-02-14 |
+| TASK-087 | `GET /api/search/history` - requireAuth, return current user's search history ordered by searched_at DESC, limit 20 | ✅ | 2026-02-14 |
+| TASK-088 | `DELETE /api/search/history` - requireAuth, DELETE all search_history rows for current user | ✅ | 2026-02-14 |
 
 **Stats & Activity API Endpoints (`api/stats.php`, `api/activity.php`):**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-089 | `GET /api/stats/dashboard` - requireAuth + requireAdmin, return aggregated dashboard: total users (by status), total recipes (by status), total reviews, total views, recent daily_stat rows (last 30 days) | | |
-| TASK-090 | `GET /api/stats/daily` - requireAuth, return daily_stat rows for charting (last 30 days default, configurable via ?days= param) | | |
-| TASK-091 | `GET /api/activity` - requireAuth + requireAdmin, return activity_log rows with admin username, ordered by created_at DESC, with pagination | | |
+| TASK-089 | `GET /api/stats/dashboard` - requireAuth + requireAdmin, return aggregated dashboard: total users (by status), total recipes (by status), total reviews, total views, recent daily_stat rows (last 30 days) | ✅ | 2026-02-14 |
+| TASK-090 | `GET /api/stats/daily` - requireAuth, return daily_stat rows for charting (last 30 days default, configurable via ?days= param) | ✅ | 2026-02-14 |
+| TASK-091 | `GET /api/activity` - requireAuth + requireAdmin, return activity_log rows with admin username, ordered by created_at DESC, with pagination | ✅ | 2026-02-14 |
 
 **API Testing:**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-092 | Test all API endpoints with Postman/curl, document request/response formats for each endpoint | | |
+| TASK-092 | Test all API endpoints with Postman/curl, document request/response formats for each endpoint | ⏳ | |
 
 ### Phase 5: Frontend Integration
 
@@ -317,49 +317,49 @@ backend/
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-093 | Create `src/lib/api.js` - Base fetch wrapper: configure API_BASE_URL (default `http://localhost/recipe-sharing-system/backend`), create `apiFetch(endpoint, options)` function with `credentials: 'include'`, default headers `Content-Type: application/json`, automatic JSON parsing, error handling (throw on non-ok response with parsed error message) | | |
-| TASK-094 | `api.js` - Implement auth methods: `api.auth.register(data)`, `api.auth.login(email, password)`, `api.auth.logout()`, `api.auth.getCurrentUser()` | | |
-| TASK-095 | `api.js` - Implement recipe CRUD methods: `api.recipes.getAll(filters)`, `api.recipes.getById(id)`, `api.recipes.create(data)`, `api.recipes.update(id, data)`, `api.recipes.delete(id)` | | |
-| TASK-096 | `api.js` - Implement recipe action methods: `api.recipes.updateStatus(id, status)`, `api.recipes.like(id)`, `api.recipes.favorite(id)`, `api.recipes.recordView(id)` | | |
-| TASK-097 | `api.js` - Implement review methods: `api.reviews.getByRecipe(recipeId)`, `api.reviews.create(recipeId, data)`, `api.reviews.update(id, data)`, `api.reviews.delete(id)` | | |
-| TASK-098 | `api.js` - Implement user methods: `api.users.getAll(params)`, `api.users.getById(id)`, `api.users.update(id, data)`, `api.users.delete(id)`, `api.users.updateStatus(id, status)` | | |
-| TASK-099 | `api.js` - Implement search methods: `api.search.search(query, filters)`, `api.search.saveHistory(query)`, `api.search.getHistory()`, `api.search.clearHistory()` | | |
-| TASK-100 | `api.js` - Implement stats/activity methods: `api.stats.getDashboard()`, `api.stats.getDaily(days)`, `api.activity.getRecent(params)` | | |
+| TASK-093 | Create `src/lib/api.js` - Base fetch wrapper: configure API_BASE_URL (default `http://localhost/recipe-sharing-system/backend`), create `apiFetch(endpoint, options)` function with `credentials: 'include'`, default headers `Content-Type: application/json`, automatic JSON parsing, error handling (throw on non-ok response with parsed error message) | ✅ | 2026-02-14 |
+| TASK-094 | `api.js` - Implement auth methods: `api.auth.register(data)`, `api.auth.login(email, password)`, `api.auth.logout()`, `api.auth.getCurrentUser()` | ✅ | 2026-02-14 |
+| TASK-095 | `api.js` - Implement recipe CRUD methods: `api.recipes.getAll(filters)`, `api.recipes.getById(id)`, `api.recipes.create(data)`, `api.recipes.update(id, data)`, `api.recipes.delete(id)` | ✅ | 2026-02-14 |
+| TASK-096 | `api.js` - Implement recipe action methods: `api.recipes.updateStatus(id, status)`, `api.recipes.like(id)`, `api.recipes.favorite(id)`, `api.recipes.recordView(id)` | ✅ | 2026-02-14 |
+| TASK-097 | `api.js` - Implement review methods: `api.reviews.getByRecipe(recipeId)`, `api.reviews.create(recipeId, data)`, `api.reviews.update(id, data)`, `api.reviews.delete(id)` | ✅ | 2026-02-14 |
+| TASK-098 | `api.js` - Implement user methods: `api.users.getAll(params)`, `api.users.getById(id)`, `api.users.update(id, data)`, `api.users.delete(id)`, `api.users.updateStatus(id, status)` | ✅ | 2026-02-14 |
+| TASK-099 | `api.js` - Implement search methods: `api.search.search(query, filters)`, `api.search.saveHistory(query)`, `api.search.getHistory()`, `api.search.clearHistory()` | ✅ | 2026-02-14 |
+| TASK-100 | `api.js` - Implement stats/activity methods: `api.stats.getDashboard()`, `api.stats.getDaily(days)`, `api.activity.getRecent(params)` | ✅ | 2026-02-14 |
 
 **Auth Integration:**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-101 | Update `src/context/AuthContext.jsx` - Replace `storage.login()`/`storage.logout()` with `api.auth.login()`/`api.auth.logout()`, on mount call `api.auth.getCurrentUser()` to restore session from cookie, remove localStorage user references | | |
-| TASK-102 | Update `src/pages/Auth/Login.jsx` - Replace storage call with `api.auth.login()`, add loading state during API call, add error display for failed login, handle network errors | | |
-| TASK-103 | Update `src/pages/Auth/Signup.jsx` - Replace storage call with `api.auth.register()`, add loading state, add error display for validation failures, handle duplicate email error | | |
+| TASK-101 | Update `src/context/AuthContext.jsx` - Replace `storage.login()`/`storage.logout()` with `api.auth.login()`/`api.auth.logout()`, on mount call `api.auth.getCurrentUser()` to restore session from cookie, remove localStorage user references | ✅ | 2026-02-14 |
+| TASK-102 | Update `src/pages/Auth/Login.jsx` - Replace storage call with `api.auth.login()`, add loading state during API call, add error display for failed login, handle network errors | ✅ | 2026-02-14 |
+| TASK-103 | Update `src/pages/Auth/Signup.jsx` - Replace storage call with `api.auth.register()`, add loading state, add error display for validation failures, handle duplicate email error | ✅ | 2026-02-14 |
 
 **Recipe Pages:**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-104 | Update `src/pages/Recipe/Home.jsx` - Replace `storage.getRecipes()` with `api.recipes.getAll()`, add loading spinner while fetching, add error state for failed fetch | | |
-| TASK-105 | Update `src/pages/Recipe/RecipeDetail.jsx` - Replace all storage calls with API: `api.recipes.getById()`, `api.recipes.like()`, `api.recipes.favorite()`, `api.recipes.recordView()`, `api.reviews.getByRecipe()`, `api.reviews.create()`. Remove guest view tracking code. Require authentication for viewing | | |
-| TASK-106 | Update `src/pages/Recipe/CreateRecipe.jsx` - Replace `storage.saveRecipe()` with `api.recipes.create()`, add loading state during submission, handle validation errors from API | | |
-| TASK-107 | Update `src/pages/Recipe/Search.jsx` - Replace `storage.search*` methods with `api.search.search()`, `api.search.saveHistory()`, `api.search.getHistory()`, `api.search.clearHistory()`. Remove `storage.getOrCreateGuestId()` calls | | |
-| TASK-108 | Update `src/pages/Recipe/Profile.jsx` - Replace `storage.saveUser()` with `api.users.update()`, replace `storage.deleteRecipe()` with `api.recipes.delete()`, replace `storage.getUsers()` with `api.users.getById()` | | |
+| TASK-104 | Update `src/pages/Recipe/Home.jsx` - Replace `storage.getRecipes()` with `api.recipes.getAll()`, add loading spinner while fetching, add error state for failed fetch | ✅ | 2026-02-14 |
+| TASK-105 | Update `src/pages/Recipe/RecipeDetail.jsx` - Replace all storage calls with API: `api.recipes.getById()`, `api.recipes.like()`, `api.recipes.favorite()`, `api.recipes.recordView()`, `api.reviews.getByRecipe()`, `api.reviews.create()`. Remove guest view tracking code. Require authentication for viewing | ✅ | 2026-02-14 |
+| TASK-106 | Update `src/pages/Recipe/CreateRecipe.jsx` - Replace `storage.saveRecipe()` with `api.recipes.create()`, add loading state during submission, handle validation errors from API | ✅ | 2026-02-14 |
+| TASK-107 | Update `src/pages/Recipe/Search.jsx` - Replace `storage.search*` methods with `api.search.search()`, `api.search.saveHistory()`, `api.search.getHistory()`, `api.search.clearHistory()`. Remove `storage.getOrCreateGuestId()` calls | ✅ | 2026-02-14 |
+| TASK-108 | Update `src/pages/Recipe/Profile.jsx` - Replace `storage.saveUser()` with `api.users.update()`, replace `storage.deleteRecipe()` with `api.recipes.delete()`, replace `storage.getUsers()` with `api.users.getById()` | ✅ | 2026-02-14 |
 
 **Admin Pages:**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-109 | Update `src/pages/Admin/UserList.jsx` - Replace `storage.getUsers()` with `api.users.getAll()`, replace `storage.saveUser()` with `api.users.update()`/`api.users.updateStatus()`, replace `storage.deleteUser()` with `api.users.delete()`. Remove `storage.addActivity()` calls (auto-logged via backend) | | |
-| TASK-110 | Update `src/pages/Admin/AdminStats.jsx` - Replace all `storage.get*` methods with `api.stats.getDashboard()`, replace `storage.getRecentActivity()` with `api.activity.getRecent()` | | |
-| TASK-111 | Update `src/pages/Admin/AdminRecipes.jsx` - Replace `storage.getRecipes()` with `api.recipes.getAll()`, replace `storage.saveRecipe()` status changes with `api.recipes.updateStatus()`, replace `storage.deleteRecipe()` with `api.recipes.delete()`. Remove `storage.addActivity()` calls | | |
+| TASK-109 | Update `src/pages/Admin/UserList.jsx` - Replace `storage.getUsers()` with `api.users.getAll()`, replace `storage.saveUser()` with `api.users.update()`/`api.users.updateStatus()`, replace `storage.deleteUser()` with `api.users.delete()`. Remove `storage.addActivity()` calls (auto-logged via backend) | ✅ | 2026-02-14 |
+| TASK-110 | Update `src/pages/Admin/AdminStats.jsx` - Replace all `storage.get*` methods with `api.stats.getDashboard()`, replace `storage.getRecentActivity()` with `api.activity.getRecent()` | ✅ | 2026-02-14 |
+| TASK-111 | Update `src/pages/Admin/AdminRecipes.jsx` - Replace `storage.getRecipes()` with `api.recipes.getAll()`, replace `storage.saveRecipe()` status changes with `api.recipes.updateStatus()`, replace `storage.deleteRecipe()` with `api.recipes.delete()`. Remove `storage.addActivity()` calls | ✅ | 2026-02-14 |
 
 **UI Components & Cleanup:**
 
 | Task | Description | Completed | Date |
 |------|-------------|-----------|------|
-| TASK-112 | Create `src/components/ui/LoadingSpinner.jsx` - Reusable loading component with Tailwind styling, support sizes (sm/md/lg) | | |
-| TASK-113 | Create `src/components/ui/ErrorMessage.jsx` - Reusable error display component with retry button, Tailwind styling | | |
-| TASK-114 | Remove `src/lib/storage.js` entirely — all localStorage calls replaced by API. Remove all guest-related code (`getOrCreateGuestId`, `cookhub_guest_id` references) | | |
-| TASK-115 | Add React error boundary component to catch unhandled API errors gracefully | | |
+| TASK-112 | Create `src/components/ui/LoadingSpinner.jsx` - Reusable loading component with Tailwind styling, support sizes (sm/md/lg) | ✅ | 2026-02-14 |
+| TASK-113 | Create `src/components/ui/ErrorMessage.jsx` - Reusable error display component with retry button, Tailwind styling | ✅ | 2026-02-14 |
+| TASK-114 | Remove `src/lib/storage.js` entirely — all localStorage calls replaced by API. Remove all guest-related code (`getOrCreateGuestId`, `cookhub_guest_id` references) | ⏳ | |
+| TASK-115 | Add React error boundary component to catch unhandled API errors gracefully | ⏳ | |
 
 ### Phase 6: Testing & Deployment
 
@@ -498,53 +498,53 @@ backend/
 | FILE-015 | `database/run_all_scripts.sql` | TASK-117 | ~50 | TO CREATE |
 | FILE-016 | `database/README.md` | TASK-116 | ~100 | TO CREATE |
 
-### PHP Backend Files (12 files — to be created)
+### PHP Backend Files (12 files — all created ✅)
 
 | File ID | Path | Task(s) | Lines (est.) | Status |
 |---------|------|---------|-------------|--------|
-| FILE-017 | `backend/config/database.php` | TASK-058 | ~60 | TO CREATE |
-| FILE-018 | `backend/.htaccess` | TASK-059 | ~20 | TO CREATE |
-| FILE-019 | `backend/helpers/cors.php` | TASK-060 | ~25 | TO CREATE |
-| FILE-020 | `backend/helpers/auth.php` | TASK-061 | ~60 | TO CREATE |
-| FILE-021 | `backend/helpers/response.php` | TASK-062 | ~40 | TO CREATE |
-| FILE-022 | `backend/api/auth.php` | TASK-063 to TASK-066 | ~200 | TO CREATE |
-| FILE-023 | `backend/api/recipes.php` | TASK-067 to TASK-075 | ~400 | TO CREATE |
-| FILE-024 | `backend/api/reviews.php` | TASK-076 to TASK-079 | ~150 | TO CREATE |
-| FILE-025 | `backend/api/users.php` | TASK-080 to TASK-084 | ~200 | TO CREATE |
-| FILE-026 | `backend/api/search.php` | TASK-085 to TASK-088 | ~120 | TO CREATE |
-| FILE-027 | `backend/api/stats.php` | TASK-089, TASK-090 | ~100 | TO CREATE |
-| FILE-028 | `backend/api/activity.php` | TASK-091 | ~60 | TO CREATE |
+| FILE-017 | `backend/config/database.php` | TASK-058 | ~60 | ✅ CREATED |
+| FILE-018 | `backend/.htaccess` | TASK-059 | ~20 | ✅ CREATED |
+| FILE-019 | `backend/helpers/cors.php` | TASK-060 | ~25 | ✅ CREATED |
+| FILE-020 | `backend/helpers/auth.php` | TASK-061 | ~60 | ✅ CREATED |
+| FILE-021 | `backend/helpers/response.php` | TASK-062 | ~40 | ✅ CREATED |
+| FILE-022 | `backend/api/auth.php` | TASK-063 to TASK-066 | ~200 | ✅ CREATED |
+| FILE-023 | `backend/api/recipes.php` | TASK-067 to TASK-075 | ~400 | ✅ CREATED |
+| FILE-024 | `backend/api/reviews.php` | TASK-076 to TASK-079 | ~150 | ✅ CREATED |
+| FILE-025 | `backend/api/users.php` | TASK-080 to TASK-084 | ~200 | ✅ CREATED |
+| FILE-026 | `backend/api/search.php` | TASK-085 to TASK-088 | ~120 | ✅ CREATED |
+| FILE-027 | `backend/api/stats.php` | TASK-089, TASK-090 | ~100 | ✅ CREATED |
+| FILE-028 | `backend/api/activity.php` | TASK-091 | ~60 | ✅ CREATED |
 
 ### Frontend Files — New (4 files)
 
 | File ID | Path | Task(s) | Lines (est.) | Status |
 |---------|------|---------|-------------|--------|
-| FILE-029 | `src/lib/api.js` | TASK-093 to TASK-100 | ~400 | TO CREATE |
-| FILE-030 | `src/components/ui/LoadingSpinner.jsx` | TASK-112 | ~30 | TO CREATE |
-| FILE-031 | `src/components/ui/ErrorMessage.jsx` | TASK-113 | ~35 | TO CREATE |
-| FILE-032 | `src/components/ui/ErrorBoundary.jsx` | TASK-115 | ~40 | TO CREATE |
+| FILE-029 | `src/lib/api.js` | TASK-093 to TASK-100 | ~220 | ✅ CREATED |
+| FILE-030 | `src/components/ui/LoadingSpinner.jsx` | TASK-112 | ~30 | ✅ CREATED |
+| FILE-031 | `src/components/ui/ErrorMessage.jsx` | TASK-113 | ~35 | ✅ CREATED |
+| FILE-032 | `src/components/ui/ErrorBoundary.jsx` | TASK-115 | ~40 | ⏳ PENDING |
 
 ### Frontend Files — Modified (11 files)
 
 | File ID | Path | Task(s) | Status |
 |---------|------|---------|--------|
-| FILE-033 | `src/context/AuthContext.jsx` | TASK-101 | TO MODIFY |
-| FILE-034 | `src/pages/Auth/Login.jsx` | TASK-102 | TO MODIFY |
-| FILE-035 | `src/pages/Auth/Signup.jsx` | TASK-103 | TO MODIFY |
-| FILE-036 | `src/pages/Recipe/Home.jsx` | TASK-104 | TO MODIFY |
-| FILE-037 | `src/pages/Recipe/RecipeDetail.jsx` | TASK-105 | TO MODIFY |
-| FILE-038 | `src/pages/Recipe/CreateRecipe.jsx` | TASK-106 | TO MODIFY |
-| FILE-039 | `src/pages/Recipe/Search.jsx` | TASK-107 | TO MODIFY |
-| FILE-040 | `src/pages/Recipe/Profile.jsx` | TASK-108 | TO MODIFY |
-| FILE-041 | `src/pages/Admin/UserList.jsx` | TASK-109 | TO MODIFY |
-| FILE-042 | `src/pages/Admin/AdminStats.jsx` | TASK-110 | TO MODIFY |
-| FILE-043 | `src/pages/Admin/AdminRecipes.jsx` | TASK-111 | TO MODIFY |
+| FILE-033 | `src/context/AuthContext.jsx` | TASK-101 | ✅ MODIFIED |
+| FILE-034 | `src/pages/Auth/Login.jsx` | TASK-102 | ✅ MODIFIED |
+| FILE-035 | `src/pages/Auth/Signup.jsx` | TASK-103 | ✅ MODIFIED |
+| FILE-036 | `src/pages/Recipe/Home.jsx` | TASK-104 | ✅ MODIFIED |
+| FILE-037 | `src/pages/Recipe/RecipeDetail.jsx` | TASK-105 | ✅ MODIFIED |
+| FILE-038 | `src/pages/Recipe/CreateRecipe.jsx` | TASK-106 | ✅ MODIFIED |
+| FILE-039 | `src/pages/Recipe/Search.jsx` | TASK-107 | ✅ MODIFIED |
+| FILE-040 | `src/pages/Recipe/Profile.jsx` | TASK-108 | ✅ MODIFIED |
+| FILE-041 | `src/pages/Admin/UserList.jsx` | TASK-109 | ✅ MODIFIED |
+| FILE-042 | `src/pages/Admin/AdminStats.jsx` | TASK-110 | ✅ MODIFIED |
+| FILE-043 | `src/pages/Admin/AdminRecipes.jsx` | TASK-111 | ✅ MODIFIED |
 
 ### Frontend Files — Deleted (1 file)
 
 | File ID | Path | Task(s) | Status |
 |---------|------|---------|--------|
-| FILE-044 | `src/lib/storage.js` | TASK-114 | TO DELETE |
+| FILE-044 | `src/lib/storage.js` | TASK-114 | ⏳ DEAD CODE (0 imports, pending deletion) |
 
 ### Documentation Files (7 files — to be created)
 
@@ -558,7 +558,13 @@ backend/
 | FILE-050 | `README.md` | TASK-137 | ~800 | TO MODIFY |
 | FILE-051 | `postman/recipe_api_collection.json` | TASK-119 | ~500 | TO CREATE |
 
-**File Summary:** 52 tracked files total (14 existing SQL + 2 new DB files + 12 new PHP + 4 new frontend + 11 modified frontend + 1 deleted + 7 docs + 1 Postman)
+### Configuration Files — Modified
+
+| File ID | Path | Task(s) | Status |
+|---------|------|---------|--------|
+| FILE-052 | `vite.config.js` | Phase 5 | ✅ MODIFIED (proxy `/api` → `http://localhost`) |
+
+**File Summary:** 52 tracked files total (14 existing SQL + 2 new DB files + 12 new PHP + 4 new frontend + 11 modified frontend + 1 dead code + 1 config modified + 7 docs pending)
 
 ## 6. Testing
 

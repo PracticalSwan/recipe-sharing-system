@@ -8,5 +8,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/recipe-sharing-system-deploy/'
+  base: '/recipe-sharing-system-deploy/',
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost',
+        changeOrigin: true,
+      },
+    },
+  },
 })

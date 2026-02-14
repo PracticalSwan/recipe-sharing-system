@@ -1,69 +1,65 @@
-# Recipe Sharing System — Project Overview
+# CookHub - Recipe Sharing System
 
-**Project:** Recipe Sharing System (React 19 + Vite + Tailwind v4). CSX3006 Database Systems course project.
+## Project Overview
+- **Course**: CSX3006 Database Systems
+- **Type**: Full-stack web application (migrated from localStorage to MySQL backend)
+- **Status**: **83% Complete** (Phases 1-5 of 6 done)
+- **Last Updated**: 2026-02-14
 
-**Current Focus:** Database implementation complete with all 14 SQL scripts verified and corrected (February 13, 2026).
+## Tech Stack
+- **Frontend**: React 19.2.0 + Vite 7.2.4 + Tailwind CSS 4.1.18
+- **Backend**: Plain PHP (no framework), PDO, session-based auth
+- **Database**: MySQL/MariaDB ("cookhub", 13 tables, 2 views, 5 procedures, 6 triggers)
+- **Server**: XAMPP (Apache + MySQL + PHP)
+- **Routing**: HashRouter, base `/recipe-sharing-system-deploy/`
+- **API Communication**: Native fetch() with credentials:'include', Vite proxy `/api` → `http://localhost`
 
-**Technology Stack:**
-- Frontend: React 19 + Vite + Tailwind v4
-- Database: MySQL/MariaDB with 13 tables + 6 triggers + 4 stored procedures
-- Backend: Plain PHP (flat procedural, XAMPP) — Phase 4 pending
-- Auth: Session-based with HttpOnly cookies
-- HTTP: Native fetch() with credentials:'include'
+## Architecture (3-Tier)
+```
+React+Vite (port 5173) → PHP REST API (XAMPP, port 80) → MySQL (port 3306)
+```
 
----
+## Phase Completion Status
 
-## Project Status — 38% Complete (Phases 1-3 of 6)
+| Phase | Description | Status | Tasks |
+|-------|------------|--------|-------|
+| Phase 1 | Database Design & DDL | ✅ Complete | TASK-001 to TASK-021 |
+| Phase 2 | SQL Data Scripts & Queries | ✅ Complete | TASK-022 to TASK-043 |
+| Phase 3 | Advanced SQL (Procedures/Triggers) | ✅ Complete | TASK-044 to TASK-056 |
+| Phase 4 | PHP Backend API | ✅ Complete | TASK-057 to TASK-091 |
+| Phase 5 | Frontend Integration | ✅ Complete (except TASK-114, TASK-115) | TASK-093 to TASK-113 |
+| Phase 6 | Testing & Deployment Docs | ⏳ Not Started | TASK-116 to TASK-138 |
 
-**✅ Phase 1: Database Design** — 100% Complete
-- All 13 tables designed with FKs and constraints
-- Naming conventions: singular tables, snake_case columns, `id` PKs
+## Key Backend Files (12 files, all created 2026-02-14)
+- `backend/.htaccess` - URL rewriting
+- `backend/config/database.php` - PDO singleton
+- `backend/helpers/cors.php`, `auth.php`, `response.php` - Helpers
+- `backend/api/auth.php` - Register/login/logout/me
+- `backend/api/recipes.php` - CRUD + like/favorite/view + status=all filter
+- `backend/api/reviews.php` - CRUD for reviews
+- `backend/api/users.php` - CRUD + status (admin)
+- `backend/api/search.php` - Search + history (nested author objects)
+- `backend/api/stats.php` - Dashboard (with today metrics) + daily stats
+- `backend/api/activity.php` - Admin activity logs
 
-**✅ Phase 2: SQL Data Scripts** — 100% Complete
-- Scripts 01-04: Database, tables, indexes, views
-- Scripts 05-08: Seed data (users, recipes, reviews, stats)
+## Key Frontend Changes (completed 2026-02-14)
+- **`src/lib/api.js`** (~220 lines): Central API service layer with apiFetch wrapper, ApiError class, namespaces for auth/recipes/reviews/users/search/stats/activity, DEFAULT_AVATARS export
+- **All 11 page/component files migrated** from storage.js to api.js (async, loading states, error handling)
+- **`src/lib/storage.js`**: Dead code — zero imports remain, pending deletion
+- **New UI components**: LoadingSpinner.jsx, ErrorMessage.jsx
+- **`vite.config.js`**: Proxy added `/api` → `http://localhost`
 
-**✅ Phase 3: Advanced SQL** — 100% Complete
-- Script 09-12: Query libraries, stored procedures, functions
-- Script 13-14: Triggers, backup/restore utilities
-- **February 13, 2026:** Comprehensive review and fixes applied to scripts 09-14 for schema consistency
+## Recent Work (Sessions 4-9, completed 2026-02-14)
+- Created all 12 PHP backend files with full CRUD endpoints
+- Created api.js service layer replacing all storage.js calls
+- Migrated all frontend files from localStorage/storage.js to async API calls
+- Fixed property path issues (nested `recipe.author` objects)
+- Fixed backend bugs (main_image subquery, search nested authors, status=all filter, today metrics)
+- Added Vite proxy configuration
+- Zero compile errors confirmed across all files
 
-**⏳ Phase 4: PHP Backend** — 0% Complete (Not Started)
-- PDO connection, session management, CRUD API endpoints
-- 36 tasks remaining (TASK-057 → TASK-092)
-
-**⏳ Phase 5: Frontend Integration** — 0% Complete (Not Started)
-- Session auth integration, API client migration, localStorage replacement
-- 23 tasks remaining (TASK-093 → TASK-115)
-
-**⏳ Phase 6: Testing & Docs** — 0% Complete (Not Started)
-- end-to-end testing, performance validation, documentation
-- 23 tasks remaining (TASK-116 → TASK-138)
-
----
-
-## Recent Work (February 13, 2026)
-
-**SQL Fixes:** Full review of all 14 SQL scripts vs authoritative schema (02_create_tables.sql). Fixed column name mismatches in scripts 09-14: parent table PK corrections, column renames, ENUM case fixes, removed non-existent columns.
-
-**Plan-Alignment Patch (February 13, 2026):** Updated `12_stored_procedures.sql` to use `p_` snake_case parameter naming and corrected timestamp triggers in `13_triggers.sql` to run on `BEFORE INSERT` per TASK-053/TASK-054.
-
-**Plan v2.0 (February 8, 2026):** Merged implementation plan from 181 to 138 tasks. Simplified backend from 23 files (MVC) to 12 files (flat procedural), switched from axios to native fetch(), removed JWT option.
-
----
-
-## Next Steps
-
-1. Execute SQL scripts 01-14 in phpMyAdmin (build complete database)
-2. Create `backend/` folder structure with flat PHP files
-3. Implement `database.php` (PDO connection)
-4. Implement `auth.php` (register/login/logout)
-5. Follow 138-task sequence in [upgrade-database-integration-1.md](../../plan/upgrade-database-integration-1.md)
-
----
-
-## Implementation Plan: 138 tasks across 6 phases
-
-**Documentation:** [upgrade-database-integration-1.md](../../plan/upgrade-database-integration-1.md) (v2.0)  
-**Task Tracking:** [database-integration-implementation-plan-task.md](../database-integration-implementation-plan-task.md)  
-**SQL Fix Details:** [csx3006-sql-fixes-2026-02-13.md](../csx3006-sql-fixes-2026-02-13.md)
+## Next Steps (Phase 6)
+- TASK-114: Delete storage.js (currently dead code with 0 imports)
+- TASK-115: Create ErrorBoundary component
+- TASK-116 to TASK-138: Testing, documentation, Postman collection, deployment guide
+- End-to-end integration testing with XAMPP

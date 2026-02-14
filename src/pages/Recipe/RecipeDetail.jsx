@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { storage } from '../../lib/storage';
+import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit, Check } from 'lucide-react';
 import { cn, normalizeCategories } from '../../lib/utils';
 
@@ -14,7 +15,6 @@ export function RecipeDetail() {
     const navigate = useNavigate();
     const { user, canInteract, isPending, isSuspended, isAdmin } = useAuth();
     const [recipe, setRecipe] = useState(null);
-    const [author, setAuthor] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [newComment, setNewComment] = useState('');
     const [rating, setRating] = useState(5);
@@ -25,6 +25,7 @@ export function RecipeDetail() {
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [deleteReviewId, setDeleteReviewId] = useState(null);
     const [checkedIngredients, setCheckedIngredients] = useState({});
+    const [loading, setLoading] = useState(true);
 
     const toggleIngredient = (index) => {
         setCheckedIngredients(prev => ({
@@ -34,82 +35,83 @@ export function RecipeDetail() {
     };
 
     useEffect(() => {
-        const recipes = storage.getRecipes();
-        const found = recipes.find(r => r.id === id);
-        if (!found) {
-            navigate('/');
-            return;
+        let cancelled = false;
+
+        async function loadRecipe() {
+            try {
+                const data = await api.recipes.get(id);
+                if (cancelled) return;
+                const r = data.recipe;
+                if (r.status !== 'published' && !isAdmin) {
+                    navigate('/');
+                    return;
+                }
+                setRecipe(r);
+                setReviews(r.reviews || []);
+                setIsLiked(r.isLiked || false);
+                setIsFavorited(r.isFavorited || false);
+                setLikeCount(r.likeCount || 0);
+                setViewCount(r.viewCount || 0);
+
+                // Record view
+                api.recipes.recordView(id).catch(() => {});
+            } catch {
+                navigate('/');
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
         }
-        if (found.status !== 'published' && !isAdmin) {
-            navigate('/');
-            return;
-        }
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setRecipe(found);
 
-        const users = storage.getUsers();
-        setAuthor(users.find(u => u.id === found.authorId));
+        loadRecipe();
+        return () => { cancelled = true; };
+    }, [id, navigate, isAdmin]);
 
-        setReviews(storage.getReviews(id));
-
-        // Record view (only once per user)
-        if (user) {
-            const newViewCount = storage.recordView({ viewerId: user.id, recipeId: id, viewerType: 'user' });
-            setViewCount(newViewCount);
-            setIsLiked(storage.hasUserLiked(user.id, id));
-            setIsFavorited(storage.hasUserFavorited(user.id, id));
-            window.dispatchEvent(new CustomEvent('statsUpdated'));
-            window.dispatchEvent(new CustomEvent('recipeUpdated'));
-        } else {
-            const guestId = storage.getOrCreateGuestId();
-            const newViewCount = storage.recordView({ viewerId: guestId, recipeId: id, viewerType: 'guest' });
-            setViewCount(newViewCount);
-            window.dispatchEvent(new CustomEvent('statsUpdated'));
-            window.dispatchEvent(new CustomEvent('recipeUpdated'));
-        }
-        setLikeCount(found.likedBy?.length || 0);
-    }, [id, navigate, user, isAdmin]);
-
-    const handleToggleLike = () => {
+    const handleToggleLike = async () => {
         if (!user || !canInteract) return;
-        const result = storage.toggleLike(user.id, id);
-        setIsLiked(result.liked);
-        setLikeCount(result.count);
+        try {
+            const result = await api.recipes.toggleLike(id);
+            setIsLiked(result.liked);
+            setLikeCount(result.likeCount);
+        } catch { /* ignore */ }
     };
 
-    const handleToggleFavorite = () => {
+    const handleToggleFavorite = async () => {
         if (!user || !canInteract) return;
-        const nowFavorited = storage.toggleFavorite(user.id, id);
-        setIsFavorited(nowFavorited);
-        window.dispatchEvent(new CustomEvent('favoriteToggled'));
+        try {
+            const result = await api.recipes.toggleFavorite(id);
+            setIsFavorited(result.favorited);
+            window.dispatchEvent(new CustomEvent('favoriteToggled'));
+        } catch { /* ignore */ }
     };
 
-    const handleSubmitReview = (e) => {
+    const handleSubmitReview = async (e) => {
         e.preventDefault();
         if (!canInteract) return;
         if (!newComment.trim()) return;
 
-        storage.addReview({
-            recipeId: id,
-            userId: user.id,
-            username: user.username,
-            avatar: user.avatar,
-            rating,
-            comment: newComment
-        });
-
-        setReviews(storage.getReviews(id));
-        setNewComment('');
+        try {
+            await api.reviews.create({
+                recipeId: Number(id),
+                rating,
+                comment: newComment
+            });
+            const reviewData = await api.reviews.list(id);
+            setReviews(reviewData.reviews || []);
+            setNewComment('');
+        } catch { /* ignore */ }
     };
 
     const handleDeleteReview = (reviewId) => {
         setDeleteReviewId(reviewId);
     };
 
-    const confirmDeleteReview = () => {
+    const confirmDeleteReview = async () => {
         if (!deleteReviewId) return;
-        storage.deleteReview(deleteReviewId);
-        setReviews(storage.getReviews(id));
+        try {
+            await api.reviews.delete(deleteReviewId);
+            const reviewData = await api.reviews.list(id);
+            setReviews(reviewData.reviews || []);
+        } catch { /* ignore */ }
         setDeleteReviewId(null);
     };
 
@@ -121,20 +123,22 @@ export function RecipeDetail() {
         setIsDeleteConfirmOpen(true);
     };
 
-    const confirmDeleteRecipe = () => {
-        storage.deleteRecipe(id);
-        window.dispatchEvent(new CustomEvent('recipeUpdated'));
-        setIsDeleteConfirmOpen(false);
-        navigate('/profile?tab=recipes');
+    const confirmDeleteRecipe = async () => {
+        try {
+            await api.recipes.delete(id);
+            window.dispatchEvent(new CustomEvent('recipeUpdated'));
+            setIsDeleteConfirmOpen(false);
+            navigate('/profile?tab=recipes');
+        } catch { /* ignore */ }
     };
 
-    const isOwner = user && recipe?.authorId === user.id;
+    const isOwner = user && recipe?.author?.id === user.id;
 
     const avgRating = reviews.length > 0
         ? Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length)
         : 0;
 
-    if (!recipe) return <div className="p-10 text-center">Loading...</div>;
+    if (loading || !recipe) return <LoadingSpinner className="py-20" />;
 
     const categories = normalizeCategories(recipe.categories ?? recipe.category);
 
@@ -148,7 +152,7 @@ export function RecipeDetail() {
             <div className="flex flex-col md:flex-row gap-6">
                 {/* Smaller Image */}
                 <div className="w-full md:w-2/5 aspect-[4/3] max-h-[280px] overflow-hidden rounded-xl bg-cool-gray-10 flex-shrink-0">
-                    <img src={recipe.images?.[0]} alt={recipe.title} className="h-full w-full object-cover" />
+                    <img src={recipe.images?.[0]?.url} alt={recipe.title} className="h-full w-full object-cover" />
                 </div>
 
                 {/* Info */}
@@ -166,9 +170,9 @@ export function RecipeDetail() {
                     <h1 className="text-2xl md:text-3xl font-bold text-cool-gray-90">{recipe.title}</h1>
 
                     <div className="flex items-center gap-4 text-sm text-cool-gray-60">
-                        <Link to={`/users/${author?.id}`} className="flex items-center gap-2 group">
-                            <img src={author?.avatar || 'https://via.placeholder.com/32'} className="h-7 w-7 rounded-full" alt={author?.username || 'Author'} />
-                            <span className="font-medium text-cool-gray-90 group-hover:underline">{author?.username || 'Unknown'}</span>
+                        <Link to={`/users/${recipe.author?.id}`} className="flex items-center gap-2 group">
+                            <img src={recipe.author?.avatarUrl || 'https://via.placeholder.com/32'} className="h-7 w-7 rounded-full" alt={recipe.author?.username || 'Author'} />
+                            <span className="font-medium text-cool-gray-90 group-hover:underline">{recipe.author?.username || 'Unknown'}</span>
                         </Link>
                         {/* Rating Display */}
                         <div
@@ -324,7 +328,7 @@ export function RecipeDetail() {
                                 <div className="flex-none flex items-center justify-center w-7 h-7 rounded-full bg-cool-gray-20 text-cool-gray-90 font-bold text-xs">
                                     {i + 1}
                                 </div>
-                                <p className="text-cool-gray-60 text-sm pt-0.5">{step}</p>
+                                <p className="text-cool-gray-60 text-sm pt-0.5">{typeof step === 'string' ? step : step.text}</p>
                             </div>
                         ))}
                     </div>
@@ -351,7 +355,7 @@ export function RecipeDetail() {
 
                 {/* Comment Form */}
                 <div className="mb-6 flex gap-3">
-                    <img src={user?.avatar} className="h-9 w-9 rounded-full" alt="" />
+                    <img src={user?.avatarUrl} className="h-9 w-9 rounded-full" alt="" />
                     <form onSubmit={handleSubmitReview} className="flex-1 space-y-2">
                         <textarea
                             className="w-full rounded-lg border border-cool-gray-30 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cool-gray-90"
@@ -386,10 +390,10 @@ export function RecipeDetail() {
                 <div className="space-y-4">
                     {reviews.map(review => (
                         <div key={review.id} className="flex gap-3 group">
-                            <img src={review.avatar || 'https://via.placeholder.com/36'} className="h-9 w-9 rounded-full" alt="" />
+                            <img src={review.user?.avatarUrl || 'https://via.placeholder.com/36'} className="h-9 w-9 rounded-full" alt="" />
                             <div className="flex-1 space-y-0.5">
                                 <div className="flex items-center gap-2">
-                                    <Link to={`/users/${review.userId}`} className="font-semibold text-cool-gray-90 text-sm hover:underline">{review.username}</Link>
+                                    <Link to={`/users/${review.userId}`} className="font-semibold text-cool-gray-90 text-sm hover:underline">{review.user?.username || 'User'}</Link>
                                     <div
                                         className="flex text-xs"
                                         role="img"
@@ -401,7 +405,7 @@ export function RecipeDetail() {
                                     </div>
                                     <span className="text-[10px] text-cool-gray-30">{new Date(review.createdAt).toLocaleDateString()}</span>
                                     {/* Delete button - only visible to review author */}
-                                    {user && user.id === review.userId && (
+                                    {user && user.id === review.user?.id && (
                                         <Button
                                             size="icon"
                                             variant="ghost"
