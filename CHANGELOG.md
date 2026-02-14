@@ -2,7 +2,7 @@
 
 All notable changes to the CookHub Recipe Sharing System are documented here.
 
-## [Unreleased] - 2026-02-14
+## [1.0.1] - 2026-02-14
 
 ### Fixed
 - Fixed recipe card/detail navigation regression by normalizing `api.recipes.get()` payload handling in `RecipeDetail` and `CreateRecipe`.
@@ -21,6 +21,8 @@ All notable changes to the CookHub Recipe Sharing System are documented here.
 - Fixed admin activity feed noise by excluding active/inactive status transitions from Recent Activity.
 - Fixed logout status handling so users become `inactive` on logout; added stale-active synchronization in user/admin stats endpoints.
 - Expanded Playwright regression coverage to 127 scenarios (`TEST-001`..`TEST-127`) and verified full suite pass.
+- Updated `docs/API_DOCUMENTATION.md` to reflect view dedupe/auth, review upsert semantics, recipe status visibility rules, and admin activity feed filtering behavior.
+- Updated `docs/TESTING_GUIDE.md` to reflect the 127-test suite, current helper accounts, and new regression test block (`TEST-120`..`TEST-127`).
 
 ## [1.0.0] - 2025-06-15
 

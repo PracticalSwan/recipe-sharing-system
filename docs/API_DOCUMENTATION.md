@@ -88,6 +88,7 @@ Register a new user account. New users start with `pending` status.
 ### POST `/auth/login`
 
 Login with email and password. Creates a session cookie.
+If the user is currently `inactive`, login promotes the account to `active` and refreshes `last_active`.
 
 **Auth Required**: No
 
@@ -118,6 +119,7 @@ Login with email and password. Creates a session cookie.
 ### POST `/auth/logout`
 
 Destroy the current session and clear the cookie.
+For `active`/`inactive` users, logout also sets account status to `inactive` and updates `last_active`.
 
 **Auth Required**: Yes
 
@@ -176,7 +178,7 @@ List recipes with optional filters and pagination.
 **Query Parameters**:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `status` | string | `published` | Filter by status: published, pending, rejected |
+| `status` | string | `published` | Filter by status: `published`, `pending`, `rejected`, `all` (`all` is allowed for admins, or when `authorId` matches the current user) |
 | `category` | string | — | Filter by category |
 | `difficulty` | string | — | Filter by difficulty: Easy, Medium, Hard |
 | `authorId` | int | — | Filter by author |
@@ -293,6 +295,10 @@ Update a recipe. Only the recipe owner or an admin can update.
 
 **Request Body**: Same as POST
 
+**Status behavior**:
+- Owner edits preserve the recipe's current status by default.
+- Admin can set `status` in the same update request (`published`, `pending`, `rejected`).
+
 **Response** `200`:
 ```json
 {
@@ -367,14 +373,16 @@ Toggle favorite/bookmark on a recipe.
 ### POST `/recipes/{id}/view`
 
 Record a recipe view for analytics.
+View counting is deduplicated per `(recipe_id, user_id)` so each authenticated user increments a recipe only once.
 
-**Auth Required**: Optional
+**Auth Required**: Yes
 
 **Response** `200`:
 ```json
 {
   "data": {
-    "message": "View recorded"
+    "viewRecorded": true,
+    "viewCount": 51
   }
 }
 ```
@@ -412,7 +420,7 @@ Get all reviews for a recipe.
 
 ### POST `/reviews`
 
-Create a review. One review per user per recipe.
+Create or update the caller's review for a recipe (upsert). One review per user per recipe.
 
 **Auth Required**: Yes (active users only)
 
@@ -425,7 +433,7 @@ Create a review. One review per user per recipe.
 }
 ```
 
-**Response** `201`:
+**Response** `201` (created) or `200` (updated):
 ```json
 {
   "data": {
@@ -537,6 +545,8 @@ List all users with pagination. Admin only.
 
 **Auth Required**: Admin
 
+**Status sync behavior**: before listing, stale regular users (`status='active'` with `last_active` older than 5 minutes) are auto-marked `inactive`.
+
 **Query Parameters**:
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -611,6 +621,8 @@ Change a user's status. Admin only.
 
 **Valid statuses**: `active`, `inactive`, `pending`, `suspended`
 
+**Audit note**: transitions to `active`/`inactive` are intentionally excluded from recent admin activity feeds.
+
 ---
 
 ## Stats Endpoints (Admin Only)
@@ -620,6 +632,8 @@ Change a user's status. Admin only.
 Get dashboard summary statistics.
 
 **Auth Required**: Admin
+
+**Status sync behavior**: before aggregating metrics, stale regular users (`status='active'` with `last_active` older than 5 minutes) are auto-marked `inactive`.
 
 **Response** `200`:
 ```json
@@ -637,6 +651,8 @@ Get dashboard summary statistics.
   }
 }
 ```
+
+**Recent activity note**: `user_update` entries that only change status to `active`/`inactive` are excluded.
 
 ### GET `/stats/daily`
 
@@ -667,6 +683,8 @@ List admin activity logs.
 | `actionType` | string | — | Filter by action type |
 
 **Action Types**: `recipe_approve`, `recipe_reject`, `user_delete`, `user_update`
+
+**Feed note**: active/inactive status-only updates are filtered out from this endpoint.
 
 ---
 

@@ -71,7 +71,7 @@ The system features a comprehensive approval workflow where:
 - Admin dashboard with site analytics and metrics
 - User and recipe management tools for admins
 - Activity tracking system with real-time updates
-- Last active timestamp tracking (updated on logout/browser close)
+- Last active timestamp tracking (updated on logout with stale-active auto-sync)
 - Daily Active Users (DAU) tracking with session heartbeat
 - Admin activity logging for audit trail (active/inactive state noise excluded from recent admin actions)
 
