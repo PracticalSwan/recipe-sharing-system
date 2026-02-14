@@ -1130,10 +1130,12 @@ CREATE TRIGGER trg_Recipe_DeleteCleanup
 BEFORE DELETE ON recipe
 FOR EACH ROW
 BEGIN
-    -- Note: admin_id would need to be passed via session variable
-    -- or this trigger may just log without admin attribution
-    INSERT INTO activity_log (action_type, target_type, target_id, description)
-    VALUES ('recipe_delete', 'recipe', OLD.id, 
+    -- Prefer explicit admin context; fallback keeps FK valid
+    INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
+    VALUES (COALESCE(@current_admin_id, OLD.author_id),
+            'recipe_delete',
+            'recipe',
+            OLD.id,
             CONCAT('Recipe deleted: ', OLD.title));
 END //
 

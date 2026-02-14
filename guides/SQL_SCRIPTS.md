@@ -41,13 +41,11 @@ Run the scripts in the following order to build the complete database:
 | 4 | `04_create_views.sql` | Create 2 views |
 | 5 | `12_stored_procedures.sql` | Create 4 SPs + 1 function |
 | 6 | `13_triggers.sql` | Create 6 triggers |
-| 7 | `SET @DISABLE_TRIGGERS = 1;` | Disable triggers for seeding |
-| 8 | `05_seed_users.sql` | Seed 12 users |
-| 9 | `06_seed_recipes.sql` | Seed 13 recipes + ingredients + instructions + images |
-| 10 | `07_seed_reviews.sql` | Seed reviews, likes, favorites |
-| 11 | `08_seed_stats.sql` | Seed views, stats, search history, activity logs |
-| 12 | `SET @DISABLE_TRIGGERS = NULL;` | Re-enable triggers |
-| 13 | `14_backup_restore.sql` | Health check verification |
+| 7 | `05_seed_users.sql` | Seed 12 users (preserves `@DISABLE_TRIGGERS` state) |
+| 8 | `06_seed_recipes.sql` | Seed 13 recipes + ingredients + instructions + images |
+| 9 | `07_seed_reviews.sql` | Seed reviews, likes, favorites |
+| 10 | `08_seed_stats.sql` | Seed views, stats, search history, activity logs (preserves `@DISABLE_TRIGGERS` state) |
+| 11 | `14_backup_restore.sql` | Health check verification |
 
 ---
 
@@ -501,6 +499,8 @@ WHERE TABLE_SCHEMA = 'cookhub';
 
 USE cookhub;
 
+-- Preserve current trigger-disable state (supports nested/outer wrappers)
+SET @PREV_DISABLE_TRIGGERS = @DISABLE_TRIGGERS;
 SET @DISABLE_TRIGGERS = 1;
 
 -- ADMIN USERS (3 accounts)
@@ -577,7 +577,9 @@ INSERT INTO user (
  'https://api.dicebear.com/7.x/avataaars/svg?seed=omar',
  'Trying new cuisines.', 'Phoenix', 'Beginner');
 
-SET @DISABLE_TRIGGERS = NULL;
+-- Restore previous trigger-disable state
+SET @DISABLE_TRIGGERS = @PREV_DISABLE_TRIGGERS;
+SET @PREV_DISABLE_TRIGGERS = NULL;
 
 SELECT id, username, email, role, status, joined_date FROM user ORDER BY id;
 ```
@@ -1335,7 +1337,7 @@ BEGIN
               AND created_at >= DATE_SUB(NOW(), INTERVAL 5 SECOND)
         ) THEN
             INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
-            VALUES (COALESCE(@current_admin_id, 1), 'recipe_delete', 'recipe', OLD.id,
+            VALUES (COALESCE(@current_admin_id, OLD.author_id), 'recipe_delete', 'recipe', OLD.id,
                     CONCAT('Trigger-logged deletion of recipe: ', OLD.title));
         END IF;
     END IF;
@@ -1352,21 +1354,31 @@ BEGIN
     END IF;
 END //
 
--- trg_Recipe_SetTimestamp: Auto-update recipe.updated_at
+-- trg_Recipe_SetTimestamp: Set created_at/updated_at on insert when NULL
 CREATE TRIGGER trg_Recipe_SetTimestamp
-BEFORE UPDATE ON recipe FOR EACH ROW
+BEFORE INSERT ON recipe FOR EACH ROW
 BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
-        SET NEW.updated_at = NOW();
+        IF NEW.created_at IS NULL THEN
+            SET NEW.created_at = NOW();
+        END IF;
+        IF NEW.updated_at IS NULL THEN
+            SET NEW.updated_at = NOW();
+        END IF;
     END IF;
 END //
 
--- trg_User_SetTimestamp: Auto-update user.updated_at
+-- trg_User_SetTimestamp: Set created_at/updated_at on insert when NULL
 CREATE TRIGGER trg_User_SetTimestamp
-BEFORE UPDATE ON user FOR EACH ROW
+BEFORE INSERT ON user FOR EACH ROW
 BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
-        SET NEW.updated_at = NOW();
+        IF NEW.created_at IS NULL THEN
+            SET NEW.created_at = NOW();
+        END IF;
+        IF NEW.updated_at IS NULL THEN
+            SET NEW.updated_at = NOW();
+        END IF;
     END IF;
 END //
 
@@ -1443,11 +1455,9 @@ UNION ALL SELECT 'session', COUNT(*) FROM session;
 -- 4.  SOURCE database/04_create_views.sql;
 -- 5.  SOURCE database/12_stored_procedures.sql;
 -- 6.  SOURCE database/13_triggers.sql;
--- 7.  SET @DISABLE_TRIGGERS = 1;
--- 8.  SOURCE database/05_seed_users.sql;
--- 9.  SOURCE database/06_seed_recipes.sql;
--- 10. SOURCE database/07_seed_reviews.sql;
--- 11. SOURCE database/08_seed_stats.sql;
--- 12. SET @DISABLE_TRIGGERS = NULL;
--- 13. SOURCE database/14_backup_restore.sql;
+-- 7.  SOURCE database/05_seed_users.sql;   -- Preserves @DISABLE_TRIGGERS state
+-- 8.  SOURCE database/06_seed_recipes.sql;
+-- 9.  SOURCE database/07_seed_reviews.sql;
+-- 10. SOURCE database/08_seed_stats.sql;   -- Preserves @DISABLE_TRIGGERS state
+-- 11. SOURCE database/14_backup_restore.sql;
 ```

@@ -289,6 +289,7 @@ Database and API integration for Phases 1-5 is implemented as part of the CSX300
 - Stored procedure parameters follow `p_` snake_case naming
 - 6 triggers for automatic logging and statistics updates
 - Complete seed data matching current localStorage structure
+- SQL scripts in `database/` are import-ready for phpMyAdmin with minimal (SQL-only) formatting
 - Full RESTful API in plain PHP with PDO
 - Session-based authentication with HttpOnly cookies
 

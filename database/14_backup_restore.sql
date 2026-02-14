@@ -65,7 +65,7 @@ USE cookhub;
 
 -- Generate INSERT statements for all users (useful for migration)
 SELECT CONCAT(
-    'INSERT INTO user (username, first_name, last_name, email, password_hash, role, status, bio, avatar_url) VALUES (',
+    'INSERT INTO `user` (username, first_name, last_name, email, password_hash, role, status, bio, avatar_url) VALUES (',
     QUOTE(username), ', ',
     QUOTE(first_name), ', ',
     QUOTE(last_name), ', ',
@@ -77,7 +77,7 @@ SELECT CONCAT(
     IFNULL(QUOTE(avatar_url), 'NULL'),
     ');'
 ) AS insert_statement
-FROM user;
+FROM `user`;
 
 
 -- ============================================================================
@@ -138,7 +138,7 @@ GROUP BY TABLE_NAME, INDEX_NAME, NON_UNIQUE
 ORDER BY TABLE_NAME, INDEX_NAME;
 
 -- Row counts for all tables (exact)
-SELECT 'user' AS table_name, COUNT(*) AS row_count FROM user
+SELECT 'user' AS table_name, COUNT(*) AS row_count FROM `user`
 UNION ALL SELECT 'recipe', COUNT(*) FROM recipe
 UNION ALL SELECT 'ingredient', COUNT(*) FROM ingredient
 UNION ALL SELECT 'instruction', COUNT(*) FROM instruction

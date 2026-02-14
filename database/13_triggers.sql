@@ -1,23 +1,7 @@
--- ============================================================================
--- Script:      13_triggers.sql
--- Description: Database triggers for automated operations
--- Project:     Recipe Sharing System - CSX3006 Database Systems
--- Author:      CSX3006 Team
--- Created:     2026-02-07
--- ============================================================================
--- Naming: trg_ prefix followed by TableName_Purpose
--- Safety: All triggers check @DISABLE_TRIGGERS to allow safe seeding
--- ============================================================================
-
 USE cookhub;
 
 DELIMITER //
 
--- ============================================================================
--- TRIGGER: trg_RecipeView_UpdateStat
--- Purpose: After inserting a recipe_view, increment daily_stat.recipe_view_count
---          for the current date (auto-create row if it doesn't exist)
--- ============================================================================
 CREATE TRIGGER trg_RecipeView_UpdateStat
 AFTER INSERT ON recipe_view
 FOR EACH ROW
@@ -31,36 +15,22 @@ BEGIN
     END IF;
 END //
 
-
--- ============================================================================
--- TRIGGER: trg_User_UpdateLastActive
--- Purpose: Before updating a session record, update the user's last_active
---          timestamp to keep session activity in sync
--- ============================================================================
 CREATE TRIGGER trg_User_UpdateLastActive
 BEFORE UPDATE ON session
 FOR EACH ROW
 BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
-        UPDATE user
+        UPDATE `user`
         SET last_active = NOW()
         WHERE id = NEW.user_id;
     END IF;
 END //
 
-
--- ============================================================================
--- TRIGGER: trg_Recipe_DeleteCleanup
--- Purpose: Before deleting a recipe, log the action to activity_log
---          (defensive logging in case deletion bypasses the stored procedure)
--- ============================================================================
 CREATE TRIGGER trg_Recipe_DeleteCleanup
 BEFORE DELETE ON recipe
 FOR EACH ROW
 BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
-        -- Only log if not already logged by the stored procedure
-        -- Check if a recent log entry exists (within 5 seconds)
         IF NOT EXISTS (
             SELECT 1 FROM activity_log
             WHERE target_type = 'recipe'
@@ -80,14 +50,8 @@ BEGIN
     END IF;
 END //
 
-
--- ============================================================================
--- TRIGGER: trg_User_NewUserStat
--- Purpose: After inserting a new user, increment daily_stat.new_user_count
---          for the current date
--- ============================================================================
 CREATE TRIGGER trg_User_NewUserStat
-AFTER INSERT ON user
+AFTER INSERT ON `user`
 FOR EACH ROW
 BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
@@ -99,11 +63,6 @@ BEGIN
     END IF;
 END //
 
-
--- ============================================================================
--- TRIGGER: trg_Recipe_SetTimestamp
--- Purpose: Before inserting a recipe, set created_at and updated_at when NULL
--- ============================================================================
 CREATE TRIGGER trg_Recipe_SetTimestamp
 BEFORE INSERT ON recipe
 FOR EACH ROW
@@ -118,13 +77,8 @@ BEGIN
     END IF;
 END //
 
-
--- ============================================================================
--- TRIGGER: trg_User_SetTimestamp
--- Purpose: Before inserting a user, set created_at and updated_at when NULL
--- ============================================================================
 CREATE TRIGGER trg_User_SetTimestamp
-BEFORE INSERT ON user
+BEFORE INSERT ON `user`
 FOR EACH ROW
 BEGIN
     IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
@@ -137,12 +91,8 @@ BEGIN
     END IF;
 END //
 
-
 DELIMITER ;
 
--- ============================================================================
--- VERIFY TRIGGERS
--- ============================================================================
 SELECT
     TRIGGER_NAME,
     EVENT_MANIPULATION,

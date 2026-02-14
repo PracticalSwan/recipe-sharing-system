@@ -73,14 +73,8 @@
 
 #### Step 3.4: Seed the Database with Sample Data
 
-**IMPORTANT:** Before running seed scripts, you must disable triggers.
-
-1. Click the **"SQL"** tab
-2. Type this command:
-   ```sql
-   SET @DISABLE_TRIGGERS = 1;
-   ```
-3. Click **"Go"**
+**Current behavior:** `05_seed_users.sql` and `08_seed_stats.sql` now preserve and restore `@DISABLE_TRIGGERS` internally.
+You can run seed scripts directly without manual trigger toggling.
 
 **Now run each seed script** (same process as Step 3.3):
 
@@ -89,14 +83,7 @@
 3. `07_seed_reviews.sql` ← Sample reviews
 4. `08_seed_stats.sql` ← Sample statistics
 
-**After all seed scripts complete:**
-
-1. Click the **"SQL"** tab again
-2. Type this command:
-   ```sql
-   SET @DISABLE_TRIGGERS = NULL;
-   ```
-3. Click **"Go"**
+**Optional wrapper mode (advanced):** if you intentionally set `@DISABLE_TRIGGERS` yourself before seeding, these scripts will preserve your existing value and restore it after execution.
 
 #### Step 3.5: Optional Backup Script
 

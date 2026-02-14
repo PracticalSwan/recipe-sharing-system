@@ -1,22 +1,5 @@
--- ============================================================================
--- Script:      04_create_views.sql
--- Description: Creates database views for commonly accessed aggregated data
--- Project:     Recipe Sharing System - CSX3006 Database Systems
--- Author:      CSX3006 Team
--- Created:     2026-02-07
--- ============================================================================
--- Views:
---   1. vw_recipe_with_stat  - Recipe listing with aggregated engagement stats
---   2. vw_user_dashboard_stat - User dashboard summary statistics
--- ============================================================================
-
 USE cookhub;
 
--- ============================================================================
--- VIEW 1: vw_recipe_with_stat
--- Joins recipe with author info and aggregated engagement statistics
--- Used by: Home page, Search page, Recipe listings
--- ============================================================================
 DROP VIEW IF EXISTS vw_recipe_with_stat;
 
 CREATE VIEW vw_recipe_with_stat AS
@@ -50,7 +33,7 @@ SELECT
         LIMIT 1
     ) AS primary_image_url
 FROM recipe r
-    INNER JOIN user u
+    INNER JOIN `user` u
         ON r.author_id = u.id
     LEFT JOIN (
         SELECT
@@ -82,11 +65,6 @@ FROM recipe r
         GROUP BY recipe_id
     ) fv ON fv.recipe_id = r.id;
 
--- ============================================================================
--- VIEW 2: vw_user_dashboard_stat
--- Aggregates per-user statistics for the user profile/dashboard
--- Used by: Profile page, User dashboard
--- ============================================================================
 DROP VIEW IF EXISTS vw_user_dashboard_stat;
 
 CREATE VIEW vw_user_dashboard_stat AS
@@ -106,7 +84,7 @@ SELECT
     COALESCE(rv.review_count, 0)           AS review_count,
     COALESCE(lk.like_given_count, 0)       AS like_given_count,
     COALESCE(lk_rcv.like_received_count, 0) AS like_received_count
-FROM user u
+FROM `user` u
     LEFT JOIN (
         SELECT
             author_id,
@@ -146,7 +124,6 @@ FROM user u
         GROUP BY r.author_id
     ) lk_rcv ON lk_rcv.author_id = u.id;
 
--- Verify views were created
 SELECT TABLE_NAME, VIEW_DEFINITION
 FROM INFORMATION_SCHEMA.VIEWS
 WHERE TABLE_SCHEMA = 'cookhub';

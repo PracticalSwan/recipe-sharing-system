@@ -1,22 +1,5 @@
--- ============================================================================
--- Script:      11_analytics_queries.sql
--- Description: Analytics, trending, and engagement queries
--- Project:     Recipe Sharing System - CSX3006 Database Systems
--- Author:      CSX3006 Team
--- Created:     2026-02-07
--- ============================================================================
--- Queries demonstrate: Window functions, DATE functions, GROUP BY with ROLLUP,
---                      CTEs, UNION, complex aggregation, ranking
--- ============================================================================
-
 USE cookhub;
 
--- ============================================================================
--- QUERY 1: Top 10 recipes by views / likes / average rating
--- Demonstrates: LEFT JOIN, GROUP BY, ORDER BY aggregate, LIMIT
--- ============================================================================
-
--- Top 10 by views
 SELECT
     r.id,
     r.title,
@@ -26,14 +9,13 @@ SELECT
     (SELECT COUNT(*) FROM like_record WHERE recipe_id = r.id)            AS like_count,
     (SELECT ROUND(AVG(rating), 1) FROM review WHERE recipe_id = r.id)   AS avg_rating
 FROM recipe r
-INNER JOIN user u        ON r.author_id = u.id
+INNER JOIN `user` u        ON r.author_id = u.id
 LEFT JOIN recipe_view rv ON r.id = rv.recipe_id
 WHERE r.status = 'published'
 GROUP BY r.id, r.title, r.category, u.username
 ORDER BY total_views DESC
 LIMIT 10;
 
--- Top 10 by likes
 SELECT
     r.id,
     r.title,
@@ -42,14 +24,13 @@ SELECT
     COUNT(lr.id) AS total_likes,
     (SELECT ROUND(AVG(rating), 1) FROM review WHERE recipe_id = r.id) AS avg_rating
 FROM recipe r
-INNER JOIN user u       ON r.author_id = u.id
+INNER JOIN `user` u       ON r.author_id = u.id
 LEFT JOIN like_record lr ON r.id = lr.recipe_id
 WHERE r.status = 'published'
 GROUP BY r.id, r.title, r.category, u.username
 ORDER BY total_likes DESC
 LIMIT 10;
 
--- Top 10 by average rating (minimum 2 reviews)
 SELECT
     r.id,
     r.title,
@@ -58,7 +39,7 @@ SELECT
     COUNT(rv.id)                AS review_count,
     ROUND(AVG(rv.rating), 2)    AS avg_rating
 FROM recipe r
-INNER JOIN user u   ON r.author_id = u.id
+INNER JOIN `user` u   ON r.author_id = u.id
 INNER JOIN review rv ON r.id = rv.recipe_id
 WHERE r.status = 'published'
 GROUP BY r.id, r.title, r.category, u.username
@@ -66,11 +47,6 @@ HAVING review_count >= 2
 ORDER BY avg_rating DESC, review_count DESC
 LIMIT 10;
 
-
--- ============================================================================
--- QUERY 2: User engagement metrics (recipes, reviews, likes given/received)
--- Demonstrates: Subqueries, LEFT JOIN, complex aggregation
--- ============================================================================
 SELECT
     u.id,
     u.username,
@@ -86,17 +62,10 @@ SELECT
     (SELECT COUNT(*) FROM favorite WHERE user_id = u.id)                          AS favorites_count,
     (SELECT COUNT(*) FROM recipe_view WHERE user_id = u.id)                       AS recipes_viewed,
     (SELECT COUNT(*) FROM search_history WHERE user_id = u.id)                    AS searches_made
-FROM user u
+FROM `user` u
 WHERE u.role = 'user'
 ORDER BY published_recipes DESC, likes_received DESC;
 
-
--- ============================================================================
--- QUERY 3: Daily/weekly/monthly growth trends
--- Demonstrates: DATE functions, GROUP BY date, subqueries for period comparison
--- ============================================================================
-
--- Daily stats for the last 30 days
 SELECT
     stat_date,
     page_view_count,
@@ -107,7 +76,6 @@ FROM daily_stat
 WHERE stat_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 ORDER BY stat_date DESC;
 
--- Weekly aggregation
 SELECT
     YEARWEEK(stat_date, 1)         AS year_week,
     MIN(stat_date)                  AS week_start,
@@ -121,7 +89,6 @@ WHERE stat_date >= DATE_SUB(CURDATE(), INTERVAL 12 WEEK)
 GROUP BY YEARWEEK(stat_date, 1)
 ORDER BY year_week DESC;
 
--- Monthly aggregation
 SELECT
     DATE_FORMAT(stat_date, '%Y-%m') AS month,
     SUM(page_view_count)            AS total_page_views,
@@ -132,11 +99,6 @@ FROM daily_stat
 GROUP BY DATE_FORMAT(stat_date, '%Y-%m')
 ORDER BY month DESC;
 
-
--- ============================================================================
--- QUERY 4: Category distribution and popularity analysis
--- Demonstrates: GROUP BY, COUNT, SUM with CASE, LEFT JOIN multi-aggregate
--- ============================================================================
 SELECT
     r.category,
     COUNT(*)                                                  AS recipe_count,
@@ -156,13 +118,6 @@ FROM recipe r
 GROUP BY r.category
 ORDER BY recipe_count DESC;
 
-
--- ============================================================================
--- QUERY 5: Popular search terms analysis
--- Demonstrates: GROUP BY, COUNT, DATE functions, ORDER BY aggregate
--- ============================================================================
-
--- Most searched terms (all time)
 SELECT
     LOWER(query) AS search_term,
     COUNT(*)     AS search_count,
@@ -173,7 +128,6 @@ GROUP BY LOWER(query)
 ORDER BY search_count DESC
 LIMIT 20;
 
--- Search trends in the last 7 days
 SELECT
     DATE(searched_at) AS search_date,
     COUNT(*)          AS total_searches,
@@ -183,11 +137,6 @@ WHERE searched_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
 GROUP BY DATE(searched_at)
 ORDER BY search_date DESC;
 
-
--- ============================================================================
--- QUERY 6: Difficulty and time distribution analysis
--- Demonstrates: CASE grouping, AVG, GROUP BY with expressions
--- ============================================================================
 SELECT
     r.difficulty,
     COUNT(*) AS recipe_count,
