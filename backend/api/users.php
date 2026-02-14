@@ -40,6 +40,14 @@ function handleUsersList(PDO $pdo, string $method): void {
     }
 
     requireAdmin($pdo);
+    $pdo->exec("
+        UPDATE user
+        SET status = 'inactive'
+        WHERE role = 'user'
+          AND status = 'active'
+          AND last_active IS NOT NULL
+          AND last_active < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+    ");
 
     $page  = max(1, (int) ($_GET['page'] ?? 1));
     $limit = min(50, max(1, (int) ($_GET['limit'] ?? 20)));
@@ -367,18 +375,25 @@ function handleUserStatus(PDO $pdo, string $method, int $id): void {
         errorResponse('User not found', 404);
     }
 
-    $stmt = $pdo->prepare("UPDATE user SET status = :status WHERE id = :id");
-    $stmt->execute([':status' => $data['status'], ':id' => $id]);
+    if ($data['status'] === 'active') {
+        $stmt = $pdo->prepare("UPDATE user SET status = :status, last_active = NOW() WHERE id = :id");
+        $stmt->execute([':status' => $data['status'], ':id' => $id]);
+    } else {
+        $stmt = $pdo->prepare("UPDATE user SET status = :status WHERE id = :id");
+        $stmt->execute([':status' => $data['status'], ':id' => $id]);
+    }
 
-    // Log activity
-    $pdo->prepare("
-        INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
-        VALUES (:admin_id, 'user_update', 'user', :target_id, :description)
-    ")->execute([
-        ':admin_id'    => $admin['id'],
-        ':target_id'   => $id,
-        ':description' => "Changed status of {$target['username']} to {$data['status']}",
-    ]);
+    // Keep admin audit focused on moderation events.
+    if (!in_array($data['status'], ['active', 'inactive'], true)) {
+        $pdo->prepare("
+            INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
+            VALUES (:admin_id, 'user_update', 'user', :target_id, :description)
+        ")->execute([
+            ':admin_id'    => $admin['id'],
+            ':target_id'   => $id,
+            ':description' => "Changed status of {$target['username']} to {$data['status']}",
+        ]);
+    }
 
     successResponse(null, "User status updated to {$data['status']}");
 }

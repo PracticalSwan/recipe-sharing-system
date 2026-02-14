@@ -107,25 +107,40 @@ function handleCreateReview(PDO $pdo): void {
         errorResponse('Recipe not found', 404);
     }
 
-    // Check for existing review (unique constraint)
+    $comment = trim($data['comment'] ?? '');
+
+    // Upsert review so each user has exactly one review per recipe.
     $stmt = $pdo->prepare("SELECT id FROM review WHERE user_id = :uid AND recipe_id = :rid");
     $stmt->execute([':uid' => $user['id'], ':rid' => $recipeId]);
-    if ($stmt->fetch()) {
-        errorResponse('You have already reviewed this recipe');
+    $existing = $stmt->fetch();
+
+    $statusCode = 201;
+    if ($existing) {
+        $reviewId = (int) $existing['id'];
+        $stmt = $pdo->prepare("
+            UPDATE review
+            SET rating = :rating, comment = :comment
+            WHERE id = :id
+        ");
+        $stmt->execute([
+            ':rating' => $rating,
+            ':comment' => $comment,
+            ':id' => $reviewId,
+        ]);
+        $statusCode = 200;
+    } else {
+        $stmt = $pdo->prepare("
+            INSERT INTO review (user_id, recipe_id, rating, comment)
+            VALUES (:user_id, :recipe_id, :rating, :comment)
+        ");
+        $stmt->execute([
+            ':user_id'   => $user['id'],
+            ':recipe_id' => $recipeId,
+            ':rating'    => $rating,
+            ':comment'   => $comment,
+        ]);
+        $reviewId = (int) $pdo->lastInsertId();
     }
-
-    $stmt = $pdo->prepare("
-        INSERT INTO review (user_id, recipe_id, rating, comment)
-        VALUES (:user_id, :recipe_id, :rating, :comment)
-    ");
-    $stmt->execute([
-        ':user_id'   => $user['id'],
-        ':recipe_id' => $recipeId,
-        ':rating'    => $rating,
-        ':comment'   => trim($data['comment'] ?? ''),
-    ]);
-
-    $reviewId = (int) $pdo->lastInsertId();
 
     // Return the created review
     $stmt = $pdo->prepare("
@@ -151,7 +166,7 @@ function handleCreateReview(PDO $pdo): void {
             'firstName' => $rv['first_name'],
             'lastName'  => $rv['last_name'],
         ],
-    ], 201);
+    ], $statusCode);
 }
 
 // ============================================================================

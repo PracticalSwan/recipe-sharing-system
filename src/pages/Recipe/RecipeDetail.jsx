@@ -58,8 +58,13 @@ export function RecipeDetail() {
                 setLikeCount(r.likeCount || 0);
                 setViewCount(r.viewCount || 0);
 
-                // Record view
-                api.recipes.recordView(id).catch(() => {});
+                api.recipes.recordView(id)
+                    .then((viewData) => {
+                        if (!cancelled && typeof viewData?.viewCount === 'number') {
+                            setViewCount(viewData.viewCount);
+                        }
+                    })
+                    .catch(() => {});
             } catch {
                 navigate('/');
             } finally {
@@ -95,11 +100,19 @@ export function RecipeDetail() {
         if (!newComment.trim()) return;
 
         try {
-            await api.reviews.create({
-                recipeId: Number(id),
-                rating,
-                comment: newComment
-            });
+            const myExistingReview = reviews.find((review) => Number(review.user?.id) === Number(user?.id));
+            if (myExistingReview) {
+                await api.reviews.update(myExistingReview.id, {
+                    rating,
+                    comment: newComment,
+                });
+            } else {
+                await api.reviews.create({
+                    recipeId: Number(id),
+                    rating,
+                    comment: newComment,
+                });
+            }
             const reviewData = await api.reviews.list(id);
             setReviews(reviewData.reviews || []);
             setNewComment('');
@@ -138,6 +151,19 @@ export function RecipeDetail() {
     };
 
     const isOwner = user && recipe?.author?.id === user.id;
+    const myExistingReview = user
+        ? reviews.find((review) => Number(review.user?.id) === Number(user.id))
+        : null;
+    const likeDisabledText = isSuspended
+        ? 'Suspended accounts cannot like recipes'
+        : isPending
+            ? 'Pending accounts cannot like recipes'
+            : 'Only active user accounts can like recipes';
+    const saveDisabledText = isSuspended
+        ? 'Suspended accounts cannot save recipes'
+        : isPending
+            ? 'Pending accounts cannot save recipes'
+            : 'Only active user accounts can save recipes';
 
     const avgRating = reviews.length > 0
         ? Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length)
@@ -216,7 +242,8 @@ export function RecipeDetail() {
                             className="gap-1.5"
                             disabled={!canInteract}
                             aria-pressed={isLiked}
-                            aria-label={isLiked ? 'Unlike recipe' : 'Like recipe'}
+                            aria-label={canInteract ? (isLiked ? 'Unlike recipe' : 'Like recipe') : likeDisabledText}
+                            title={canInteract ? (isLiked ? 'Unlike recipe' : 'Like recipe') : likeDisabledText}
                         >
                             <Heart className={`h-4 w-4 ${isLiked ? 'fill-white' : ''}`} />
                             {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
@@ -228,14 +255,15 @@ export function RecipeDetail() {
                             className="gap-1.5"
                             disabled={!canInteract}
                             aria-pressed={isFavorited}
-                            aria-label={isFavorited ? 'Unsave recipe' : 'Save recipe'}
+                            aria-label={canInteract ? (isFavorited ? 'Unsave recipe' : 'Save recipe') : saveDisabledText}
+                            title={canInteract ? (isFavorited ? 'Unsave recipe' : 'Save recipe') : saveDisabledText}
                         >
                             <Bookmark className={`h-4 w-4 ${isFavorited ? 'fill-white' : ''}`} />
                             {isFavorited ? 'Saved' : 'Save'}
                         </Button>
                         
                         {/* Edit/Delete buttons for recipe owner */}
-                        {isOwner && (
+                        {isOwner && canInteract && (
                             <>
                                 <Button
                                     variant="outline"
@@ -386,7 +414,9 @@ export function RecipeDetail() {
                                     </button>
                                 ))}
                             </div>
-                            <Button type="submit" size="sm" disabled={!newComment.trim() || !canInteract}>Post</Button>
+                            <Button type="submit" size="sm" disabled={!newComment.trim() || !canInteract}>
+                                {myExistingReview ? 'Update' : 'Post'}
+                            </Button>
                         </div>
                     </form>
                 </div>

@@ -36,6 +36,14 @@ if (empty($segments) || $segments[0] === 'dashboard') {
 // ============================================================================
 function handleDashboardStats(PDO $pdo): void {
     requireAdmin($pdo);
+    $pdo->exec("
+        UPDATE user
+        SET status = 'inactive'
+        WHERE role = 'user'
+          AND status = 'active'
+          AND last_active IS NOT NULL
+          AND last_active < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+    ");
 
     // Total counts
     $totalUsers   = (int) $pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
@@ -66,6 +74,13 @@ function handleDashboardStats(PDO $pdo): void {
                u.username AS adminUsername
         FROM activity_log al
         JOIN user u ON u.id = al.admin_id
+        WHERE NOT (
+            al.action_type = 'user_update'
+            AND (
+                LOWER(al.description) LIKE '% to active'
+                OR LOWER(al.description) LIKE '% to inactive'
+            )
+        )
         ORDER BY al.created_at DESC
         LIMIT 10
     ")->fetchAll();

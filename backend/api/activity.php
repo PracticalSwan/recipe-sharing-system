@@ -25,7 +25,15 @@ $limit  = min(50, max(1, (int) ($_GET['limit'] ?? 20)));
 $offset = ($page - 1) * $limit;
 $actionType = $_GET['actionType'] ?? null;
 
-$where = [];
+$where = [
+    "NOT (
+        al.action_type = 'user_update'
+        AND (
+            LOWER(al.description) LIKE '% to active'
+            OR LOWER(al.description) LIKE '% to inactive'
+        )
+    )",
+];
 $params = [];
 
 if ($actionType) {

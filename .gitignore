@@ -56,6 +56,10 @@ build/
 # Testing
 coverage/
 .nyc_output/
+playwright-report/
+test-results/
+tests/
+playwright.config.js
 
 # OS specific files
 Thumbs.db

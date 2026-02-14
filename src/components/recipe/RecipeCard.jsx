@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { cn, normalizeCategories } from '../../lib/utils';
 
 export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
-    const { user, canInteract } = useAuth();
+    const { user, canInteract, isPending, isSuspended } = useAuth();
 
     // Use data directly from the API-provided recipe object
     const [isLiked, setIsLiked] = useState(recipe.isLiked || false);
@@ -20,6 +20,16 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
 
     const categories = normalizeCategories(recipe.categories ?? recipe.category);
     const authorName = recipe.author?.username || `User ${recipe.author?.id || recipe.authorId}`;
+    const likeDisabledText = isSuspended
+        ? 'Suspended accounts cannot like recipes'
+        : isPending
+            ? 'Pending accounts cannot like recipes'
+            : 'Only active user accounts can like recipes';
+    const saveDisabledText = isSuspended
+        ? 'Suspended accounts cannot save recipes'
+        : isPending
+            ? 'Pending accounts cannot save recipes'
+            : 'Only active user accounts can save recipes';
 
     const handleLikeClick = async (e) => {
         e.preventDefault();
@@ -64,8 +74,8 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                     <button
                         onClick={handleLikeClick}
                         className={`absolute top-1.5 left-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1 ${canInteract ? 'hover:bg-white' : 'opacity-60 cursor-not-allowed'}`}
-                        title={canInteract ? (isLiked ? 'Unlike' : 'Like') : 'Pending accounts cannot like recipes'}
-                        aria-label={isLiked ? 'Unlike recipe' : 'Like recipe'}
+                        title={canInteract ? (isLiked ? 'Unlike' : 'Like') : likeDisabledText}
+                        aria-label={canInteract ? (isLiked ? 'Unlike recipe' : 'Like recipe') : likeDisabledText}
                         aria-pressed={isLiked}
                         aria-disabled={!canInteract}
                     >
@@ -105,8 +115,8 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                         <button
                             onClick={handleSaveClick}
                             className={`p-1 rounded-md transition-colors shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1 ${canInteract ? 'hover:bg-cool-gray-10' : 'opacity-60 cursor-not-allowed'}`}
-                            title={canInteract ? (isFavorited ? 'Unsave' : 'Save') : 'Pending accounts cannot save recipes'}
-                            aria-label={isFavorited ? 'Unsave recipe' : 'Save recipe'}
+                            title={canInteract ? (isFavorited ? 'Unsave' : 'Save') : saveDisabledText}
+                            aria-label={canInteract ? (isFavorited ? 'Unsave recipe' : 'Save recipe') : saveDisabledText}
                             aria-pressed={isFavorited}
                             aria-disabled={!canInteract}
                         >

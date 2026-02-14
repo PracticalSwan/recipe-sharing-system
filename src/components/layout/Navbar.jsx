@@ -8,8 +8,8 @@ export function Navbar() {
     const { user, logout, canInteract } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
         navigate('/login');
     };
 

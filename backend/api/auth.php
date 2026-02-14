@@ -124,9 +124,13 @@ function handleLogin(PDO $pdo, string $method): void {
         errorResponse('Invalid credentials', 401);
     }
 
-    // Update last_active
-    $stmt = $pdo->prepare("UPDATE user SET last_active = NOW() WHERE id = :id");
-    $stmt->execute([':id' => $user['id']]);
+    if ($user['status'] === 'inactive') {
+        $stmt = $pdo->prepare("UPDATE user SET status = 'active', last_active = NOW() WHERE id = :id");
+        $stmt->execute([':id' => $user['id']]);
+    } else {
+        $stmt = $pdo->prepare("UPDATE user SET last_active = NOW() WHERE id = :id");
+        $stmt->execute([':id' => $user['id']]);
+    }
 
     createSession($pdo, (int) $user['id']);
 
@@ -149,6 +153,12 @@ function handleLogin(PDO $pdo, string $method): void {
 function handleLogout(PDO $pdo, string $method): void {
     if ($method !== 'POST') {
         errorResponse('Method not allowed', 405);
+    }
+
+    $currentUser = getCurrentUser($pdo);
+    if ($currentUser && in_array($currentUser['status'], ['active', 'inactive'], true)) {
+        $stmt = $pdo->prepare("UPDATE user SET status = 'inactive', last_active = NOW() WHERE id = :id");
+        $stmt->execute([':id' => $currentUser['id']]);
     }
 
     destroySession($pdo);

@@ -44,6 +44,7 @@ export function AdminStats() {
                         type: a.actionType,
                         text: a.description,
                         time: a.createdAt,
+                        adminUsername: a.adminUsername || 'Unknown admin',
                     })),
                 });
             } catch (err) {
@@ -93,7 +94,10 @@ export function AdminStats() {
                             {stats.recentActivity.length ? (
                                 stats.recentActivity.map((activity, index) => (
                                     <div key={`${activity.type}-${activity.time}-${index}`} className="flex items-start justify-between gap-4">
-                                        <span>{activity.text}</span>
+                                        <span>
+                                            {activity.text}
+                                            <span className="ml-1 text-cool-gray-50">by {activity.adminUsername}</span>
+                                        </span>
                                         <span className="whitespace-nowrap text-xs text-cool-gray-50">
                                             {new Date(activity.time).toLocaleString()}
                                         </span>

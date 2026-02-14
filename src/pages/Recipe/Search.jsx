@@ -153,12 +153,13 @@ export function Search() {
     };
 
     const resetFilters = () => {
-        setFilters(prev => ({
-            ...prev,
+        setFilters({
+            keyword: '',
             category: [],
             difficulty: 'All',
             sort: 'rating'
-        }));
+        });
+        setSearchParams({}, { replace: true });
         setShowCategoryDropdown(false);
     };
 

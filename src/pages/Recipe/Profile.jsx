@@ -58,7 +58,10 @@ export function Profile() {
     const loadRecipes = useCallback(async () => {
         if (!profileUser) return;
         try {
-            const data = await api.recipes.list({ authorId: profileUser.id });
+            const data = await api.recipes.list({
+                authorId: profileUser.id,
+                status: isOwnProfile ? 'all' : 'published',
+            });
             const all = data.recipes || [];
             setMyRecipes(isOwnProfile ? all : all.filter(r => r.status === 'published'));
         } catch { setMyRecipes([]); }
@@ -177,7 +180,14 @@ export function Profile() {
             )}
 
             {/* Edit Profile Modal */}
-            <Modal isOpen={isEditing} onClose={() => setIsEditing(false)} title="Edit Profile" className="max-w-lg">
+            <Modal
+                isOpen={isEditing}
+                onClose={() => setIsEditing(false)}
+                title="Edit Profile"
+                className="max-w-lg"
+                closeOnOverlayClick={false}
+                closeOnEscape={false}
+            >
                 <div className="space-y-4">
                     {/* Avatar Selector */}
                     <div className="space-y-2">

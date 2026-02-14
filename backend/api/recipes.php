@@ -71,7 +71,7 @@ function handleRecipesList(PDO $pdo, string $method): void {
     $currentUserId = $currentUser ? (int) $currentUser['id'] : null;
 
     // Query params
-    $status     = $_GET['status'] ?? 'published';
+    $status      = $_GET['status'] ?? 'published';
     $category   = $_GET['category'] ?? null;
     $difficulty  = $_GET['difficulty'] ?? null;
     $authorId   = isset($_GET['authorId']) ? (int) $_GET['authorId'] : null;
@@ -82,6 +82,14 @@ function handleRecipesList(PDO $pdo, string $method): void {
 
     $where = [];
     $params = [];
+
+    if ($status === 'all') {
+        $isAdmin = $currentUser && $currentUser['role'] === 'admin';
+        $isOwnAuthorView = $authorId && $currentUserId && $authorId === $currentUserId;
+        if (!$isAdmin && !$isOwnAuthorView) {
+            $status = 'published';
+        }
+    }
 
     if ($status !== 'all') {
         $where[] = "r.status = :status";
@@ -327,7 +335,7 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
     }
 
     // Check ownership or admin
-    $stmt = $pdo->prepare("SELECT author_id FROM recipe WHERE id = :id");
+    $stmt = $pdo->prepare("SELECT author_id, status FROM recipe WHERE id = :id");
     $stmt->execute([':id' => $id]);
     $recipe = $stmt->fetch();
     if (!$recipe) {
@@ -335,6 +343,15 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
     }
     if ((int) $recipe['author_id'] !== (int) $user['id'] && $user['role'] !== 'admin') {
         errorResponse('Not authorized', 403);
+    }
+
+    $nextStatus = $recipe['status'];
+    if (
+        isset($data['status']) &&
+        in_array($data['status'], ['published', 'pending', 'rejected'], true) &&
+        $user['role'] === 'admin'
+    ) {
+        $nextStatus = $data['status'];
     }
 
     $category = '';
@@ -362,7 +379,7 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
             ':prep_time'   => (int) ($data['prepTime'] ?? 0),
             ':cook_time'   => (int) ($data['cookTime'] ?? 0),
             ':servings'    => (int) ($data['servings'] ?? 1),
-            ':status'      => $data['status'] ?? 'pending',
+            ':status'      => $nextStatus,
             ':id'          => $id,
         ]);
 
@@ -581,8 +598,8 @@ function handleRecipeView(PDO $pdo, string $method, int $recipeId): void {
         errorResponse('Method not allowed', 405);
     }
 
-    $currentUser = getCurrentUser($pdo);
-    $userId = $currentUser ? (int) $currentUser['id'] : null;
+    $user = requireAuth($pdo);
+    $userId = (int) $user['id'];
 
     $stmt = $pdo->prepare("SELECT id FROM recipe WHERE id = :id");
     $stmt->execute([':id' => $recipeId]);
@@ -590,10 +607,25 @@ function handleRecipeView(PDO $pdo, string $method, int $recipeId): void {
         errorResponse('Recipe not found', 404);
     }
 
-    $stmt = $pdo->prepare("INSERT INTO recipe_view (recipe_id, user_id, viewed_at) VALUES (:recipe_id, :user_id, NOW())");
+    $stmt = $pdo->prepare("SELECT id FROM recipe_view WHERE recipe_id = :recipe_id AND user_id = :user_id LIMIT 1");
     $stmt->execute([':recipe_id' => $recipeId, ':user_id' => $userId]);
+    $existingView = $stmt->fetch();
 
-    successResponse(null, 'View recorded');
+    $viewRecorded = false;
+    if (!$existingView) {
+        $stmt = $pdo->prepare("INSERT INTO recipe_view (recipe_id, user_id, viewed_at) VALUES (:recipe_id, :user_id, NOW())");
+        $stmt->execute([':recipe_id' => $recipeId, ':user_id' => $userId]);
+        $viewRecorded = true;
+    }
+
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM recipe_view WHERE recipe_id = :recipe_id");
+    $stmt->execute([':recipe_id' => $recipeId]);
+    $viewCount = (int) $stmt->fetchColumn();
+
+    jsonResponse([
+        'viewRecorded' => $viewRecorded,
+        'viewCount' => $viewCount,
+    ]);
 }
 
 // ============================================================================
