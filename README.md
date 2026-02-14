@@ -22,11 +22,13 @@ A collaborative web application that enables users to share, discover, and inter
 <a id="overview"></a>
 ## Overview
 
-The Recipe Sharing System is currently in two implementation phases:
+The Recipe Sharing System now runs as a full-stack application with database integration (Phases 1-5 implemented):
 
-- **Current Release (localStorage)** - A fully functional demonstration version with browser localStorage persistence, complete with user authentication, recipe management, reviews, admin dashboard, and all features listed below.
+- **Frontend:** React + Vite
+- **Backend:** Plain PHP REST API (PDO + prepared statements + cookie sessions)
+- **Database:** MySQL/MariaDB (cookhub) with normalized schema, views, procedures, and triggers
 
-- **Database Integration (In Progress)** - A migration to a full-stack application with MySQL/MariaDB database and PHP RESTful API is being developed as part of CSX3006 Database Systems course. This will transform the application into a three-tier architecture (Presentation → Application → Data Layer).
+Phase 6 (integration testing and additional deployment/documentation hardening) remains in progress.
 
 ### Approval Workflow
 
@@ -183,16 +185,18 @@ npm run preview
 | `lina@cookhub.com` | `lina123` | Lina Patel | Inactive |
 | `omar@cookhub.com` | `omar123` | Omar Hassan | Pending |
 
-> **Note:** These credentials are for the localStorage version. The database version will create matching accounts during seeding.
+> **Note:** These credentials are seeded by `database/05_seed_users.sql` when the database scripts are executed.
 
-### Reset Data (localStorage)
+### Reset Seed Data (Database)
 
-To reset to initial seed state, run in browser console:
+To reset the system to the initial seeded state:
 
-```javascript
-localStorage.clear();
-location.reload();
-```
+1. Drop and recreate the `cookhub` database.
+2. Re-run SQL scripts in order (`01_create_database.sql` through `14_backup_restore.sql`) as documented in `guides/SETUP_GUIDE_PHPMYADMIN.md`.
+3. Log in again from the frontend after the database is re-seeded.
+
+Seed execution note:
+`database/05_seed_users.sql` and `database/08_seed_stats.sql` now preserve the current `@DISABLE_TRIGGERS` state, so they work correctly both standalone and inside wrapper rebuild sequences.
 
 <a id="project-structure"></a>
 ## Project Structure
@@ -270,13 +274,13 @@ recipe-sharing-system/
 <a id="data-database"></a>
 ## Data & Database
 
-### Current Storage: Browser localStorage
+### Current Storage: MySQL/MariaDB via PHP API
 
-The application currently uses **browser localStorage** for data persistence with all feature data (users, recipes, reviews, daily stats, activity logs, search history).
+The application now persists data in **MySQL/MariaDB** through the PHP API layer (`backend/api/*`). The legacy localStorage service has been removed from runtime usage (`src/lib/storage.js`).
 
-### Database Integration (In Progress)
+### Database Integration Status
 
-Target Storage: MySQL/MariaDB Database + PHP RESTful API. A comprehensive database backend is being developed as part of CSX3006 Database Systems course.
+Database and API integration for Phases 1-5 is implemented as part of the CSX3006 Database Systems project plan.
 
 **Database Features:**
 - 13 normalized tables (3NF design) with proper constraints
@@ -306,7 +310,7 @@ Target Storage: MySQL/MariaDB Database + PHP RESTful API. A comprehensive databa
 | `activity_log` | Admin action audit trail |
 | `session` | Server-side session tokens |
 
-> **Progress:** View detailed implementation plan at [plan/upgrade-database-integration-1.md](plan/upgrade-database-integration-1.md) (38% complete — SQL scripts done, backend integration pending)
+> **Progress:** View detailed implementation plan at [plan/upgrade-database-integration-1.md](plan/upgrade-database-integration-1.md) (80% complete — Phases 1-5 implemented; Phase 6 testing/docs pending)
 
 <a id="available-scripts"></a>
 ## Available Scripts

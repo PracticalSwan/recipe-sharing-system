@@ -26,6 +26,9 @@
 
 USE cookhub;
 
+-- Preserve current trigger-disable state (supports nested/outer wrappers)
+SET @PREV_DISABLE_TRIGGERS = @DISABLE_TRIGGERS;
+
 -- Disable triggers temporarily during seeding to avoid stat conflicts
 SET @DISABLE_TRIGGERS = 1;
 
@@ -152,8 +155,9 @@ INSERT INTO user (
     'Trying new cuisines.', 'Phoenix', 'Beginner'
 );
 
--- Re-enable triggers
-SET @DISABLE_TRIGGERS = NULL;
+-- Restore previous trigger-disable state
+SET @DISABLE_TRIGGERS = @PREV_DISABLE_TRIGGERS;
+SET @PREV_DISABLE_TRIGGERS = NULL;
 
 -- Verify seeded users
 SELECT id, username, email, role, status, joined_date

@@ -4,13 +4,13 @@ version: 2.0
 date_created: 2026-02-04
 last_updated: 2026-02-14
 owner: CSX3006 Database Systems Course Project
-status: 'In Progress (83% Complete — Phases 1-5 Done)'
+status: 'In Progress (80% Complete — Phases 1-5 Implemented, validation/docs pending)'
 tags: [database, backend, php, mysql, api, migration, architecture, xampp]
 ---
 
 # Introduction
 
-![Status: In Progress](https://img.shields.io/badge/status-83%25%20Complete-blue)
+![Status: In Progress](https://img.shields.io/badge/status-80%25%20Complete-blue)
 
 This implementation plan outlines the complete migration of the Recipe Sharing System from a localStorage-based frontend-only application to a full-stack web application with MySQL database backend and PHP RESTful API. The plan maintains all existing frontend functionality while demonstrating comprehensive database design, SQL scripting, and backend development skills required for the CSX3006 Database Systems course.
 
@@ -358,8 +358,8 @@ backend/
 |------|-------------|-----------|------|
 | TASK-112 | Create `src/components/ui/LoadingSpinner.jsx` - Reusable loading component with Tailwind styling, support sizes (sm/md/lg) | ✅ | 2026-02-14 |
 | TASK-113 | Create `src/components/ui/ErrorMessage.jsx` - Reusable error display component with retry button, Tailwind styling | ✅ | 2026-02-14 |
-| TASK-114 | Remove `src/lib/storage.js` entirely — all localStorage calls replaced by API. Remove all guest-related code (`getOrCreateGuestId`, `cookhub_guest_id` references) | ⏳ | |
-| TASK-115 | Add React error boundary component to catch unhandled API errors gracefully | ⏳ | |
+| TASK-114 | Remove `src/lib/storage.js` entirely — all localStorage calls replaced by API. Remove all guest-related code (`getOrCreateGuestId`, `cookhub_guest_id` references) | ✅ | 2026-02-14 |
+| TASK-115 | Add React error boundary component to catch unhandled API errors gracefully | ✅ | 2026-02-14 |
 
 ### Phase 6: Testing & Deployment
 
@@ -522,7 +522,7 @@ backend/
 | FILE-029 | `src/lib/api.js` | TASK-093 to TASK-100 | ~220 | ✅ CREATED |
 | FILE-030 | `src/components/ui/LoadingSpinner.jsx` | TASK-112 | ~30 | ✅ CREATED |
 | FILE-031 | `src/components/ui/ErrorMessage.jsx` | TASK-113 | ~35 | ✅ CREATED |
-| FILE-032 | `src/components/ui/ErrorBoundary.jsx` | TASK-115 | ~40 | ⏳ PENDING |
+| FILE-032 | `src/components/ui/ErrorBoundary.jsx` | TASK-115 | ~40 | ✅ CREATED |
 
 ### Frontend Files — Modified (11 files)
 
@@ -544,7 +544,7 @@ backend/
 
 | File ID | Path | Task(s) | Status |
 |---------|------|---------|--------|
-| FILE-044 | `src/lib/storage.js` | TASK-114 | ⏳ DEAD CODE (0 imports, pending deletion) |
+| FILE-044 | `src/lib/storage.js` | TASK-114 | ✅ REMOVED |
 
 ### Documentation Files (7 files — to be created)
 
@@ -815,10 +815,10 @@ Quick reference of all RESTful endpoints:
 | Phase 1: Database Design | 21 (TASK-001 → TASK-021) | 18 | 3 (ER diagrams) | ✅ SQL Complete |
 | Phase 2: SQL Data Scripts | 22 (TASK-022 → TASK-043) | 22 | 0 | ✅ Complete |
 | Phase 3: Advanced SQL | 13 (TASK-044 → TASK-056) | 13 | 0 | ✅ Complete |
-| Phase 4: PHP Backend | 36 (TASK-057 → TASK-092) | 0 | 36 | ⏳ Not Started |
-| Phase 5: Frontend Integration | 23 (TASK-093 → TASK-115) | 0 | 23 | ⏳ Not Started |
+| Phase 4: PHP Backend | 36 (TASK-057 → TASK-092) | 35 | 1 (endpoint runtime testing) | ✅ API Implemented |
+| Phase 5: Frontend Integration | 23 (TASK-093 → TASK-115) | 23 | 0 | ✅ Complete |
 | Phase 6: Testing & Docs | 23 (TASK-116 → TASK-138) | 0 | 23 | ⏳ Not Started |
-| **Total** | **138** | **53** | **85** | **38% Complete** |
+| **Total** | **138** | **111** | **27** | **80% Complete** |
 
 **Priority Levels:**
 - **Critical (Must Have):** Phase 1 (TASK-004 to TASK-021), Phase 2, Phase 4 (TASK-057 to TASK-092), Phase 5 (TASK-093 to TASK-115)

@@ -2,6 +2,7 @@
 // ============================================================================
 // Stats API Endpoints (Admin)
 // GET /api/stats          - Dashboard summary stats
+// GET /api/stats/dashboard - Dashboard summary stats (alias)
 // GET /api/stats/daily    - Daily stats history
 // ============================================================================
 
@@ -22,7 +23,7 @@ if ($method !== 'GET') {
     errorResponse('Method not allowed', 405);
 }
 
-if (empty($segments)) {
+if (empty($segments) || $segments[0] === 'dashboard') {
     handleDashboardStats($pdo);
 } elseif ($segments[0] === 'daily') {
     handleDailyStats($pdo);
@@ -49,7 +50,7 @@ function handleDashboardStats(PDO $pdo): void {
     // New this week
     $newUsersWeek   = (int) $pdo->query("SELECT COUNT(*) FROM user WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
     $newRecipesWeek = (int) $pdo->query("SELECT COUNT(*) FROM recipe WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
-    $newReviewsWeek = (int) $pdo->query("SELECT COUNT(*) FROM review WHERE reviewed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
+    $newReviewsWeek = (int) $pdo->query("SELECT COUNT(*) FROM review WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
 
     // Today stats
     $newUsersToday        = (int) $pdo->query("SELECT COUNT(*) FROM user WHERE DATE(created_at) = CURDATE()")->fetchColumn();
@@ -71,7 +72,8 @@ function handleDashboardStats(PDO $pdo): void {
 
     // Top recipes by views
     $topRecipes = $pdo->query("
-        SELECT r.id, r.title, r.image_url AS imageUrl,
+        SELECT r.id, r.title,
+               (SELECT ri.image_url FROM recipe_image ri WHERE ri.recipe_id = r.id ORDER BY ri.display_order ASC LIMIT 1) AS main_image,
                COUNT(rv.id) AS viewCount,
                u.username AS authorName
         FROM recipe r
@@ -130,7 +132,7 @@ function handleDashboardStats(PDO $pdo): void {
         'topRecipes'     => array_map(fn($r) => [
             'id'         => (int) $r['id'],
             'title'      => $r['title'],
-            'imageUrl'   => $r['imageUrl'],
+            'imageUrl'   => $r['main_image'],
             'viewCount'  => (int) $r['viewCount'],
             'authorName' => $r['authorName'],
         ], $topRecipes),
@@ -147,15 +149,39 @@ function handleDailyStats(PDO $pdo): void {
     $days = min(90, max(1, (int) ($_GET['days'] ?? 30)));
 
     $stmt = $pdo->prepare("
-        SELECT stat_date AS statDate, new_users AS newUsers, new_recipes AS newRecipes,
-               new_reviews AS newReviews, total_views AS totalViews,
-               active_users AS activeUsers
-        FROM daily_stat
-        WHERE stat_date >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
-        ORDER BY stat_date ASC
+        SELECT
+            ds.stat_date AS statDate,
+            ds.new_user_count AS newUsers,
+            ds.page_view_count AS totalViews,
+            ds.active_user_count AS activeUsers,
+            ds.recipe_view_count AS recipeViews,
+            (
+                SELECT COUNT(*)
+                FROM recipe r
+                WHERE DATE(r.created_at) = ds.stat_date
+            ) AS newRecipes,
+            (
+                SELECT COUNT(*)
+                FROM review rv
+                WHERE DATE(rv.created_at) = ds.stat_date
+            ) AS newReviews
+        FROM daily_stat ds
+        WHERE ds.stat_date >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+        ORDER BY ds.stat_date ASC
     ");
     $stmt->bindValue(':days', $days, PDO::PARAM_INT);
     $stmt->execute();
 
-    jsonResponse($stmt->fetchAll());
+    $rows = $stmt->fetchAll();
+    $formatted = array_map(fn($row) => [
+        'statDate' => $row['statDate'],
+        'newUsers' => (int) $row['newUsers'],
+        'newRecipes' => (int) $row['newRecipes'],
+        'newReviews' => (int) $row['newReviews'],
+        'totalViews' => (int) $row['totalViews'],
+        'activeUsers' => (int) $row['activeUsers'],
+        'recipeViews' => (int) $row['recipeViews'],
+    ], $rows);
+
+    jsonResponse($formatted);
 }

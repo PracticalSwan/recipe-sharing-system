@@ -163,10 +163,8 @@ UNION ALL SELECT 'session', COUNT(*) FROM session;
 -- 4.  SOURCE database/04_create_views.sql;
 -- 5.  SOURCE database/12_stored_procedures.sql;   -- Before triggers (SPs referenced)
 -- 6.  SOURCE database/13_triggers.sql;
--- 7.  SET @DISABLE_TRIGGERS = 1;                  -- Disable triggers during seeding
--- 8.  SOURCE database/05_seed_users.sql;
--- 9.  SOURCE database/06_seed_recipes.sql;
--- 10. SOURCE database/07_seed_reviews.sql;
--- 11. SOURCE database/08_seed_stats.sql;
--- 12. SET @DISABLE_TRIGGERS = NULL;               -- Re-enable triggers
--- 13. SOURCE database/14_backup_restore.sql;      -- Verify with health check
+-- 7.  SOURCE database/05_seed_users.sql;           -- Preserves @DISABLE_TRIGGERS state
+-- 8.  SOURCE database/06_seed_recipes.sql;
+-- 9.  SOURCE database/07_seed_reviews.sql;
+-- 10. SOURCE database/08_seed_stats.sql;           -- Preserves @DISABLE_TRIGGERS state
+-- 11. SOURCE database/14_backup_restore.sql;       -- Verify with health check

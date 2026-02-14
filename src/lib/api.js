@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
 export const DEFAULT_AVATARS = [
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
@@ -245,7 +245,7 @@ export const search = {
 
 export const stats = {
     async dashboard() {
-        const res = await apiFetch('/stats');
+        const res = await apiFetch('/stats/dashboard');
         return res.data;
     },
 

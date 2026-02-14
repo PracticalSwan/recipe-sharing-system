@@ -43,9 +43,11 @@ function handleSearch(PDO $pdo, string $method): void {
         errorResponse('Method not allowed', 405);
     }
 
+    $user       = requireAuth($pdo);
     $query      = trim($_GET['q'] ?? '');
-    $category   = $_GET['category'] ?? null;
+    $category   = trim($_GET['category'] ?? '');
     $difficulty  = $_GET['difficulty'] ?? null;
+    $sort       = $_GET['sort'] ?? 'newest';
     $page       = max(1, (int) ($_GET['page'] ?? 1));
     $limit      = min(50, max(1, (int) ($_GET['limit'] ?? 20)));
     $offset     = ($page - 1) * $limit;
@@ -58,9 +60,17 @@ function handleSearch(PDO $pdo, string $method): void {
         $params[':q1'] = '%' . $query . '%';
         $params[':q2'] = '%' . $query . '%';
     }
-    if ($category) {
-        $where[] = "r.category LIKE :cat";
-        $params[':cat'] = '%' . $category . '%';
+    if ($category !== '') {
+        $categories = array_values(array_filter(array_map('trim', explode(',', $category))));
+        if (!empty($categories)) {
+            $catConditions = [];
+            foreach ($categories as $index => $cat) {
+                $key = ":cat$index";
+                $catConditions[] = "r.category LIKE $key";
+                $params[$key] = '%' . $cat . '%';
+            }
+            $where[] = '(' . implode(' OR ', $catConditions) . ')';
+        }
     }
     if ($difficulty) {
         $where[] = "r.difficulty = :diff";
@@ -68,6 +78,11 @@ function handleSearch(PDO $pdo, string $method): void {
     }
 
     $whereClause = 'WHERE ' . implode(' AND ', $where);
+    $orderBy = match ($sort) {
+        'rating' => 'like_count DESC, r.created_at DESC',
+        'difficulty-asc' => "FIELD(r.difficulty, 'Easy', 'Medium', 'Hard') ASC, r.created_at DESC",
+        default => 'r.created_at DESC',
+    };
 
     // Count
     $countStmt = $pdo->prepare("SELECT COUNT(*) FROM recipe r $whereClause");
@@ -89,7 +104,7 @@ function handleSearch(PDO $pdo, string $method): void {
         LEFT JOIN (SELECT recipe_id, COUNT(*) AS view_count FROM recipe_view GROUP BY recipe_id) vc ON vc.recipe_id = r.id
         LEFT JOIN (SELECT recipe_id, COUNT(*) AS review_count, AVG(rating) AS avg_rating FROM review GROUP BY recipe_id) rvc ON rvc.recipe_id = r.id
         $whereClause
-        ORDER BY r.created_at DESC
+        ORDER BY $orderBy
         LIMIT :limit OFFSET :offset
     ";
 
@@ -102,21 +117,18 @@ function handleSearch(PDO $pdo, string $method): void {
     $stmt->execute();
     $recipes = $stmt->fetchAll();
 
-    $user = getCurrentUser($pdo);
     $likedMap = [];
     $favMap = [];
-    if ($user) {
-        $recipeIds = array_map(fn($r) => (int)$r['id'], $recipes);
-        if (!empty($recipeIds)) {
-            $ph = implode(',', array_fill(0, count($recipeIds), '?'));
-            $ls = $pdo->prepare("SELECT recipe_id FROM like_record WHERE user_id = ? AND recipe_id IN ($ph)");
-            $ls->execute(array_merge([$user['id']], $recipeIds));
-            $likedMap = array_flip($ls->fetchAll(PDO::FETCH_COLUMN));
+    $recipeIds = array_map(fn($r) => (int)$r['id'], $recipes);
+    if (!empty($recipeIds)) {
+        $ph = implode(',', array_fill(0, count($recipeIds), '?'));
+        $ls = $pdo->prepare("SELECT recipe_id FROM like_record WHERE user_id = ? AND recipe_id IN ($ph)");
+        $ls->execute(array_merge([$user['id']], $recipeIds));
+        $likedMap = array_flip($ls->fetchAll(PDO::FETCH_COLUMN));
 
-            $fs = $pdo->prepare("SELECT recipe_id FROM favorite WHERE user_id = ? AND recipe_id IN ($ph)");
-            $fs->execute(array_merge([$user['id']], $recipeIds));
-            $favMap = array_flip($fs->fetchAll(PDO::FETCH_COLUMN));
-        }
+        $fs = $pdo->prepare("SELECT recipe_id FROM favorite WHERE user_id = ? AND recipe_id IN ($ph)");
+        $fs->execute(array_merge([$user['id']], $recipeIds));
+        $favMap = array_flip($fs->fetchAll(PDO::FETCH_COLUMN));
     }
 
     $formatted = array_map(fn($r) => [
@@ -181,7 +193,7 @@ function handleSearchHistory(PDO $pdo, string $method): void {
 function handleGetHistory(PDO $pdo): void {
     $user = requireAuth($pdo);
     $stmt = $pdo->prepare("
-        SELECT id, search_term AS query, results_count AS resultsCount, searched_at AS searchedAt
+        SELECT id, query, 0 AS resultsCount, searched_at AS searchedAt
         FROM search_history
         WHERE user_id = :uid
         ORDER BY searched_at DESC
@@ -201,13 +213,12 @@ function handleSaveHistory(PDO $pdo): void {
     }
 
     $stmt = $pdo->prepare("
-        INSERT INTO search_history (user_id, search_term, results_count)
-        VALUES (:uid, :term, :count)
+        INSERT INTO search_history (user_id, query)
+        VALUES (:uid, :term)
     ");
     $stmt->execute([
         ':uid'   => $user['id'],
         ':term'  => $term,
-        ':count' => (int) ($data['resultsCount'] ?? 0),
     ]);
 
     successResponse(null, 'Search saved', 201);

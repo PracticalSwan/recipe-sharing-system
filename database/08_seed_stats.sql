@@ -13,6 +13,12 @@
 
 USE cookhub;
 
+-- Preserve current trigger-disable state (supports nested/outer wrappers)
+SET @PREV_DISABLE_TRIGGERS = @DISABLE_TRIGGERS;
+
+-- Disable triggers while inserting historical stats/view rows to keep deterministic seeds
+SET @DISABLE_TRIGGERS = 1;
+
 -- ============================================================================
 -- RECIPE VIEWS (derived from storage.js recipe.viewedBy arrays)
 -- User ID mapping: 4=John, 5=Maria, 6=Tom, 9=Sarah, 10=Daniel, 11=Lina
@@ -149,6 +155,10 @@ INSERT INTO activity_log (admin_id, action_type, target_type, target_id, descrip
 (1, 'recipe_approve', 'recipe', 8,  'Approved recipe: Lemon Garlic Salmon', '2026-02-01 10:00:00'),
 (2, 'user_update', 'user', 11, 'Updated user status: Lina Patel set to inactive', '2026-02-02 14:00:00'),
 (3, 'recipe_reject', 'recipe', 11, 'Re-reviewed and confirmed rejection: Spicy Tofu Stir-Fry', '2026-02-03 09:00:00');
+
+-- Restore previous trigger-disable state
+SET @DISABLE_TRIGGERS = @PREV_DISABLE_TRIGGERS;
+SET @PREV_DISABLE_TRIGGERS = NULL;
 
 -- Verify seeded data
 SELECT 'Recipe Views' AS data_type, COUNT(*) AS count FROM recipe_view

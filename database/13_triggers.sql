@@ -70,7 +70,7 @@ BEGIN
         ) THEN
             INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
             VALUES (
-                COALESCE(@current_admin_id, 1),
+                COALESCE(@current_admin_id, OLD.author_id),
                 'recipe_delete',
                 'recipe',
                 OLD.id,

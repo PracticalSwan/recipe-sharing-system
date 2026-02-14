@@ -8,8 +8,8 @@
 - ✅ Phase 1 complete: database design and schema
 - ✅ Phase 2 complete: seed data and SQL queries
 - ✅ Phase 3 complete: stored procedures, triggers, backup/restore script
-- ⏳ Phase 4 pending: PHP backend API
-- ⏳ Phase 5 pending: frontend integration from localStorage to API
+- ✅ Phase 4 complete: PHP backend API implemented
+- ✅ Phase 5 complete: frontend migrated to API service layer
 - ⏳ Phase 6 pending: integration testing and deployment docs
 
 ## Prerequisites
@@ -33,39 +33,93 @@
 
 ## 3) Create and Initialize Database
 
-Use the scripts in this exact order:
+### Step-by-Step Instructions
 
-1. `database/01_create_database.sql`
-2. `database/02_create_tables.sql`
-3. `database/03_create_indexes.sql`
-4. `database/04_create_views.sql`
-5. `database/12_stored_procedures.sql`
-6. `database/13_triggers.sql`
+#### Step 3.1: Create the Database
 
-### Important for Seeding
+1. In phpMyAdmin home page (`http://localhost/phpmyadmin/`), look at the left sidebar
+2. Click the **"SQL"** tab at the top of the page (it's next to "Databases")
+3. You'll see a large text box where you can type SQL queries
+4. Open the file `database/01_create_database.sql` from your project folder
+5. Copy **ALL** the content from that file
+6. Paste it into the SQL text box in phpMyAdmin
+7. Click the **"Go"** button (bottom right of the text box)
+8. You should see a green success message
+9. Now look at the left sidebar - you should see `cookhub` database listed
 
-Before seed scripts:
+#### Step 3.2: Select the Database
 
-```sql
-SET @DISABLE_TRIGGERS = 1;
-```
+1. In the left sidebar, click on **`cookhub`** database name
+2. The database is now selected (you'll see it highlighted)
 
-Run seed scripts:
+#### Step 3.3: Run the Table Creation Scripts
 
-7. `database/05_seed_users.sql`
-8. `database/06_seed_recipes.sql`
-9. `database/07_seed_reviews.sql`
-10. `database/08_seed_stats.sql`
+**For each script below, repeat these steps:**
 
-After seed scripts:
+1. Click the **"SQL"** tab at the top
+2. Open the script file from your project's `database/` folder
+3. Copy the entire content of the file
+4. Paste it into the SQL text box
+5. Click **"Go"**
+6. Wait for green success message
 
-```sql
-SET @DISABLE_TRIGGERS = NULL;
-```
+**Run these scripts IN THIS EXACT ORDER:**
 
-Optional verification script:
+1. `02_create_tables.sql` ← Creates all tables
+2. `03_create_indexes.sql` ← Adds indexes for performance
+3. `04_create_views.sql` ← Creates views
+4. `12_stored_procedures.sql` ← Creates stored procedures
+5. `13_triggers.sql` ← Creates triggers
 
-11. `database/14_backup_restore.sql`
+#### Step 3.4: Seed the Database with Sample Data
+
+**IMPORTANT:** Before running seed scripts, you must disable triggers.
+
+1. Click the **"SQL"** tab
+2. Type this command:
+   ```sql
+   SET @DISABLE_TRIGGERS = 1;
+   ```
+3. Click **"Go"**
+
+**Now run each seed script** (same process as Step 3.3):
+
+1. `05_seed_users.sql` ← Sample users
+2. `06_seed_recipes.sql` ← Sample recipes
+3. `07_seed_reviews.sql` ← Sample reviews
+4. `08_seed_stats.sql` ← Sample statistics
+
+**After all seed scripts complete:**
+
+1. Click the **"SQL"** tab again
+2. Type this command:
+   ```sql
+   SET @DISABLE_TRIGGERS = NULL;
+   ```
+3. Click **"Go"**
+
+#### Step 3.5: Optional Backup Script
+
+To review the backup/restore procedures:
+
+1. Open `database/14_backup_restore.sql` in a text editor
+2. Read the comments - this file is for reference only
+3. **Do NOT run this in phpMyAdmin** (it contains backup commands for terminal/command line)
+
+### Alternative Method: Using Import
+
+If you prefer importing files instead of copy-paste:
+
+1. Select the `cookhub` database from left sidebar
+2. Click the **"Import"** tab at the top
+3. Click **"Choose File"** button
+4. Navigate to your project's `database/` folder
+5. Select the SQL file you want to run
+6. Click **"Go"** at the bottom
+7. Wait for success message
+8. Repeat for each script in order
+
+**Note:** Some large seed files may have import size limits. If you get an error, use the copy-paste method from Step 3.3 instead.
 
 ## 4) Quick Verification
 
@@ -93,7 +147,7 @@ SELECT COUNT(*) AS stats_rows FROM daily_stat;
 
 ## 5) Known Current Architecture Note
 
-At this moment, the React app still uses local storage. The API backend (`backend/...`) and API service layer (`src/lib/api.js`) are planned but not implemented yet.
+The React app is integrated with the PHP backend API. Use `src/lib/api.js` for frontend data access and `backend/api/*` for endpoint handlers.
 
 ## 6) Common Troubleshooting
 
@@ -119,6 +173,6 @@ CREATE DATABASE cookhub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 ## 7) Next Step
 
-After DB setup is verified, proceed with Phase 4 implementation plan in:
+After DB setup is verified, proceed with Phase 6 testing/documentation tasks in:
 
 - `plan/upgrade-database-integration-1.md`
