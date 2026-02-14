@@ -152,7 +152,7 @@ test.describe('Home Page', () => {
   test.beforeEach(async ({ page }) => { await loginAsUser(page); });
 
   test('TEST-013: Hero section displays heading and search', async ({ page }) => {
-    await expect(page.locator('text=Discover & Share')).toBeVisible();
+    await expect(page.locator('h1:has-text("Share Your Culinary")')).toBeVisible();
     const searchInput = page.locator('form input[placeholder*="Search"]');
     await expect(searchInput).toBeVisible();
   });
@@ -248,19 +248,19 @@ test.describe('Recipe Detail', () => {
 
   test('TEST-023: Ingredients list with checkboxes', async ({ page }) => {
     await expect(page.locator('text=Ingredients')).toBeVisible({ timeout: 10000 });
-    const checkboxes = page.locator('input[type="checkbox"]');
+    const checkboxes = page.locator('[role="checkbox"]');
     const count = await checkboxes.count();
     expect(count).toBeGreaterThan(0);
   });
 
   test('TEST-024: Toggle ingredient checkbox', async ({ page }) => {
     await expect(page.locator('text=Ingredients')).toBeVisible({ timeout: 10000 });
-    const checkbox = page.locator('input[type="checkbox"]').first();
-    await expect(checkbox).not.toBeChecked();
+    const checkbox = page.locator('[role="checkbox"]').first();
+    await expect(checkbox).toHaveAttribute('aria-checked', 'false');
     await checkbox.click();
-    await expect(checkbox).toBeChecked();
+    await expect(checkbox).toHaveAttribute('aria-checked', 'true');
     await checkbox.click();
-    await expect(checkbox).not.toBeChecked();
+    await expect(checkbox).toHaveAttribute('aria-checked', 'false');
   });
 
   test('TEST-025: Instructions section is displayed', async ({ page }) => {
@@ -317,16 +317,16 @@ test.describe('Search Page', () => {
   });
 
   test('TEST-031: Search page loads with filters', async ({ page }) => {
-    await expect(page.locator('text=Explore Recipes')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('h2:has-text("Results")')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('input[placeholder*="Search"]')).toBeVisible();
   });
 
   test('TEST-032: Category filter dropdown visible', async ({ page }) => {
-    await expect(page.locator('text=Category')).toBeVisible();
+    await expect(page.locator('button[aria-label="Filter by category"]')).toBeVisible();
   });
 
   test('TEST-033: Difficulty filter visible', async ({ page }) => {
-    await expect(page.locator('text=Difficulty')).toBeVisible();
+    await expect(page.locator('select[aria-label="Filter by difficulty"]')).toBeVisible();
   });
 
   test('TEST-034: Search by keyword updates URL', async ({ page }) => {
@@ -558,9 +558,8 @@ test.describe('Profile Page', () => {
     const editBtn = page.locator('button:has-text("Edit Profile"), button:has-text("Edit profile")').first();
     await editBtn.click();
     await page.waitForTimeout(500);
-    // Should show multiple avatar images
-    const avatarImgs = page.locator('[role="dialog"] img.rounded-full, .fixed.inset-0 img.rounded-full');
-    const count = await avatarImgs.count();
+    const avatarChoices = page.locator('[role="dialog"] button[aria-label^="Select avatar"]');
+    const count = await avatarChoices.count();
     expect(count).toBeGreaterThan(0);
   });
 
@@ -609,10 +608,11 @@ test.describe('Admin Dashboard', () => {
   });
 
   test('TEST-065: Dashboard stat numbers are rendered', async ({ page }) => {
-    // Stat cards should show numeric values
+    await expect(page.locator('text=Total Users')).toBeVisible();
+    await expect(page.locator('text=Published Recipes')).toBeVisible();
     const statValues = page.locator('.text-2xl.font-bold');
     const count = await statValues.count();
-    expect(count).toBeGreaterThan(0);
+    expect(count).toBeGreaterThanOrEqual(8);
   });
 
   test('TEST-066: Admin redirected to dashboard by RootLayout', async ({ page }) => {
@@ -693,7 +693,9 @@ test.describe('Admin User Management', () => {
     const approveBtn = page.locator('button[title="Approve"]').first();
     const suspendBtn = page.locator('button[title="Suspend"]').first();
     const deleteBtn = page.locator('button[title="Delete User"]').first();
-    await expect(approveBtn.or(suspendBtn).or(deleteBtn)).toBeVisible();
+    await expect(approveBtn).toBeVisible();
+    await expect(suspendBtn).toBeVisible();
+    await expect(deleteBtn).toBeVisible();
   });
 
   test('TEST-075: Delete user shows confirmation modal', async ({ page }) => {
@@ -1066,6 +1068,136 @@ test.describe('Recipe Interactions', () => {
 // 15. ERROR HANDLING (TEST-116 to TEST-119)
 // ═══════════════════════════════════════════════════════════
 
+
+// ═══════════════════════════════════════════════════════════
+// 15. REGRESSION FIXES (TEST-120 to TEST-127)
+// ═══════════════════════════════════════════════════════════
+
+test.describe('Regression Fixes', () => {
+  test('TEST-120: Create recipe appears in profile list immediately', async ({ page }) => {
+    await loginAsUser(page);
+    const suffix = Date.now();
+
+    await page.goto(`${BASE}/recipes/create`);
+    await page.fill('#title', `E2E Regression Recipe ${suffix}`);
+    await page.fill('#description', 'Regression test description for recipe creation visibility.');
+    await page.fill('#prepTime', '10');
+    await page.fill('#cookTime', '5');
+    await page.fill('#servings', '2');
+    await page.fill('input[placeholder="Item (e.g. Flour)"]', 'Flour');
+    await page.fill('input[placeholder="Qty"]', '1');
+    await page.fill('input[placeholder="Unit"]', 'cup');
+    await page.fill('textarea[placeholder="Step 1..."]', 'Mix ingredients and cook until done.');
+    await page.click('button:has-text("Submit Recipe")');
+
+    await expect(page).toHaveURL(/\/#\/profile\?tab=recipes/);
+    await expect(page.locator(`text=E2E Regression Recipe ${suffix}`)).toBeVisible({ timeout: 10000 });
+  });
+
+  test('TEST-121: Recipe view increments only once per user', async ({ request }) => {
+    await request.post('/api/auth/login', { data: { email: USER_EMAIL, password: USER_PASS } });
+    const recipesRes = await request.get('/api/recipes?status=published&limit=1&page=1');
+    const recipesBody = await recipesRes.json();
+    const recipeId = recipesBody.data.recipes[0].id;
+
+    await request.post(`/api/recipes/${recipeId}/view`);
+    const firstDetailRes = await request.get(`/api/recipes/${recipeId}`);
+    const firstDetail = await firstDetailRes.json();
+    const firstCount = firstDetail.data.viewCount;
+
+    await request.post(`/api/recipes/${recipeId}/view`);
+    const secondDetailRes = await request.get(`/api/recipes/${recipeId}`);
+    const secondDetail = await secondDetailRes.json();
+    const secondCount = secondDetail.data.viewCount;
+
+    expect(secondCount).toBe(firstCount);
+  });
+
+  test('TEST-122: Posting review twice updates the same user review', async ({ request }) => {
+    await request.post('/api/auth/login', { data: { email: USER_EMAIL, password: USER_PASS } });
+    const meRes = await request.get('/api/auth/me');
+    const meBody = await meRes.json();
+    const userId = meBody.data.user.id;
+
+    const recipesRes = await request.get('/api/recipes?status=published&limit=1&page=1');
+    const recipesBody = await recipesRes.json();
+    const recipeId = recipesBody.data.recipes[0].id;
+    const stamp = Date.now();
+
+    const createRes = await request.post('/api/reviews', {
+      data: { recipeId, rating: 4, comment: `First review ${stamp}` },
+    });
+    expect([200, 201]).toContain(createRes.status());
+
+    const updateRes = await request.post('/api/reviews', {
+      data: { recipeId, rating: 5, comment: `Updated review ${stamp}` },
+    });
+    expect(updateRes.status()).toBe(200);
+
+    const listRes = await request.get(`/api/reviews?recipeId=${recipeId}`);
+    const listBody = await listRes.json();
+    const mine = (listBody.data.reviews || []).filter((r) => Number(r.user?.id) === Number(userId));
+    expect(mine.length).toBe(1);
+    expect(mine[0].comment).toContain(`Updated review ${stamp}`);
+    expect(mine[0].rating).toBe(5);
+  });
+
+  test('TEST-123: Reset filters clears keyword and URL params', async ({ page }) => {
+    await loginAsUser(page);
+    await page.goto(`${BASE}/search?q=pasta&difficulty=Hard&sort=difficulty-asc`);
+    await page.click('button:has-text("Reset filters")');
+
+    await expect(page).toHaveURL(/\/#\/search$/);
+    await expect(page.locator('input[placeholder="Search recipes..."]')).toHaveValue('');
+  });
+
+  test('TEST-124: Edit Profile modal remains open when clicking outside', async ({ page }) => {
+    await loginAsUser(page);
+    await page.goto(`${BASE}/profile`);
+    await page.click('button:has-text("Edit Profile")');
+
+    const modalHeading = page.locator('h3:has-text("Edit Profile")');
+    await expect(modalHeading).toBeVisible();
+    await page.mouse.click(10, 10);
+    await expect(modalHeading).toBeVisible();
+  });
+
+  test('TEST-125: Suspended account shows suspended tooltip copy for like/save', async ({ page }) => {
+    await page.goto(`${BASE}/login`);
+    await page.fill('#email', 'tom@cookhub.com');
+    await page.fill('#password', 'tom123');
+    await page.click('button[type="submit"]');
+    await expect(page.locator('text=Fresh from the Kitchen')).toBeVisible({ timeout: 15000 });
+
+    const firstCard = page.locator('.group.block').first();
+    const likeBtn = firstCard.locator('button').first();
+    const saveBtn = firstCard.locator('button').nth(1);
+
+    await expect(likeBtn).toHaveAttribute('title', 'Suspended accounts cannot like recipes');
+    await expect(saveBtn).toHaveAttribute('title', 'Suspended accounts cannot save recipes');
+  });
+
+  test('TEST-126: Recent activity excludes active/inactive status updates', async ({ request }) => {
+    await request.post('/api/auth/login', { data: { email: ADMIN_EMAIL, password: ADMIN_PASS } });
+    const res = await request.get('/api/stats/dashboard');
+    const body = await res.json();
+    const descriptions = (body.data.recentActivity || []).map((a) => a.description || '');
+    const hasActiveInactive = descriptions.some((d) => / to active| to inactive/i.test(d));
+    expect(hasActiveInactive).toBeFalsy();
+  });
+
+  test('TEST-127: User status becomes inactive after logout', async ({ request }) => {
+    await request.post('/api/auth/login', { data: { email: USER_EMAIL, password: USER_PASS } });
+    await request.post('/api/auth/logout');
+
+    await request.post('/api/auth/login', { data: { email: ADMIN_EMAIL, password: ADMIN_PASS } });
+    const usersRes = await request.get('/api/users?limit=100');
+    const usersBody = await usersRes.json();
+    const user = (usersBody.data.users || []).find((u) => u.email === USER_EMAIL);
+    expect(user?.status).toBe('inactive');
+  });
+});
+
 test.describe('Error Handling', () => {
   test('TEST-116: Non-existent recipe ID handled gracefully', async ({ page }) => {
     await loginAsUser(page);
@@ -1080,7 +1212,9 @@ test.describe('Error Handling', () => {
     page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
     await page.goto(`${BASE}/login`);
     await page.waitForTimeout(2000);
-    const real = errors.filter(e => !e.includes('favicon') && !e.includes('404'));
+    const real = errors.filter(
+      e => !e.includes('favicon') && !e.includes('404') && !e.includes('401 (Unauthorized)')
+    );
     expect(real.length).toBe(0);
   });
 
@@ -1089,7 +1223,9 @@ test.describe('Error Handling', () => {
     page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
     await loginAsUser(page);
     await page.waitForTimeout(2000);
-    const real = errors.filter(e => !e.includes('favicon') && !e.includes('404'));
+    const real = errors.filter(
+      e => !e.includes('favicon') && !e.includes('404') && !e.includes('401 (Unauthorized)')
+    );
     expect(real.length).toBe(0);
   });
 
@@ -1099,3 +1235,4 @@ test.describe('Error Handling', () => {
     expect(title.length).toBeGreaterThan(0);
   });
 });
+

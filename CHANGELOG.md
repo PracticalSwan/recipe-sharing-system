@@ -11,6 +11,16 @@ All notable changes to the CookHub Recipe Sharing System are documented here.
 - Updated backend search keyword behavior to match recipe titles explicitly (`r.title LIKE ...`) so title search is deterministic.
 - Strengthened Playwright regression assertions for recipe-detail navigation (`TEST-018`, `TEST-020`, `TEST-039`) to ensure detail content is rendered, not just URL changes.
 - Verified recipe navigation, edit flow, like toggle, keyword search, and difficulty filtering with Playwright targeted checks.
+- Fixed recipe updates changing `published` recipes to `pending` unexpectedly by preserving current status on owner edits.
+- Fixed owner profile recipe visibility by allowing authenticated own-profile requests to use `status=all`.
+- Fixed recipe view counting so each authenticated user increments a recipe view only once.
+- Fixed review submission to support one review per user/recipe with update-on-resubmit behavior.
+- Fixed search reset behavior to clear all filter inputs and URL query parameters.
+- Fixed profile edit modal dismissal by disabling outside-click and Escape auto-close for the edit form.
+- Fixed suspended account aria-label/title messaging for disabled like/save actions.
+- Fixed admin activity feed noise by excluding active/inactive status transitions from Recent Activity.
+- Fixed logout status handling so users become `inactive` on logout; added stale-active synchronization in user/admin stats endpoints.
+- Expanded Playwright regression coverage to 127 scenarios (`TEST-001`..`TEST-127`) and verified full suite pass.
 
 ## [1.0.0] - 2025-06-15
 

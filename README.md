@@ -27,7 +27,7 @@ The Recipe Sharing System is a full-stack application with complete database int
 - **Frontend:** React 19.2 + Vite 7.3 + Tailwind CSS 4.1
 - **Backend:** Plain PHP REST API (PDO + prepared statements + session-based auth)
 - **Database:** MySQL/MariaDB (cookhub) with 13 tables, views, stored procedures, and triggers
-- **Testing:** Playwright E2E test suite (35/35 tests passing)
+- **Testing:** Playwright E2E test suite (127/127 tests passing)
 
 ### Recent Fixes (2026-02-14)
 
@@ -35,7 +35,16 @@ The Recipe Sharing System is a full-stack application with complete database int
 - Fixed recipe edit loading (`/#/recipes/edit/:id`) by aligning frontend payload parsing with the PHP API response shape.
 - Updated detail access logic so recipe owners can view their own non-published recipes.
 - Updated search keyword behavior to match recipe titles explicitly and re-verified filter behavior (difficulty/search combinations).
-- Re-verified navigation, likes, and search/filter flows with Playwright targeted runs.
+- Fixed recipe update flow to preserve recipe status (editing no longer hides/removes recipes unexpectedly).
+- Fixed create recipe visibility for owners by allowing own-profile fetches to request `status=all`.
+- Fixed recipe view tracking to increment once per user per recipe.
+- Fixed review submission to enforce one review per user with update-on-resubmit behavior.
+- Fixed Reset Filters to clear all filter inputs and URL query params.
+- Fixed Edit Profile modal behavior so outside clicks do not close/discard the form.
+- Fixed suspended account tooltip/aria copy for like/save controls.
+- Fixed admin activity feed so active/inactive status churn is excluded from Recent Activity.
+- Fixed logout/account presence handling so active users become inactive on logout, with stale active users auto-synced to inactive.
+- Expanded and re-verified E2E coverage with full Playwright regression runs (127 passing tests).
 
 ### Approval Workflow
 
@@ -55,14 +64,16 @@ The system features a comprehensive approval workflow where:
 - Advanced recipe discovery (search, filtering, sorting)
 - User profile management
 - Recipe ratings and reviews (one review per user per recipe)
+- Recipe review updates via resubmission (upsert per user/recipe)
 - Favorites/saved recipes functionality
+- Per-user unique recipe view tracking
 - Interactive ingredient checklist to mark off ingredients while cooking
 - Admin dashboard with site analytics and metrics
 - User and recipe management tools for admins
 - Activity tracking system with real-time updates
 - Last active timestamp tracking (updated on logout/browser close)
 - Daily Active Users (DAU) tracking with session heartbeat
-- Admin activity logging for audit trail
+- Admin activity logging for audit trail (active/inactive state noise excluded from recent admin actions)
 
 <a id="system-architecture"></a>
 ## System Architecture
@@ -91,7 +102,7 @@ The system features a comprehensive approval workflow where:
 │  ├── Daily Stats (views, active users, new users)           │
 │  └── Activity Logs (admin actions, user management)       │
 ├──────────────────────────────────────────────────────────────┤
-│  Testing: Playwright E2E (35 tests, 7 categories)      │
+│  Testing: Playwright E2E (127 tests, full regression)  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -267,7 +278,7 @@ recipe-sharing-system/
 │   ├── DEPLOYMENT_GUIDE.md    # Setup & deployment guide
 │   └── TESTING_GUIDE.md       # Testing documentation
 ├── tests/                     # Playwright E2E tests
-│   └── e2e.spec.js            # 35 test scenarios
+│   └── e2e.spec.js            # 127 test scenarios
 ├── public/                    # Static assets
 ├── playwright.config.js       # Playwright configuration
 ├── CHANGELOG.md               # Version changelog
@@ -353,7 +364,7 @@ Database and API integration for Phases 1-5 is implemented as part of the CSX300
 | `npm run build` | Build optimized production bundle |
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | Run ESLint to check code quality |
-| `npx playwright test` | Run E2E test suite (35 tests) |
+| `npx playwright test` | Run E2E test suite (127 tests) |
 | `npx playwright test --headed` | Run tests with visible browser |
 | `npx playwright show-report` | View HTML test report |
 
@@ -373,7 +384,7 @@ Database and API integration for Phases 1-5 is implemented as part of the CSX300
 
 ### Testing
 
-- [Testing Guide](docs/TESTING_GUIDE.md) — Playwright E2E test suite with 35 test scenarios
+- [Testing Guide](docs/TESTING_GUIDE.md) — Playwright E2E strategy and execution guide
 
 ### Planning & Design
 
