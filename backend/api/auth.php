@@ -100,7 +100,7 @@ function handleRegister(PDO $pdo, string $method): void {
     $stmt->execute([':id' => $userId]);
     $user = $stmt->fetch();
 
-    jsonResponse(formatUserResponse($user), 201);
+    jsonResponse(['user' => formatUserResponse($user)], 201);
 }
 
 // ============================================================================
@@ -140,7 +140,7 @@ function handleLogin(PDO $pdo, string $method): void {
     $stmt->execute([':id' => $user['id']]);
     $user = $stmt->fetch();
 
-    jsonResponse(formatUserResponse($user));
+    jsonResponse(['user' => formatUserResponse($user)]);
 }
 
 // ============================================================================
@@ -176,7 +176,7 @@ function handleMe(PDO $pdo, string $method): void {
     $response = formatUserResponse($user);
     $response['favorites'] = array_map('intval', $favorites);
 
-    jsonResponse($response);
+    jsonResponse(['user' => $response]);
 }
 
 // ============================================================================

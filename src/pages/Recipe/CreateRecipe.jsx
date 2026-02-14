@@ -43,8 +43,11 @@ export function CreateRecipe() {
             try {
                 const data = await api.recipes.get(id);
                 if (cancelled) return;
-                const recipe = data.recipe;
-                if (recipe.author?.id !== user?.id) {
+                const recipe = data?.recipe ?? data;
+                if (!recipe || typeof recipe !== 'object') {
+                    throw new Error('Invalid recipe payload');
+                }
+                if (Number(recipe.author?.id) !== Number(user?.id)) {
                     navigate('/profile?tab=recipes');
                     return;
                 }
@@ -52,7 +55,7 @@ export function CreateRecipe() {
                 const nextCategories = Array.isArray(recipe.categories)
                     ? recipe.categories
                     : recipe.category
-                        ? [recipe.category]
+                        ? recipe.category.split(',').map(c => c.trim()).filter(Boolean)
                         : ['Breakfast'];
                 setFormData({
                     title: recipe.title || '',

@@ -5,7 +5,7 @@
 
 function jsonResponse(mixed $data, int $status = 200): void {
     http_response_code($status);
-    echo json_encode($data);
+    echo json_encode(['data' => $data]);
     exit;
 }
 

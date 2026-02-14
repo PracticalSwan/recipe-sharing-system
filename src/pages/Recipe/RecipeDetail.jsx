@@ -41,8 +41,13 @@ export function RecipeDetail() {
             try {
                 const data = await api.recipes.get(id);
                 if (cancelled) return;
-                const r = data.recipe;
-                if (r.status !== 'published' && !isAdmin) {
+                const r = data?.recipe ?? data;
+                if (!r || typeof r !== 'object') {
+                    throw new Error('Invalid recipe payload');
+                }
+
+                const isOwnerViewing = user && Number(r.author?.id) === Number(user.id);
+                if (r.status !== 'published' && !isAdmin && !isOwnerViewing) {
                     navigate('/');
                     return;
                 }
@@ -64,7 +69,7 @@ export function RecipeDetail() {
 
         loadRecipe();
         return () => { cancelled = true; };
-    }, [id, navigate, isAdmin]);
+    }, [id, navigate, isAdmin, user]);
 
     const handleToggleLike = async () => {
         if (!user || !canInteract) return;
@@ -393,7 +398,7 @@ export function RecipeDetail() {
                             <img src={review.user?.avatarUrl || 'https://via.placeholder.com/36'} className="h-9 w-9 rounded-full" alt="" />
                             <div className="flex-1 space-y-0.5">
                                 <div className="flex items-center gap-2">
-                                    <Link to={`/users/${review.userId}`} className="font-semibold text-cool-gray-90 text-sm hover:underline">{review.user?.username || 'User'}</Link>
+                                    <Link to={`/users/${review.user?.id || review.userId}`} className="font-semibold text-cool-gray-90 text-sm hover:underline">{review.user?.username || 'User'}</Link>
                                     <div
                                         className="flex text-xs"
                                         role="img"

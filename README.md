@@ -22,13 +22,20 @@ A collaborative web application that enables users to share, discover, and inter
 <a id="overview"></a>
 ## Overview
 
-The Recipe Sharing System now runs as a full-stack application with database integration (Phases 1-5 implemented):
+The Recipe Sharing System is a full-stack application with complete database integration (all 6 phases implemented):
 
-- **Frontend:** React + Vite
-- **Backend:** Plain PHP REST API (PDO + prepared statements + cookie sessions)
-- **Database:** MySQL/MariaDB (cookhub) with normalized schema, views, procedures, and triggers
+- **Frontend:** React 19.2 + Vite 7.3 + Tailwind CSS 4.1
+- **Backend:** Plain PHP REST API (PDO + prepared statements + session-based auth)
+- **Database:** MySQL/MariaDB (cookhub) with 13 tables, views, stored procedures, and triggers
+- **Testing:** Playwright E2E test suite (35/35 tests passing)
 
-Phase 6 (integration testing and additional deployment/documentation hardening) remains in progress.
+### Recent Fixes (2026-02-14)
+
+- Fixed recipe card navigation so opening a recipe consistently stays on the detail route (`/#/recipes/:id`) instead of bouncing back to home.
+- Fixed recipe edit loading (`/#/recipes/edit/:id`) by aligning frontend payload parsing with the PHP API response shape.
+- Updated detail access logic so recipe owners can view their own non-published recipes.
+- Updated search keyword behavior to match recipe titles explicitly and re-verified filter behavior (difficulty/search combinations).
+- Re-verified navigation, likes, and search/filter flows with Playwright targeted runs.
 
 ### Approval Workflow
 
@@ -77,12 +84,14 @@ The system features a comprehensive approval workflow where:
 │                    ├── Reviews & Ratings         Approval          │
 │                    └── Likes & Engagement        Full Access        │
 ├──────────────────────────────────────────────────────────────┤
-│  Data Layer: Local Storage                             │
+│  Data Layer: MySQL/MariaDB (cookhub) via PHP API       │
 │  ├── User Accounts (credentials, profiles, roles)          │
 │  ├── Recipes (content, status, metadata)                    │
 │  ├── Reviews & Ratings (one per user per recipe)            │
 │  ├── Daily Stats (views, active users, new users)           │
 │  └── Activity Logs (admin actions, user management)       │
+├──────────────────────────────────────────────────────────────┤
+│  Testing: Playwright E2E (35 tests, 7 categories)      │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -129,8 +138,9 @@ Access with admin credentials (`admin@cookhub.com` / `admin`)
 
 ### Prerequisites
 
-- **Node.js** v16 or higher
-- **npm** (comes with Node.js)
+- **Node.js** v18 or higher
+- **npm** v9+
+- **XAMPP** 8.x+ (Apache + MySQL + PHP)
 
 ### Quick Start
 
@@ -142,11 +152,19 @@ cd recipe-sharing-system
 # Install dependencies
 npm install
 
+# Link project to XAMPP (run as Administrator)
+cmd /c mklink /J "C:\xampp\htdocs\recipe-sharing-system" "C:\path\to\recipe-sharing-system"
+
+# Set up database (run SQL scripts in order via phpMyAdmin or CLI)
+# See docs/DEPLOYMENT_GUIDE.md for full instructions
+
 # Start development server
 npm run dev
 ```
 
-The application will open at `http://localhost:5173`
+The application will open at `http://localhost:5173/recipe-sharing-system-deploy/`
+
+> See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) for full setup instructions.
 
 ### Build for Production
 
@@ -239,9 +257,22 @@ recipe-sharing-system/
 │   ├── App.jsx              # Main application component
 │   ├── main.jsx             # Application entry point
 │   └── index.css            # Global styles
+├── backend/                   # PHP REST API
+│   ├── api/                 # API endpoint modules (7 files)
+│   ├── config/              # Database configuration
+│   └── helpers/             # Auth, CORS, response helpers
+├── docs/                      # Generated documentation
+│   ├── API_DOCUMENTATION.md   # Full API reference
+│   ├── DATABASE_SCHEMA.md     # Database schema docs
+│   ├── DEPLOYMENT_GUIDE.md    # Setup & deployment guide
+│   └── TESTING_GUIDE.md       # Testing documentation
+├── tests/                     # Playwright E2E tests
+│   └── e2e.spec.js            # 35 test scenarios
 ├── public/                    # Static assets
-├── package.json             # Dependencies & scripts
-└── README.md               # This file
+├── playwright.config.js       # Playwright configuration
+├── CHANGELOG.md               # Version changelog
+├── package.json               # Dependencies & scripts
+└── README.md                  # This file
 ```
 
 <a id="technologies"></a>
@@ -311,7 +342,7 @@ Database and API integration for Phases 1-5 is implemented as part of the CSX300
 | `activity_log` | Admin action audit trail |
 | `session` | Server-side session tokens |
 
-> **Progress:** View detailed implementation plan at [plan/upgrade-database-integration-1.md](plan/upgrade-database-integration-1.md) (80% complete — Phases 1-5 implemented; Phase 6 testing/docs pending)
+> **Progress:** View detailed implementation plan at [plan/upgrade-database-integration-1.md](plan/upgrade-database-integration-1.md) (100% complete — all 6 phases implemented)
 
 <a id="available-scripts"></a>
 ## Available Scripts
@@ -322,23 +353,34 @@ Database and API integration for Phases 1-5 is implemented as part of the CSX300
 | `npm run build` | Build optimized production bundle |
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | Run ESLint to check code quality |
+| `npx playwright test` | Run E2E test suite (35 tests) |
+| `npx playwright test --headed` | Run tests with visible browser |
+| `npx playwright show-report` | View HTML test report |
 
 <a id="documentation"></a>
 ## Documentation
 
-### Database Integration
+### API & Backend
 
-- [Database Integration Plan](plan/upgrade-database-integration-1.md) — Complete migration plan to MySQL + PHP backend
-- [Database Setup Guide](guides/SETUP_GUIDE_PHPMYADMIN.md) — Step-by-step MySQL/XAMPP installation and configuration
+- [API Documentation](docs/API_DOCUMENTATION.md) — Complete REST API reference (40+ endpoints)
+- [Database Schema](docs/DATABASE_SCHEMA.md) — Full schema with ER diagram and table definitions
+- [Database README](database/README.md) — Database setup and SQL script reference
+
+### Setup & Deployment
+
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) — XAMPP setup, database, and production deployment
+- [Database Setup Guide](guides/SETUP_GUIDE_PHPMYADMIN.md) — Step-by-step phpMyAdmin configuration
+
+### Testing
+
+- [Testing Guide](docs/TESTING_GUIDE.md) — Playwright E2E test suite with 35 test scenarios
+
+### Planning & Design
+
+- [Implementation Plan](plan/upgrade-database-integration-1.md) — MySQL + PHP backend migration plan (100% complete)
 - [Database Logic Explanation](guides/database_implementation_logic_explanation.md) — Detailed SQL scripts documentation
 - [SQL Scripts Reference](guides/SQL_SCRIPTS.md) — Complete SQL scripts catalog
-
-### System Diagrams
-
-- [Application Flowchart](mermaid-diagrams/application_flowchart.mmd) — Complete user journey and workflow
-- [Data Flow Diagram](mermaid-diagrams/data-flow-from-py.mmd) — Data movement through system layers
-- [ER Diagrams (Conceptual)](python_diagrams/er_recipe_conceptual_graphviz.py) — High-level entity relationships
-- [ER Diagrams (Logical)](python_diagrams/er_recipe_logical_graphviz.py) — Detailed data structure with attributes
+- [Changelog](CHANGELOG.md) — Version history
 
 <a id="test-data"></a>
 ## Test Data

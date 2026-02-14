@@ -11,7 +11,7 @@ INSERT INTO `user` (
 ) VALUES
 (
     'Admin User', 'Admin', 'User', 'admin@cookhub.com',
-    '$2y$12$LJ3m4ys3Gz8y/nKBk9MQY.7pLDVKx.G3rXMqp1FLzH5b4vE8VujaW',
+    '$2y$10$mcxuNIpFb723w0ajx/qqmu1beF2vHilnDJV2nP4zJN./OJ4ZqxfK.',
     '1990-01-01', 'admin', 'active',
     '2025-06-01 00:00:00', NOW(),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
@@ -19,7 +19,7 @@ INSERT INTO `user` (
 ),
 (
     'Olivia Admin', 'Olivia', 'Nguyen', 'olivia@cookhub.com',
-    '$2y$12$LJ3m4ys3Gz8y/nKBk9MQY.7pLDVKx.G3rXMqp1FLzH5b4vE8VujaW',
+    '$2y$10$mcxuNIpFb723w0ajx/qqmu1beF2vHilnDJV2nP4zJN./OJ4ZqxfK.',
     '1986-04-12', 'admin', 'active',
     '2025-09-01 00:00:00', DATE_SUB(NOW(), INTERVAL 2 HOUR),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=olivia-admin',
@@ -27,7 +27,7 @@ INSERT INTO `user` (
 ),
 (
     'Marcus Admin', 'Marcus', 'Lee', 'marcus@cookhub.com',
-    '$2y$12$LJ3m4ys3Gz8y/nKBk9MQY.7pLDVKx.G3rXMqp1FLzH5b4vE8VujaW',
+    '$2y$10$mcxuNIpFb723w0ajx/qqmu1beF2vHilnDJV2nP4zJN./OJ4ZqxfK.',
     '1983-11-22', 'admin', 'active',
     '2025-10-05 00:00:00', DATE_SUB(NOW(), INTERVAL 90 MINUTE),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=marcus-admin',
@@ -41,7 +41,7 @@ INSERT INTO `user` (
 ) VALUES
 (
     'John Doe', 'John', 'Doe', 'user@cookhub.com',
-    '$2y$12$wG9bF3v2Rk4Qx8L1mN5pYuH7jD0eA6iC3oP2sT9vX4w1zB8kM5nR',
+    '$2y$10$0FkkS.pxqerygxx6sAoTS.h7xUSpR8Q5ylEl5m.Z2egmqvRgSF3tm',
     '1995-06-15', 'user', 'active',
     '2025-06-15 00:00:00', DATE_SUB(NOW(), INTERVAL 1 HOUR),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=john',
@@ -49,7 +49,7 @@ INSERT INTO `user` (
 ),
 (
     'Maria Garcia', 'Maria', 'Garcia', 'maria@cookhub.com',
-    '$2y$12$aR3kL7xP9nQ2wE5tY8uI0oBf4gH6jM1dC3vS7pZ0rN9mX2wK5lAy',
+    '$2y$10$/krNSQraXnfh.w7pEX..qO05AnuI5b/ZZ7ztujYnYuQE4mQD0yHpu',
     '1988-03-20', 'user', 'inactive',
     '2025-03-20 00:00:00', DATE_SUB(NOW(), INTERVAL 7 DAY),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=maria',
@@ -57,7 +57,7 @@ INSERT INTO `user` (
 ),
 (
     'Tom Baker', 'Tom', 'Baker', 'tom@cookhub.com',
-    '$2y$12$bD4mN8yR0oS3xF6uZ9vJ1pCg5hI7kO2eA4wT8qB1sP0nL3rM6jXz',
+    '$2y$10$tPd/M7Lxwt0gdiMTv4CWZ.8a/Tnwg.O/mx6F2Qf6lO4tzaPvU9oAC',
     '1992-08-01', 'user', 'suspended',
     '2025-08-01 00:00:00', DATE_SUB(NOW(), INTERVAL 30 DAY),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=tom',
@@ -65,7 +65,7 @@ INSERT INTO `user` (
 ),
 (
     'Amy Wilson', 'Amy', 'Wilson', 'amy@cookhub.com',
-    '$2y$12$cE5nO9zS1pT4yG7vA0wK2qDh6iJ8lP3fB5xU9rC2tQ1oM4sN7kYa',
+    '$2y$10$FeWJR/4XiMBG5rY11HKqrOOn/VmM050gty3UcmZVXnQurYKabcitW',
     '1998-11-10', 'user', 'pending',
     '2025-11-10 00:00:00', NULL,
     'https://api.dicebear.com/7.x/avataaars/svg?seed=amy',
@@ -73,7 +73,7 @@ INSERT INTO `user` (
 ),
 (
     'Kevin Tran', 'Kevin', 'Tran', 'kevin@cookhub.com',
-    '$2y$12$dF6oP0aT2qU5zH8wB1xL3rEi7jK9mQ4gC6yV0sD3uR2pN5tO8lZb',
+    '$2y$10$FFGPYQRBe.yVD6ijmn0iVucxrCTahAZ.V8mo.vG7z0n6sEDUOxLQe',
     '1996-02-18', 'user', 'pending',
     '2026-01-20 00:00:00', NULL,
     'https://api.dicebear.com/7.x/avataaars/svg?seed=kevin',
@@ -81,7 +81,7 @@ INSERT INTO `user` (
 ),
 (
     'Sarah Kim', 'Sarah', 'Kim', 'sarah@cookhub.com',
-    '$2y$12$eG7pQ1bU3rV6aI9xC2yM4sFj8kL0nR5hD7zW1tE4vS3qO6uP9mAc',
+    '$2y$10$ODml9vH4OizBFVCANWhzsu7kZQean0aEfOQ2WcC70DM7TQyYa6yJa',
     '1991-07-09', 'user', 'active',
     '2025-12-28 00:00:00', DATE_SUB(NOW(), INTERVAL 30 MINUTE),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
@@ -89,7 +89,7 @@ INSERT INTO `user` (
 ),
 (
     'Daniel Rivera', 'Daniel', 'Rivera', 'daniel@cookhub.com',
-    '$2y$12$fH8qR2cV4sW7bJ0yD3zN5tGk9lM1oS6iE8aX2uF5wT4rP7vQ0nBd',
+    '$2y$10$LElRgwvLzgYmpTI/eR4TbukMq9lwPCAkq03xjgHSgPThoARpD7h/q',
     '1989-05-30', 'user', 'active',
     '2025-12-05 00:00:00', DATE_SUB(NOW(), INTERVAL 67 MINUTE),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=daniel',
@@ -97,7 +97,7 @@ INSERT INTO `user` (
 ),
 (
     'Lina Patel', 'Lina', 'Patel', 'lina@cookhub.com',
-    '$2y$12$gI9rS3dW5tX8cK1zE4aO6uHl0mN2pT7jF9bY3vG6xU5sQ8wR1oCe',
+    '$2y$10$OrJ0UJZWdUcYvdDDVIrHa.JrZE1wIpZw6YQHLLzIORLwZ7KjGVYdq',
     '2000-09-14', 'user', 'inactive',
     '2025-11-01 00:00:00', DATE_SUB(NOW(), INTERVAL 10 DAY),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=lina',
@@ -105,7 +105,7 @@ INSERT INTO `user` (
 ),
 (
     'Omar Hassan', 'Omar', 'Hassan', 'omar@cookhub.com',
-    '$2y$12$hJ0sT4eX6uY9dL2aF5bP7vIm1nO3qU8kG0cZ4wH7yV6tR9xS2pDf',
+    '$2y$10$lGIy0Zzzec/.stSuWDXk3eEJlVQMOHt2qY10nunlFPRJsLzllDZgq',
     '1993-03-03', 'user', 'pending',
     '2026-01-21 00:00:00', NULL,
     'https://api.dicebear.com/7.x/avataaars/svg?seed=omar',

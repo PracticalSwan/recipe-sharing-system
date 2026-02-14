@@ -56,9 +56,8 @@ function handleSearch(PDO $pdo, string $method): void {
     $params = [];
 
     if ($query !== '') {
-        $where[] = "(r.title LIKE :q1 OR r.description LIKE :q2)";
-        $params[':q1'] = '%' . $query . '%';
-        $params[':q2'] = '%' . $query . '%';
+        $where[] = "r.title LIKE :title_query";
+        $params[':title_query'] = '%' . $query . '%';
     }
     if ($category !== '') {
         $categories = array_values(array_filter(array_map('trim', explode(',', $category))));

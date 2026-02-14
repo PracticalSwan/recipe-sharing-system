@@ -12,7 +12,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost',
+        target: 'http://localhost/recipe-sharing-system/backend',
         changeOrigin: true,
       },
     },
