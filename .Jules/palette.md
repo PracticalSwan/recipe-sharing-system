@@ -13,3 +13,7 @@
 ## 2025-05-23 - [Accessible Star Ratings and Pluralization]
 **Learning:** Star rating displays are often implemented with raw characters (★) which screen readers announce individually, creating noise. Furthermore, shorthand review counts like "(5)" lack context for assistive technology.
 **Action:** Wrap star groups in a container with `role="img"` and a descriptive, pluralized `aria-label` (e.g., "Rating: 4 out of 5 stars"). Hide individual stars with `aria-hidden="true"`. For counts, use explicit labels like `${count} ${count === 1 ? 'review' : 'reviews'}`.
+
+## 2026-02-15 - [Form Accessibility and Auto-completion]
+**Learning:** Generic input components often lack the semantic linking needed for screen readers to correctly associate error messages with their respective fields. Additionally, missing `autoComplete` attributes on common forms like Login and Signup significantly degrades the user experience by preventing password manager integration and browser autofill.
+**Action:** In the `Input` component, use `aria-describedby` to link the input to its error message and `aria-invalid` to signal the error state. Always provide appropriate `autoComplete` values (e.g., "email", "current-password", "new-password", "given-name", "family-name") for authentication and profile forms to reduce user friction.

@@ -8,16 +8,23 @@ export function Input({
     type = "text",
     ...props
 }) {
+    const errorId = id ? `${id}-error` : undefined;
+
     return (
         <div className="w-full">
             {label && (
                 <label htmlFor={id} className="block text-sm font-medium text-cool-gray-60 mb-1">
                     {label}
+                    {props.required && (
+                        <span className="text-red-500 ml-1" aria-hidden="true" title="Required">*</span>
+                    )}
                 </label>
             )}
             <input
                 id={id}
                 type={type}
+                aria-invalid={!!error}
+                aria-describedby={error ? errorId : undefined}
                 className={cn(
                     "flex h-10 w-full rounded-md border border-cool-gray-30 bg-white px-3 py-2 text-sm placeholder:text-cool-gray-30 focus:outline-none focus:ring-2 focus:ring-cool-gray-90 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
                     error && "border-red-500 focus:ring-red-500",
@@ -26,7 +33,9 @@ export function Input({
                 {...props}
             />
             {error && (
-                <p className="mt-1 text-xs text-red-500">{error}</p>
+                <p id={errorId} className="mt-1 text-xs text-red-500">
+                    {error}
+                </p>
             )}
         </div>
     );

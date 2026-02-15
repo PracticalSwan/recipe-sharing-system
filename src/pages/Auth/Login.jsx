@@ -44,6 +44,7 @@ export function Login() {
                     label="Email"
                     type="email"
                     placeholder="admin@cookhub.com"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -54,6 +55,7 @@ export function Login() {
                         label="Password"
                         type="password"
                         placeholder="••••••"
+                        autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required

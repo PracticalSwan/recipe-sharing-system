@@ -76,6 +76,7 @@ export function Signup() {
                         id="firstName"
                         label="First Name"
                         placeholder="John"
+                        autoComplete="given-name"
                         value={formData.firstName}
                         onChange={handleChange}
                         required
@@ -84,6 +85,7 @@ export function Signup() {
                         id="lastName"
                         label="Last Name"
                         placeholder="Doe"
+                        autoComplete="family-name"
                         value={formData.lastName}
                         onChange={handleChange}
                         required
@@ -93,6 +95,7 @@ export function Signup() {
                     id="birthday"
                     label="Birthday"
                     type="date"
+                    autoComplete="bday"
                     value={formData.birthday}
                     onChange={handleChange}
                     required
@@ -102,6 +105,7 @@ export function Signup() {
                     label="Email"
                     type="email"
                     placeholder="john@example.com"
+                    autoComplete="email"
                     value={formData.email}
                     onChange={handleChange}
                     required
@@ -110,6 +114,7 @@ export function Signup() {
                     id="password"
                     label="Password"
                     type="password"
+                    autoComplete="new-password"
                     value={formData.password}
                     onChange={handleChange}
                     required
@@ -118,6 +123,7 @@ export function Signup() {
                     id="confirmPassword"
                     label="Confirm Password"
                     type="password"
+                    autoComplete="new-password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
