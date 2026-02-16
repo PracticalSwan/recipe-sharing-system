@@ -64,11 +64,15 @@ function handleRegister(PDO $pdo, string $method): void {
         errorResponse('Invalid email format');
     }
 
+    if (strlen($data['password']) < 6) {
+        errorResponse('Password must be at least 6 characters');
+    }
+
     // Check email uniqueness
     $stmt = $pdo->prepare("SELECT id FROM user WHERE email = :email");
     $stmt->execute([':email' => $email]);
     if ($stmt->fetch()) {
-        errorResponse('Email already registered');
+        errorResponse('Registration failed. Please try again.');
     }
 
     $passwordHash = password_hash($data['password'], PASSWORD_BCRYPT);

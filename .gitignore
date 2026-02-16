@@ -60,6 +60,7 @@ playwright-report/
 test-results/
 tests/
 playwright.config.js
+.playwright-mcp/
 
 # OS specific files
 Thumbs.db

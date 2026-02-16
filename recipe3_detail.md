@@ -1,0 +1,152 @@
+- generic [ref=e5138]:
+  - link "Skip to content" [ref=e5139] [cursor=pointer]:
+    - /url: "#main-content"
+  - navigation [ref=e5140]:
+    - generic [ref=e5141]:
+      - generic [ref=e5142]:
+        - link "CookHub" [ref=e5143] [cursor=pointer]:
+          - /url: "#/"
+          - generic [ref=e5144]: CookHub
+        - generic [ref=e5145]:
+          - link "Discover" [ref=e5146] [cursor=pointer]:
+            - /url: "#/"
+          - link "My Recipes" [ref=e5147] [cursor=pointer]:
+            - /url: "#/recipes/my-recipes"
+      - generic [ref=e5148]:
+        - link "Create" [ref=e5149] [cursor=pointer]:
+          - /url: "#/recipes/create"
+          - button "Create" [ref=e5150]:
+            - img [ref=e5151]
+            - generic [ref=e5153]: Create
+        - link "View Profile" [ref=e5154] [cursor=pointer]:
+          - /url: "#/profile"
+          - button "View Profile" [ref=e5155]:
+            - img [ref=e5156]
+        - button "Logout" [ref=e5159] [cursor=pointer]:
+          - img [ref=e5160]
+  - main [ref=e5163]:
+    - generic [ref=e5689]:
+      - button "Back" [ref=e5690] [cursor=pointer]:
+        - img [ref=e5691]
+        - text: Back
+      - generic [ref=e5693]:
+        - img "Thai Green Curry" [ref=e5695]
+        - generic [ref=e5696]:
+          - generic [ref=e5697]:
+            - generic [ref=e5699]: Asian
+            - generic [ref=e5700]: November 20, 2025
+          - heading "Thai Green Curry" [level=1] [ref=e5701]
+          - generic [ref=e5702]:
+            - link "Maria Garcia Maria Garcia" [ref=e5703] [cursor=pointer]:
+              - /url: "#/users/5"
+              - img "Maria Garcia" [ref=e5704]
+              - generic [ref=e5705]: Maria Garcia
+            - 'img "Rating: 4 out of 5 stars" [ref=e5706]':
+              - generic [ref=e5707]:
+                - generic [ref=e5708]: ★
+                - generic [ref=e5709]: ★
+                - generic [ref=e5710]: ★
+                - generic [ref=e5711]: ★
+                - generic [ref=e5712]: ★
+              - generic [ref=e5713]: (3 reviews)
+            - generic [ref=e5714]:
+              - img [ref=e5715]
+              - generic [ref=e5718]: 45 min
+            - generic [ref=e5719]: Medium
+          - paragraph [ref=e5720]: Aromatic and spicy Thai green curry with vegetables and coconut milk.
+          - generic [ref=e5721]:
+            - button "Unlike recipe" [pressed] [ref=e5722] [cursor=pointer]:
+              - img [ref=e5723]
+              - text: 1 Like
+            - button "Unsave recipe" [pressed] [ref=e5725] [cursor=pointer]:
+              - img [ref=e5726]
+              - text: Saved
+            - generic [ref=e5728]:
+              - img [ref=e5729]
+              - generic [ref=e5732]: 1 views
+      - generic [ref=e5733]:
+        - generic [ref=e5735]:
+          - heading "Ingredients" [level=3] [ref=e5737]
+          - list [ref=e5738]:
+            - checkbox "Green curry paste 3 tbsp" [ref=e5739] [cursor=pointer]:
+              - generic [ref=e5742]: Green curry paste
+              - generic [ref=e5743]: 3 tbsp
+            - checkbox "Coconut milk 400 ml" [ref=e5744] [cursor=pointer]:
+              - generic [ref=e5747]: Coconut milk
+              - generic [ref=e5748]: 400 ml
+            - checkbox "Chicken breast 500 g" [ref=e5749] [cursor=pointer]:
+              - generic [ref=e5752]: Chicken breast
+              - generic [ref=e5753]: 500 g
+            - checkbox "Thai basil 1 bunch" [ref=e5754] [cursor=pointer]:
+              - generic [ref=e5757]: Thai basil
+              - generic [ref=e5758]: 1 bunch
+          - paragraph [ref=e5759]: "Tip: Click an ingredient to check it off while cooking."
+        - generic [ref=e5760]:
+          - heading "Instructions" [level=3] [ref=e5761]
+          - generic [ref=e5762]:
+            - generic [ref=e5763]:
+              - generic [ref=e5764]: "1"
+              - paragraph [ref=e5765]: Fry curry paste in oil
+            - generic [ref=e5766]:
+              - generic [ref=e5767]: "2"
+              - paragraph [ref=e5768]: Add coconut milk and bring to simmer
+            - generic [ref=e5769]:
+              - generic [ref=e5770]: "3"
+              - paragraph [ref=e5771]: Add chicken and vegetables
+            - generic [ref=e5772]:
+              - generic [ref=e5773]: "4"
+              - paragraph [ref=e5774]: Cook until chicken is done
+            - generic [ref=e5775]:
+              - generic [ref=e5776]: "5"
+              - paragraph [ref=e5777]: Garnish with Thai basil
+      - generic [ref=e5778]:
+        - heading "Reviews (3)" [level=3] [ref=e5779]
+        - generic [ref=e5781]:
+          - textbox "Share your thoughts..." [ref=e5782]
+          - generic [ref=e5783]:
+            - group "Rating" [ref=e5784]:
+              - button "Rate 1 star" [pressed] [ref=e5785] [cursor=pointer]: ★
+              - button "Rate 2 stars" [pressed] [ref=e5786] [cursor=pointer]: ★
+              - button "Rate 3 stars" [pressed] [ref=e5787] [cursor=pointer]: ★
+              - button "Rate 4 stars" [pressed] [ref=e5788] [cursor=pointer]: ★
+              - button "Rate 5 stars" [pressed] [ref=e5789] [cursor=pointer]: ★
+            - button "Update" [disabled]
+        - generic [ref=e5790]:
+          - generic [ref=e5792]:
+            - generic [ref=e5793]:
+              - link "Daniel Rivera" [ref=e5794] [cursor=pointer]:
+                - /url: "#/users/10"
+              - 'img "Rating: 4 out of 5 stars" [ref=e5795]':
+                - generic [ref=e5796]: ★
+                - generic [ref=e5797]: ★
+                - generic [ref=e5798]: ★
+                - generic [ref=e5799]: ★
+                - generic [ref=e5800]: ★
+              - generic [ref=e5801]: 12/10/2025
+            - paragraph [ref=e5802]: Good recipe but I would recommend adding more vegetables for a heartier meal.
+          - generic [ref=e5804]:
+            - generic [ref=e5805]:
+              - link "Sarah Kim" [ref=e5806] [cursor=pointer]:
+                - /url: "#/users/9"
+              - 'img "Rating: 4 out of 5 stars" [ref=e5807]':
+                - generic [ref=e5808]: ★
+                - generic [ref=e5809]: ★
+                - generic [ref=e5810]: ★
+                - generic [ref=e5811]: ★
+                - generic [ref=e5812]: ★
+              - generic [ref=e5813]: 12/1/2025
+            - paragraph [ref=e5814]: Very aromatic and flavorful. I used tofu instead of chicken and it worked great.
+          - generic [ref=e5816]:
+            - generic [ref=e5817]:
+              - link "John Doe" [ref=e5818] [cursor=pointer]:
+                - /url: "#/users/4"
+              - 'img "Rating: 5 out of 5 stars" [ref=e5819]':
+                - generic [ref=e5820]: ★
+                - generic [ref=e5821]: ★
+                - generic [ref=e5822]: ★
+                - generic [ref=e5823]: ★
+                - generic [ref=e5824]: ★
+              - generic [ref=e5825]: 11/25/2025
+              - button "Delete Review" [ref=e5826] [cursor=pointer]:
+                - img [ref=e5827]
+            - paragraph [ref=e5830]: Best green curry recipe I have found online. Perfectly balanced flavors!

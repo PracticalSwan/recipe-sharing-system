@@ -80,6 +80,9 @@ export function CreateRecipe() {
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
+        if (errors[e.target.id]) {
+            setErrors(prev => { const next = { ...prev }; delete next[e.target.id]; return next; });
+        }
     };
 
     const toggleCategory = (category) => {
@@ -170,7 +173,10 @@ export function CreateRecipe() {
         // Image URL validation (optional but must be valid if provided)
         if (formData.image && formData.image.trim()) {
             try {
-                new URL(formData.image);
+                const url = new URL(formData.image);
+                if (!['http:', 'https:'].includes(url.protocol)) {
+                    newErrors.image = 'Only http and https URLs are allowed';
+                }
             } catch {
                 newErrors.image = 'Please enter a valid URL';
             }
@@ -399,10 +405,10 @@ export function CreateRecipe() {
                         {errors.ingredients && <p className="text-red-500 text-xs">{errors.ingredients}</p>}
                         {ingredients.map((ing, i) => (
                             <div key={i} className="space-y-1">
-                                <div className="flex gap-2 items-start">
+                                <div className="flex gap-4 items-start">
                                     <Input placeholder="Item (e.g. Flour)" value={ing.name} onChange={(e) => updateIngredient(i, 'name', e.target.value)} className="flex" />
-                                    <Input placeholder="Qty" value={ing.quantity} onChange={(e) => updateIngredient(i, 'quantity', e.target.value)} className="flex w-24" />
-                                    <Input placeholder="Unit" value={ing.unit} onChange={(e) => updateIngredient(i, 'unit', e.target.value)} className="flex w-24" />
+                                    <Input placeholder="Qty" value={ing.quantity} onChange={(e) => updateIngredient(i, 'quantity', e.target.value)} className="flex" />
+                                    <Input placeholder="Unit" value={ing.unit} onChange={(e) => updateIngredient(i, 'unit', e.target.value)} className="flex" />
                                     {ingredients.length > 1 && (
                                         <Button type="button" size="icon" variant="ghost" onClick={() => removeIngredient(i)} className="text-red-500 hover:text-red-600" aria-label={`Remove ingredient ${i + 1}`}>
                                             <Trash2 className="h-4 w-4" />
