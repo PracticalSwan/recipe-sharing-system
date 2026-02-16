@@ -6,7 +6,7 @@
 
 function setCorsHeaders(): void {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+    $allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://practicalswan.github.io/recipe-sharing-system-deploy'];
 
     if (in_array($origin, $allowedOrigins, true)) {
         header("Access-Control-Allow-Origin: $origin");
