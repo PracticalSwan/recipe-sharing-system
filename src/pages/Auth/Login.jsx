@@ -41,26 +41,27 @@ export function Login() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
                     id="email"
+                    name="email"
                     label="Email"
                     type="email"
                     placeholder="admin@cookhub.com"
+                    autoComplete="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
                     required
                 />
                 <div className="space-y-1">
                     <Input
                         id="password"
+                        name="password"
                         label="Password"
                         type="password"
                         placeholder="••••••"
+                        autoComplete="current-password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => { setPassword(e.target.value); setError(''); }}
                         required
                     />
-                    <div className="flex justify-end">
-                        <Link to="#" className="text-sm font-medium text-cool-gray-60 hover:text-cool-gray-90">Forgot password?</Link>
-                    </div>
                 </div>
 
                 {error && (

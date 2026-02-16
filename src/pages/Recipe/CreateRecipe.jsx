@@ -8,6 +8,17 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
 import { Plus, Trash2, UploadCloud, ArrowLeft } from 'lucide-react';
 
+const EMPTY_FORM_DATA = {
+    title: '',
+    description: '',
+    categories: [],
+    prepTime: '',
+    cookTime: '',
+    servings: '',
+    difficulty: '',
+    image: '',
+};
+
 export function CreateRecipe() {
     const navigate = useNavigate();
     const { id } = useParams(); // If id exists, we're in edit mode
@@ -16,16 +27,7 @@ export function CreateRecipe() {
     const isEditMode = Boolean(id);
     const isBlocked = isSuspended || isPending;
 
-    const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        categories: ['Breakfast'],
-        prepTime: 15,
-        cookTime: 15,
-        servings: 2,
-        difficulty: 'Medium',
-        image: '',
-    });
+    const [formData, setFormData] = useState(EMPTY_FORM_DATA);
 
     const [ingredients, setIngredients] = useState([{ name: '', quantity: '', unit: '' }]);
     const [instructions, setInstructions] = useState(['']);
@@ -56,15 +58,15 @@ export function CreateRecipe() {
                     ? recipe.categories
                     : recipe.category
                         ? recipe.category.split(',').map(c => c.trim()).filter(Boolean)
-                        : ['Breakfast'];
+                        : [];
                 setFormData({
                     title: recipe.title || '',
                     description: recipe.description || '',
-                    categories: nextCategories.length ? nextCategories : ['Breakfast'],
-                    prepTime: recipe.prepTime || 15,
-                    cookTime: recipe.cookTime || 15,
-                    servings: recipe.servings || 2,
-                    difficulty: recipe.difficulty || 'Medium',
+                    categories: nextCategories,
+                    prepTime: recipe.prepTime ?? '',
+                    cookTime: recipe.cookTime ?? '',
+                    servings: recipe.servings ?? '',
+                    difficulty: recipe.difficulty || '',
                     image: recipe.images?.[0]?.url || '',
                 });
                 setIngredients(recipe.ingredients?.length ? recipe.ingredients : [{ name: '', quantity: '', unit: '' }]);
@@ -144,6 +146,10 @@ export function CreateRecipe() {
             newErrors.categories = 'Select at least 1 category';
         } else if (selectedCategories.length > 3) {
             newErrors.categories = 'Select up to 3 categories';
+        }
+
+        if (!formData.difficulty) {
+            newErrors.difficulty = 'Difficulty is required';
         }
 
         // Prep time validation: 1-1440 minutes (max 24 hours)
@@ -365,9 +371,17 @@ export function CreateRecipe() {
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-cool-gray-60 mb-1 block">Difficulty</label>
-                                <select id="difficulty" className="w-full h-10 rounded-md border border-cool-gray-30 px-3 bg-white" value={formData.difficulty} onChange={handleChange}>
+                                <select
+                                    id="difficulty"
+                                    className={`w-full h-10 rounded-md border px-3 bg-white ${errors.difficulty ? 'border-red-400' : 'border-cool-gray-30'}`}
+                                    value={formData.difficulty}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="" disabled>Select difficulty...</option>
                                     {RECIPE_DIFFICULTIES.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
+                                {errors.difficulty && <p className="text-red-500 text-xs mt-1">{errors.difficulty}</p>}
                             </div>
                         </div>
                         <div>

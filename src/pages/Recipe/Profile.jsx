@@ -49,7 +49,7 @@ export function Profile() {
         if (!userId) return;
         setLoading(true);
         api.users.get(userId)
-            .then(data => setProfileUser(data.user))
+            .then(data => setProfileUser(data))
             .catch(() => setProfileUser(null))
             .finally(() => setLoading(false));
     }, [userId, currentUser, isOwnProfile]);

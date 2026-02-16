@@ -267,6 +267,11 @@ function handleUpdateUser(PDO $pdo, int $id): void {
     $stmt->execute([':id' => $id]);
     $updated = $stmt->fetch();
 
+    // Include favorites
+    $favStmt = $pdo->prepare("SELECT recipe_id FROM favorite WHERE user_id = :id");
+    $favStmt->execute([':id' => $id]);
+    $favorites = $favStmt->fetchAll(PDO::FETCH_COLUMN);
+
     jsonResponse([
         'id'           => (int) $updated['id'],
         'username'     => $updated['username'],
@@ -282,6 +287,7 @@ function handleUpdateUser(PDO $pdo, int $id): void {
         'bio'          => $updated['bio'],
         'location'     => $updated['location'],
         'cookingLevel' => $updated['cooking_level'],
+        'favorites'    => array_map('intval', $favorites),
         'createdAt'    => $updated['created_at'],
         'updatedAt'    => $updated['updated_at'],
     ]);

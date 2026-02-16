@@ -29,8 +29,14 @@ The Recipe Sharing System is a full-stack application with complete database int
 - **Database:** MySQL/MariaDB (cookhub) with 13 tables, views, stored procedures, and triggers
 - **Testing:** Playwright E2E test suite (127/127 tests passing)
 
-### Recent Fixes (2026-02-14)
+### Recent Fixes (2026-02-16)
 
+- Fixed author profile page showing "User not found" when navigating to another user's profile.
+- Fixed profile edit wiping user favorites (backend `PUT /users/{id}` now returns favorites in response).
+- Fixed login error message persisting after clearing/changing input fields.
+- Fixed "1 views" grammar on recipe detail page (now uses singular "view" for count of 1).
+- Removed non-functional "Forgot password?" placeholder link from login page.
+- Added `autocomplete` and `name` attributes to login and signup form inputs.
 - Fixed recipe card navigation so opening a recipe consistently stays on the detail route (`/#/recipes/:id`) instead of bouncing back to home.
 - Fixed recipe edit loading (`/#/recipes/edit/:id`) by aligning frontend payload parsing with the PHP API response shape.
 - Updated detail access logic so recipe owners can view their own non-published recipes.
@@ -44,6 +50,8 @@ The Recipe Sharing System is a full-stack application with complete database int
 - Fixed suspended account tooltip/aria copy for like/save controls.
 - Fixed admin activity feed so active/inactive status churn is excluded from Recent Activity.
 - Fixed logout/account presence handling so active users become inactive on logout, with stale active users auto-synced to inactive.
+- Fixed create recipe form defaults so new recipes start with empty category, difficulty, prep time, cook time, and servings fields (no pre-filled values in create mode).
+- Comprehensive live browser testing verified all 14 feature areas (auth, home, search, recipe detail, reviews, CRUD, profile, favorites, admin dashboard/users/recipes, edge cases, security).
 - Expanded and re-verified E2E coverage with full Playwright regression runs (127 passing tests).
 
 ### Approval Workflow

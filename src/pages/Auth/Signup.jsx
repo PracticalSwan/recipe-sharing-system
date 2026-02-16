@@ -79,16 +79,20 @@ export function Signup() {
                 <div className="grid grid-cols-2 gap-4">
                     <Input
                         id="firstName"
+                        name="firstName"
                         label="First Name"
                         placeholder="John"
+                        autoComplete="given-name"
                         value={formData.firstName}
                         onChange={handleChange}
                         required
                     />
                     <Input
                         id="lastName"
+                        name="lastName"
                         label="Last Name"
                         placeholder="Doe"
+                        autoComplete="family-name"
                         value={formData.lastName}
                         onChange={handleChange}
                         required
@@ -96,33 +100,41 @@ export function Signup() {
                 </div>
                 <Input
                     id="birthday"
+                    name="birthday"
                     label="Birthday"
                     type="date"
+                    autoComplete="bday"
                     value={formData.birthday}
                     onChange={handleChange}
                     required
                 />
                 <Input
                     id="email"
+                    name="email"
                     label="Email"
                     type="email"
                     placeholder="john@example.com"
+                    autoComplete="email"
                     value={formData.email}
                     onChange={handleChange}
                     required
                 />
                 <Input
                     id="password"
+                    name="password"
                     label="Password"
                     type="password"
+                    autoComplete="new-password"
                     value={formData.password}
                     onChange={handleChange}
                     required
                 />
                 <Input
                     id="confirmPassword"
+                    name="confirmPassword"
                     label="Confirm Password"
                     type="password"
+                    autoComplete="new-password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required

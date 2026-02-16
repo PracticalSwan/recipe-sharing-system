@@ -230,6 +230,105 @@ To view tasks, the command **show tasks [filter]** will display filtered lists w
 - Encountering blockers or issues
 - Changing task status (Pending → In Progress → Completed/Abandoned)
 
+### Memory Creation Workflow
+
+**CRITICAL: ALWAYS check for relevant existing memories before creating new ones**
+
+#### Step-by-Step Process
+
+1. **List available memories**: Use `list_memories` to see all existing memories
+2. **Analyze relevance**: Identify if any existing memory covers the same topic/concept
+3. **Check memory content**: If relevant memories found, use `read_memory` to examine their content
+4. **Match criteria**:
+   - Same feature/technology/topic domain
+   - Overlapping purpose or scope
+   - Related architectural decisions
+   - Similar problem space or concern
+5. **Decision**:
+   - **IF relevant memory exists**: Update the existing memory using `edit_memory` with new information and current timestamp
+   - **IF no relevant memory exists**: Create new memory using `write_memory`
+
+#### Matching Guidelines
+
+A new memory entry is relevant to an existing memory if:
+
+| Criteria | Example |
+|----------|---------|
+| Same feature area | "admin-features" already covers admin workflows → add new admin task details to it |
+| Same technology | "auth-context" already covers authentication → add new auth implementation details to it |
+| Related architecture | "system-patterns" covers architecture decisions → add new architectural choices to it |
+| Same domain concern | "ui-components-and-styling" covers component library → add new component specs to it |
+| Project-wide update | "project-overview" covers overall status → add general project updates to it |
+
+#### Update Pattern for Existing Memories
+
+When updating existing memories, follow this structure:
+
+```markdown
+## {Topic} — Updated [YYYY-MM-DD HH:MM]
+
+### [Date] - Update
+- [New information or decision]
+- [Implementation details or findings]
+- [Related changes or impacts]
+- [Next actions or considerations]
+
+### Previous Context
+[Preserve existing relevant information]
+```
+
+#### Examples of Memory Consolidation
+
+**Scenario 1: Adding new admin feature specs**
+```
+Existing: admin-features.md (500 bytes)
+New info: New user moderation workflow specs
+Action: Update admin-features.md with new section, update timestamp
+```
+
+**Scenario 2: Fixing SQL bug**
+```
+Existing: csx3006-sql-fixes-2026-02-13.md
+New info: Another SQL bug related to same issue
+Action: Update csx3006-sql-fixes-2026-02-13.md, add new fix details, update timestamp
+```
+
+**Scenario 3: New authentication implementation detail**
+```
+Existing: auth-context.md
+New info: Session management implementation specifics
+Action: Update auth-context.md with new implementation section, update timestamp
+```
+
+**Scenario 4: New database-fix memory for different issue**
+```
+Existing: csx3006-sql-fixes-2026-02-13.md (column name fixes)
+New info: Index optimization fixes (different topic)
+Action: Create NEW memory: csx3006-index-fixes-2026-02-16.md
+```
+
+#### When to Create New Memories
+
+Create a NEW memory only when:
+
+- **Different domain**: Topic is fundamentally different from existing memories
+- **Major milestone**: New phase or significant project shift
+- **New technology stack**: Unrelated to existing technical context
+- **Time-based tracking**: Fix memories, daily updates, or dated logs
+- **Overwhelming size**: Existing memory would exceed 5-10 KB with additions
+
+**Examples of when to create new memories:**
+```
+Existing: admin-features.md
+New: Performance analysis reports → Create NEW: performance-analysis.md
+
+Existing: ui-components-and-styling.md
+New: Mobile responsiveness specifications → Create NEW: mobile-responsive.md
+
+Existing: csx3006-sql-fixes-2026-02-13.md (database schema corrections)
+New: API endpoint bug fixes → Create NEW: api-fixes-2026-02-16.md
+```
+
 ### Memory Bank Documentation Guidelines
 
 The Serena memories follow the Memory Bank structure for comprehensive project intelligence. Key guidelines:
@@ -371,17 +470,24 @@ Serena provides reflection tools to maintain focus:
 7. Begin work with current phase context
 
 ### During a Session
-- **SQL/database work:** Create `{topic}-fixes-{date}.md` memory for bug fixes (e.g., column name corrections)
-- **Feature implementation:** Update or create `{feature-name}.md` memory for feature specs
-- **Phase completion:** Update `project-overview.md` with new status percentage
+- **SQL/database work:** Check if `{topic}-fixes-{date}.md` exists → update OR create new memory for bug fixes
+- **Feature implementation:** Check if `{feature-name}.md` exists → update OR create new memory for feature specs
+- **Phase completion:** Update `project-overview.md` with new status percentage and current timestamp
 - **Notion updates:** Use `notion-update-page` after completing plan tasks (TASK-001 → TASK-138)
 - **Code navigation:** Use symbol tools to explore React components and future PHP backend files
+- **NEW information flow:**
+  1. Use `list_memories` to review all existing memories
+  2. Identify if any existing memory covers the topic
+  3. If relevant memory exists: Use `edit_memory` with new information + updated timestamp
+  4. If no relevant memory: Use `write_memory` to create new memory
 
 ---
 
 ## Best Practices
 
 - **ALWAYS check activation before any Serena operations using `get_current_config`**
+- **ALWAYS check for relevant existing memories with `list_memories` before creating new ones**
+- **CRITICAL: Use `edit_memory` to update existing memories with new timestamp rather than creating duplicates**
 - Activate project first if not already activated using `activate_project`
 - Check onboarding after activation, before first use on a project
 - Keep memories concise — prefer structured data over prose
@@ -392,6 +498,7 @@ Serena provides reflection tools to maintain focus:
 - Keep `task-index` synchronized with task memory status changes
 - Delete obsolete memories to prevent confusion
 - Use task IDs from `task-index` as reference when discussing work
+- When adding information to existing memories, update timestamp to YYYY-MM-DD HH:MM format
 
 ## Troubleshooting
 
@@ -401,8 +508,10 @@ Serena provides reflection tools to maintain focus:
 | Onboarding not detected | After activation, run `onboarding` tool explicitly |
 | Memory not found | Check exact name with `list_memories` |
 | Symbol not found | Ensure file is indexed; try broader name |
-| Stale memories | Use `edit_memory` to update with current state |
-| Conflicting memories | Delete outdated entry, create fresh one |
+| Stale memories | Use `edit_memory` to update with current state and timestamp |
+| Conflicting memories | Delete outdated entry, merge into single memory with consolidated content |
+| Duplicate memories | Avoid by ALWAYS checking `list_memories` before creating new ones; use `edit_memory` to update existing |
+| Unsure which memory to update | Use `list_memories` → review purpose of each → read relevant memories → update the most appropriate one |
 
 ---
 
@@ -456,10 +565,11 @@ Serena provides reflection tools to maintain focus:
 - HTTP: Native `fetch()` with `credentials: 'include'`
 
 **Documentation Flow:**
-- SQL fixes → create `{topic}-fixes-{date}.md` memory
-- Major milestones → update `project-overview.md`
-- Phase completion → update `database-integration-implementation-plan-task.md`
-- Notion sync → update `notion-implementation-tracking.md`
+- SQL fixes → Check if `{topic}-fixes-{date}.md` exists → update OR create new memory
+- Major milestones → update `project-overview.md` with new timestamp
+- Phase completion → update `database-integration-implementation-plan-task.md` with progress
+- Notion sync → update `notion-implementation-tracking.md` with sync status
+- **ALL updates** → Include current timestamp in format: "Updated: YYYY-MM-DD HH:MM"
 
 **Naming Patterns Used:**
 - Feature memories: lowercase kebab-case (admin-features, recipe-features, auth-context)
@@ -506,4 +616,49 @@ Serena provides reflection tools to maintain focus:
 - Everyday progress (project status tracked in `project-overview.md`)
 - Code samples (code is in actual files, not memories)
 - Historical one-time events (delete when obsolete)
+- **INFORMATION THAT SHOULD UPDATE AN EXISTING MEMORY instead of creating a new one**
+
+---
+
+## Memory Update vs Creation Quick Reference
+
+### Decision Tree
+
+```
+Need to store information?
+│
+├─ Check: `list_memories`
+│  │
+│  ├─ Existing memory covers this topic?
+│  │  │
+│  │  ├─ YES → Use `edit_memory` with new info + updated timestamp
+│  │  │
+│  │  └─ NO → Use `write_memory` to create new memory
+│  │
+│  └─ Proceed with work
+```
+
+### Common Match Patterns
+
+| When adding info about... | Check memory... | If exists... | If not... |
+|--------------------------|-----------------|--------------|-----------|
+| Admin features/moderation | `admin-features` | Update it | Create `admin-features` |
+| Recipe CRUD/search | `recipe-features` | Update it | Create `recipe-features` |
+| Authentication/session | `auth-context` | Update it | Create `auth-context` |
+| SQL fixes today | `{topic}-fixes-{date}` | Update it | Create new with today's date |
+| Architecture decisions | `system-patterns` | Update it | Create `system-patterns` |
+| Overall project status | `project-overview` | ALWAYS update it | Create `project-overview` |
+| Component specs | `ui-components-and-styling` | Update it | Create if different topic |
+
+### Edit Memory Pattern
+
+```bash
+# Always use this format when updating existing memories
+edit_memory(
+  memory_file_name="existing-memory-name",
+  needle="section or content to replace or append after",
+  repl="new information with timestamp:\n\n## [Section] — Updated YYYY-MM-DD HH:MM\n\n- [new info]",
+  mode="literal" # or "regex" as appropriate
+)
+```
 ```

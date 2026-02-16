@@ -157,6 +157,42 @@ Running 127 tests using 1 worker
 
 ---
 
+## Live Browser Testing (Chrome DevTools)
+
+In addition to the Playwright E2E suite, comprehensive live browser testing was performed using Chrome DevTools MCP tools to verify all features interactively.
+
+### Tested Feature Areas (14 total — all passed)
+
+| Area | Scope |
+|------|-------|
+| Auth flows | Login, signup, logout, pending restrictions, error handling |
+| Home page | Recipe cards, like/save toggles, search bar, View All |
+| Search & filters | Keyword, difficulty, category multi-select, combined, reset, sort, history |
+| Recipe detail | Image, metadata, ingredients, instructions, reviews, like/save/view |
+| Ratings & reviews | Create, update, delete with confirmation modal |
+| Recipe CRUD | Create (pending status), edit (pre-populated), delete (confirmation) |
+| Profile & edit profile | Avatar selector, form fields, favorites preserved after edit |
+| Favorites flow | Save/unsave from card, detail page, and favorites tab |
+| Admin dashboard | Stats cards, activity feed, system health |
+| Admin user mgmt | Search, approve pending, suspend user |
+| Admin recipe mgmt | Approve, reject, delete with confirmation |
+| Edge cases | Non-existent resources, unknown routes, malformed IDs |
+| Route protection | Unauthenticated redirect, role-based access control |
+| Security | XSS prevention (React JSX escaping), SQL injection prevention (PDO) |
+
+### Bugs Found & Fixed During Live Testing
+
+| # | Bug | File(s) | Fix |
+|---|-----|---------|-----|
+| 1 | Author profile "User not found" | `Profile.jsx` | Changed `data.user` → `data` |
+| 2 | Profile edit wipes favorites | `backend/api/users.php` | Added favorites query to update response |
+| 3 | Login error persists after input change | `Login.jsx` | Added `setError('')` to onChange |
+| 4 | "1 views" grammar | `RecipeDetail.jsx` | Singular/plural logic |
+| 5 | Non-functional "Forgot password?" link | `Login.jsx` | Removed placeholder link |
+| 6 | Missing autocomplete attributes | `Login.jsx`, `Signup.jsx` | Added `autoComplete` and `name` props |
+
+---
+
 ## Adding New Tests
 
 1. Add tests inside `tests/e2e.spec.js` in the correct `describe` block.

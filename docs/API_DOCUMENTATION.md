@@ -600,6 +600,29 @@ Update a user profile. Owner or admin only.
 }
 ```
 
+**Response** `200`:
+```json
+{
+  "message": "Profile updated",
+  "data": {
+    "id": 4,
+    "username": "New Name",
+    "firstName": "John",
+    "lastName": "Smith",
+    "email": "user@cookhub.com",
+    "role": "user",
+    "status": "active",
+    "bio": "I love cooking!",
+    "location": "Bangkok",
+    "cookingLevel": "Intermediate",
+    "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+    "favorites": [1, 3]
+  }
+}
+```
+
+> **Note**: The response includes the user's `favorites` array (list of saved recipe IDs) to keep the client-side auth state in sync after profile updates.
+
 ### DELETE `/users/{id}`
 
 Delete a user and all their data. Admin only.

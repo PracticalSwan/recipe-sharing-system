@@ -288,7 +288,7 @@ export function RecipeDetail() {
                         
                         <div className="flex items-center gap-1 text-sm text-cool-gray-60 ml-auto">
                             <Eye className="h-4 w-4" />
-                            <span>{viewCount} views</span>
+                            <span>{viewCount} {viewCount === 1 ? 'view' : 'views'}</span>
                         </div>
                     </div>
                 </div>

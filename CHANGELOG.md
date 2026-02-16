@@ -2,6 +2,38 @@
 
 All notable changes to the CookHub Recipe Sharing System are documented here.
 
+## [1.0.3] - 2026-02-16
+
+### Fixed
+- Fixed author profile page showing "User not found" when visiting another user's profile (Profile.jsx accessed `data.user` instead of `data`).
+- Fixed profile edit wiping user favorites by adding favorites query to the `PUT /users/{id}` response in `backend/api/users.php`.
+- Fixed login error message persisting after user modifies input fields (added `setError('')` to onChange handlers).
+- Fixed "1 views" grammar on recipe detail page — now correctly shows "1 view" (singular).
+- Removed non-functional "Forgot password?" placeholder link from login page.
+- Added `autocomplete` and `name` attributes to all login and signup form inputs for proper browser autofill support.
+
+### Verified (Live Browser Testing)
+- All 14 feature areas tested via Chrome DevTools live browser interaction.
+- Auth flows (login, signup, logout, pending restrictions).
+- Home page (recipe cards, like/save toggles, search bar, View All).
+- Search & filters (keyword, difficulty, category, combined, reset, sort, history).
+- Recipe detail (hero image, metadata, ingredients, instructions, reviews).
+- Ratings & reviews (create, update, delete with confirmation).
+- Recipe CRUD (create with pending status, edit, delete with confirmation).
+- Profile & edit profile (avatar selector, form fields, favorites preserved).
+- Favorites flow (save/unsave from card, detail, and favorites tab).
+- Admin dashboard (stats, activity feed, system health).
+- Admin user management (search, approve, suspend).
+- Admin recipe management (approve, reject, delete).
+- Edge cases: route protection, role-based access, non-existent resources.
+- Security: XSS prevention (React JSX escaping), SQL injection prevention (PDO prepared statements).
+
+## [1.0.2] - 2026-02-16
+
+### Fixed
+- Removed hardcoded create-mode defaults in `CreateRecipe` so category, difficulty, prep time, cook time, and servings now initialize empty for new recipe submissions.
+- Added explicit difficulty-required validation and placeholder option in the create/edit recipe form.
+
 ## [1.0.1] - 2026-02-14
 
 ### Fixed
