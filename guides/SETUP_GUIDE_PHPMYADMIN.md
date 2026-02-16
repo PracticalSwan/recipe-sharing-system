@@ -85,14 +85,6 @@ You can run seed scripts directly without manual trigger toggling.
 
 **Optional wrapper mode (advanced):** if you intentionally set `@DISABLE_TRIGGERS` yourself before seeding, these scripts will preserve your existing value and restore it after execution.
 
-#### Step 3.5: Optional Backup Script
-
-To review the backup/restore procedures:
-
-1. Open `database/14_backup_restore.sql` in a text editor
-2. Read the comments - this file is for reference only
-3. **Do NOT run this in phpMyAdmin** (it contains backup commands for terminal/command line)
-
 ### Alternative Method: Using Import
 
 If you prefer importing files instead of copy-paste:
