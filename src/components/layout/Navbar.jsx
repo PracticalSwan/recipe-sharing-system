@@ -1,3 +1,12 @@
+/**
+ * Top navigation bar for authenticated users.
+ * File: src/components/layout/Navbar.jsx
+ *
+ * Shows logo, navigation links (Discover, My Recipes),
+ * create button, profile avatar, and logout button.
+ * Interactive actions are hidden when the user cannot interact
+ * (pending / suspended accounts).
+ */
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';

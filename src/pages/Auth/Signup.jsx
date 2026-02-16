@@ -1,3 +1,11 @@
+/**
+ * Signup (registration) page.
+ * File: src/pages/Auth/Signup.jsx
+ *
+ * Collects first name, last name, birthday, email, and password.
+ * Auto-generates a DiceBear avatar URL from the first name.
+ * Client-side validation before calling AuthContext.signup().
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';

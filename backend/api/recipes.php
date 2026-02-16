@@ -1,15 +1,24 @@
 <?php
 // ============================================================================
 // Recipes API Endpoints
-// GET    /api/recipes          - List recipes (with filters, pagination, stats)
-// GET    /api/recipes/{id}     - Get recipe detail
-// POST   /api/recipes          - Create recipe
-// PUT    /api/recipes/{id}     - Update recipe
-// DELETE /api/recipes/{id}     - Delete recipe
-// PUT    /api/recipes/{id}/status - Update recipe status (admin)
-// POST   /api/recipes/{id}/like     - Toggle like
-// POST   /api/recipes/{id}/favorite - Toggle favorite
-// POST   /api/recipes/{id}/view     - Record view
+// File: backend/api/recipes.php
+//
+// The main CRUD controller for recipes. Handles listing, creation, reading,
+// updating, deletion, and social interactions (like, favorite, view).
+//
+// Routes:
+//   GET    /api/recipes              - List recipes (with filters, pagination)
+//   POST   /api/recipes              - Create a new recipe
+//   GET    /api/recipes/{id}         - Get full recipe detail
+//   PUT    /api/recipes/{id}         - Update a recipe (owner or admin)
+//   DELETE /api/recipes/{id}         - Delete a recipe (owner or admin)
+//   PUT    /api/recipes/{id}/status  - Approve/reject recipe (admin only)
+//   POST   /api/recipes/{id}/like    - Toggle like on a recipe
+//   POST   /api/recipes/{id}/favorite - Toggle favorite (bookmark)
+//   POST   /api/recipes/{id}/view    - Record a unique view
+//
+// Related tables: recipe, ingredient, instruction, recipe_image, review,
+//                 like_record, favorite, recipe_view
 // ============================================================================
 
 require_once __DIR__ . '/../config/database.php';
@@ -23,42 +32,46 @@ $pdo = Database::getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
 
-// Parse route segments: e.g. "5/like" → ['5', 'like']
+// ----- Route parsing -----
+// Split the route string into path segments, e.g. "5/like" → ['5', 'like']
 $segments = $route ? array_filter(explode('/', $route)) : [];
 $segments = array_values($segments);
 
+// Route dispatcher: match URL pattern to handler function
 if (empty($segments)) {
-    // /api/recipes
+    // /api/recipes — list all or create new
     handleRecipesList($pdo, $method);
 } elseif (count($segments) === 1 && is_numeric($segments[0])) {
-    // /api/recipes/{id}
+    // /api/recipes/{id} — get, update, or delete a specific recipe
     handleRecipeById($pdo, $method, (int) $segments[0]);
 } elseif (count($segments) === 2 && is_numeric($segments[0])) {
+    // /api/recipes/{id}/{action} — sub-actions on a recipe
     $recipeId = (int) $segments[0];
     switch ($segments[1]) {
-        case 'status':
-            handleRecipeStatus($pdo, $method, $recipeId);
-            break;
-        case 'like':
-            handleRecipeLike($pdo, $method, $recipeId);
-            break;
-        case 'favorite':
-            handleRecipeFavorite($pdo, $method, $recipeId);
-            break;
-        case 'view':
-            handleRecipeView($pdo, $method, $recipeId);
-            break;
-        default:
-            errorResponse('Not found', 404);
+        case 'status':   handleRecipeStatus($pdo, $method, $recipeId);   break;
+        case 'like':     handleRecipeLike($pdo, $method, $recipeId);     break;
+        case 'favorite': handleRecipeFavorite($pdo, $method, $recipeId); break;
+        case 'view':     handleRecipeView($pdo, $method, $recipeId);     break;
+        default:         errorResponse('Not found', 404);
     }
 } else {
     errorResponse('Not found', 404);
 }
 
 // ============================================================================
-// GET /api/recipes - List recipes with optional filters
+// GET /api/recipes — List recipes with optional filters, sorting & pagination
+//
+// Query parameters supported:
+//   status   (published|pending|rejected|all) — default 'published'
+//   category — filter by category (LIKE match)
+//   difficulty — filter by difficulty level
+//   authorId — filter to a specific author's recipes
+//   sort     (newest|oldest|popular|rating) — default 'newest'
+//   page     — pagination page number (default 1)
+//   limit    — items per page (1–50, default 12)
 // ============================================================================
 function handleRecipesList(PDO $pdo, string $method): void {
+    // POST to this same URL creates a new recipe
     if ($method === 'POST') {
         handleCreateRecipe($pdo);
         return;
@@ -70,7 +83,7 @@ function handleRecipesList(PDO $pdo, string $method): void {
     $currentUser = getCurrentUser($pdo);
     $currentUserId = $currentUser ? (int) $currentUser['id'] : null;
 
-    // Query params
+    // ----- Extract and sanitize query parameters -----
     $status      = $_GET['status'] ?? 'published';
     $category   = $_GET['category'] ?? null;
     $difficulty  = $_GET['difficulty'] ?? null;
@@ -80,12 +93,14 @@ function handleRecipesList(PDO $pdo, string $method): void {
     $limit      = min(50, max(1, (int) ($_GET['limit'] ?? 12)));
     $offset     = ($page - 1) * $limit;
 
+    // ----- Build WHERE clause dynamically -----
     $where = [];
     $params = [];
 
     $isAdmin = $currentUser && $currentUser['role'] === 'admin';
     $isOwnAuthorView = $authorId && $currentUserId && $authorId === $currentUserId;
 
+    // Non-admin, non-owner users can only see published recipes
     if (!$isAdmin && !$isOwnAuthorView && $status !== 'published') {
         $status = 'published';
     }
@@ -108,6 +123,7 @@ function handleRecipesList(PDO $pdo, string $method): void {
         $params[':author_id'] = $authorId;
     }
 
+    // ----- Map sort parameter to SQL ORDER BY clause -----
     $orderBy = match ($sort) {
         'oldest'   => 'r.created_at ASC',
         'popular'  => 'like_count DESC, r.created_at DESC',
@@ -117,13 +133,13 @@ function handleRecipesList(PDO $pdo, string $method): void {
 
     $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-    // Count total
+    // ----- Count total matching recipes (for pagination metadata) -----
     $countSql = "SELECT COUNT(*) FROM recipe r $whereClause";
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
     $total = (int) $countStmt->fetchColumn();
 
-    // Main query with aggregated stats
+    // ----- Main query: join recipe with author + aggregated stats (likes, views, reviews) -----
     $sql = "
         SELECT r.*,
                u.username AS author_username,
@@ -154,7 +170,8 @@ function handleRecipesList(PDO $pdo, string $method): void {
     $stmt->execute();
     $recipes = $stmt->fetchAll();
 
-    // Batch fetch liked/favorited status for current user
+    // ----- Batch-fetch liked/favorited status for the current user -----
+    // Uses a single query per interaction type instead of N+1 queries per recipe
     $likedSet = [];
     $favoritedSet = [];
     if ($currentUserId && !empty($recipes)) {
@@ -170,6 +187,7 @@ function handleRecipesList(PDO $pdo, string $method): void {
         $favoritedSet = array_flip($favStmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
+    // Format each recipe row and attach liked/favorited flags
     $items = array_map(function ($r) use ($likedSet, $favoritedSet) {
         return formatRecipeListItem($r, $likedSet, $favoritedSet);
     }, $recipes);
@@ -186,7 +204,9 @@ function handleRecipesList(PDO $pdo, string $method): void {
 }
 
 // ============================================================================
-// POST /api/recipes - Create recipe
+// POST /api/recipes — Create a new recipe
+// Inserts recipe, ingredients, instructions, and images in a transaction.
+// New recipes start with status='pending' (requires admin approval).
 // ============================================================================
 function handleCreateRecipe(PDO $pdo): void {
     $user = requireAuth($pdo);
@@ -199,7 +219,7 @@ function handleCreateRecipe(PDO $pdo): void {
         errorResponse('Title is required');
     }
 
-    // Categories: store as comma-separated if array
+    // Categories: accept array from frontend, store as comma-separated string in DB
     $category = '';
     if (!empty($data['categories'])) {
         $cats = is_array($data['categories']) ? $data['categories'] : [$data['categories']];
@@ -228,7 +248,7 @@ function handleCreateRecipe(PDO $pdo): void {
 
         $recipeId = (int) $pdo->lastInsertId();
 
-        // Insert ingredients
+        // Insert ingredients (each with a sort_order for display sequence)
         if (!empty($data['ingredients']) && is_array($data['ingredients'])) {
             $ingStmt = $pdo->prepare("
                 INSERT INTO ingredient (recipe_id, name, quantity, unit, sort_order)
@@ -245,13 +265,14 @@ function handleCreateRecipe(PDO $pdo): void {
             }
         }
 
-        // Insert instructions
+        // Insert step-by-step instructions
         if (!empty($data['instructions']) && is_array($data['instructions'])) {
             $insStmt = $pdo->prepare("
                 INSERT INTO instruction (recipe_id, step_number, instruction_text)
                 VALUES (:recipe_id, :step_number, :instruction_text)
             ");
             foreach ($data['instructions'] as $i => $text) {
+                // Instructions can come as strings or objects with a 'text' key
                 $instruction = is_array($text) ? ($text['text'] ?? $text['instruction'] ?? '') : $text;
                 $insStmt->execute([
                     ':recipe_id'       => $recipeId,
@@ -261,7 +282,7 @@ function handleCreateRecipe(PDO $pdo): void {
             }
         }
 
-        // Insert images
+        // Insert recipe images (ordered by display_order)
         if (!empty($data['images']) && is_array($data['images'])) {
             $imgStmt = $pdo->prepare("
                 INSERT INTO recipe_image (recipe_id, image_url, display_order)
@@ -290,7 +311,7 @@ function handleCreateRecipe(PDO $pdo): void {
 }
 
 // ============================================================================
-// GET/PUT/DELETE /api/recipes/{id}
+// GET/PUT/DELETE /api/recipes/{id} — Dispatch by HTTP method
 // ============================================================================
 function handleRecipeById(PDO $pdo, string $method, int $id): void {
     switch ($method) {
@@ -309,7 +330,8 @@ function handleRecipeById(PDO $pdo, string $method, int $id): void {
 }
 
 // ============================================================================
-// GET /api/recipes/{id} - Full recipe detail
+// GET /api/recipes/{id} — Full recipe detail with ingredients, instructions,
+//                         images, reviews, and interaction status
 // ============================================================================
 function handleGetRecipe(PDO $pdo, int $id): void {
     $currentUser = getCurrentUser($pdo);
@@ -333,7 +355,9 @@ function handleGetRecipe(PDO $pdo, int $id): void {
 }
 
 // ============================================================================
-// PUT /api/recipes/{id}
+// PUT /api/recipes/{id} — Update recipe (owner or admin)
+// Uses "delete + re-insert" for ingredients/instructions/images to handle
+// additions, removals, and reordering in a single operation.
 // ============================================================================
 function handleUpdateRecipe(PDO $pdo, int $id): void {
     $user = requireAuth($pdo);
@@ -342,7 +366,7 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
         errorResponse('Invalid JSON body');
     }
 
-    // Check ownership or admin
+    // Verify recipe exists and check ownership or admin privileges
     $stmt = $pdo->prepare("SELECT author_id, status FROM recipe WHERE id = :id");
     $stmt->execute([':id' => $id]);
     $recipe = $stmt->fetch();
@@ -353,6 +377,7 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
         errorResponse('Not authorized', 403);
     }
 
+    // Preserve current status unless admin explicitly changes it
     $nextStatus = $recipe['status'];
     if (
         isset($data['status']) &&
@@ -391,7 +416,7 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
             ':id'          => $id,
         ]);
 
-        // Replace ingredients
+        // Replace ingredients: delete old rows then re-insert
         $pdo->prepare("DELETE FROM ingredient WHERE recipe_id = :id")->execute([':id' => $id]);
         if (!empty($data['ingredients']) && is_array($data['ingredients'])) {
             $ingStmt = $pdo->prepare("
@@ -409,7 +434,7 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
             }
         }
 
-        // Replace instructions
+        // Replace instructions: delete old steps then re-insert
         $pdo->prepare("DELETE FROM instruction WHERE recipe_id = :id")->execute([':id' => $id]);
         if (!empty($data['instructions']) && is_array($data['instructions'])) {
             $insStmt = $pdo->prepare("
@@ -426,7 +451,7 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
             }
         }
 
-        // Replace images
+        // Replace images: delete old images then re-insert
         $pdo->prepare("DELETE FROM recipe_image WHERE recipe_id = :id")->execute([':id' => $id]);
         if (!empty($data['images']) && is_array($data['images'])) {
             $imgStmt = $pdo->prepare("
@@ -454,7 +479,9 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
 }
 
 // ============================================================================
-// DELETE /api/recipes/{id}
+// DELETE /api/recipes/{id} — Delete recipe and all related data
+// Explicitly deletes child rows before the parent for clarity,
+// though FK ON DELETE CASCADE would also handle this.
 // ============================================================================
 function handleDeleteRecipe(PDO $pdo, int $id): void {
     $user = requireAuth($pdo);
@@ -489,7 +516,8 @@ function handleDeleteRecipe(PDO $pdo, int $id): void {
 }
 
 // ============================================================================
-// PUT /api/recipes/{id}/status - Admin: approve/reject
+// PUT /api/recipes/{id}/status — Admin: approve or reject a recipe
+// Logs the action in the activity_log table for audit trail.
 // ============================================================================
 function handleRecipeStatus(PDO $pdo, string $method, int $recipeId): void {
     if ($method !== 'PUT') {
@@ -529,7 +557,8 @@ function handleRecipeStatus(PDO $pdo, string $method, int $recipeId): void {
 }
 
 // ============================================================================
-// POST /api/recipes/{id}/like - Toggle like
+// POST /api/recipes/{id}/like — Toggle like (add or remove)
+// Returns the new liked state and updated like count.
 // ============================================================================
 function handleRecipeLike(PDO $pdo, string $method, int $recipeId): void {
     if ($method !== 'POST') {
@@ -544,21 +573,23 @@ function handleRecipeLike(PDO $pdo, string $method, int $recipeId): void {
         errorResponse('Recipe not found', 404);
     }
 
-    // Check if already liked
+    // Check if user already liked this recipe (toggle behavior)
     $stmt = $pdo->prepare("SELECT id FROM like_record WHERE user_id = :user_id AND recipe_id = :recipe_id");
     $stmt->execute([':user_id' => $user['id'], ':recipe_id' => $recipeId]);
     $existing = $stmt->fetch();
 
     if ($existing) {
+        // Already liked → unlike (delete the like record)
         $pdo->prepare("DELETE FROM like_record WHERE id = :id")->execute([':id' => $existing['id']]);
         $liked = false;
     } else {
+        // Not liked → like (insert a new like record)
         $pdo->prepare("INSERT INTO like_record (user_id, recipe_id) VALUES (:user_id, :recipe_id)")
             ->execute([':user_id' => $user['id'], ':recipe_id' => $recipeId]);
         $liked = true;
     }
 
-    // Get new count
+    // Return the updated total like count
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM like_record WHERE recipe_id = :recipe_id");
     $stmt->execute([':recipe_id' => $recipeId]);
     $likeCount = (int) $stmt->fetchColumn();
@@ -567,7 +598,7 @@ function handleRecipeLike(PDO $pdo, string $method, int $recipeId): void {
 }
 
 // ============================================================================
-// POST /api/recipes/{id}/favorite - Toggle favorite
+// POST /api/recipes/{id}/favorite — Toggle bookmark (save/unsave)
 // ============================================================================
 function handleRecipeFavorite(PDO $pdo, string $method, int $recipeId): void {
     if ($method !== 'POST') {
@@ -599,7 +630,8 @@ function handleRecipeFavorite(PDO $pdo, string $method, int $recipeId): void {
 }
 
 // ============================================================================
-// POST /api/recipes/{id}/view - Record view
+// POST /api/recipes/{id}/view — Record a unique view per user
+// Each user is counted only once per recipe (no duplicate views).
 // ============================================================================
 function handleRecipeView(PDO $pdo, string $method, int $recipeId): void {
     if ($method !== 'POST') {
@@ -615,6 +647,7 @@ function handleRecipeView(PDO $pdo, string $method, int $recipeId): void {
         errorResponse('Recipe not found', 404);
     }
 
+    // Only record view if user hasn't viewed this recipe before
     $stmt = $pdo->prepare("SELECT id FROM recipe_view WHERE recipe_id = :recipe_id AND user_id = :user_id LIMIT 1");
     $stmt->execute([':recipe_id' => $recipeId, ':user_id' => $userId]);
     $existingView = $stmt->fetch();
@@ -637,9 +670,11 @@ function handleRecipeView(PDO $pdo, string $method, int $recipeId): void {
 }
 
 // ============================================================================
-// Helper: Fetch full recipe with related data
+// Helper: Fetch full recipe with all related data (ingredients, instructions,
+//         images, reviews) and the current user's like/favorite status.
 // ============================================================================
 function fetchFullRecipe(PDO $pdo, int $id, ?int $currentUserId): ?array {
+    // Main recipe query with author info and aggregated like/view counts
     $stmt = $pdo->prepare("
         SELECT r.*,
                u.username AS author_username,
@@ -661,6 +696,7 @@ function fetchFullRecipe(PDO $pdo, int $id, ?int $currentUserId): ?array {
         return null;
     }
 
+    // Fetch related data from child tables
     // Ingredients
     $stmt = $pdo->prepare("SELECT id, name, quantity, unit, sort_order FROM ingredient WHERE recipe_id = :id ORDER BY sort_order");
     $stmt->execute([':id' => $id]);
@@ -688,7 +724,7 @@ function fetchFullRecipe(PDO $pdo, int $id, ?int $currentUserId): ?array {
     $stmt->execute([':id' => $id]);
     $reviews = $stmt->fetchAll();
 
-    // Liked/Favorited by current user
+    // Check if the current user has liked or favorited this recipe
     $isLiked = false;
     $isFavorited = false;
     if ($currentUserId) {
@@ -701,7 +737,7 @@ function fetchFullRecipe(PDO $pdo, int $id, ?int $currentUserId): ?array {
         $isFavorited = (bool) $stmt->fetch();
     }
 
-    // Average rating
+    // Calculate average rating from reviews
     $avgRating = 0;
     if (!empty($reviews)) {
         $avgRating = array_sum(array_column($reviews, 'rating')) / count($reviews);
@@ -711,7 +747,8 @@ function fetchFullRecipe(PDO $pdo, int $id, ?int $currentUserId): ?array {
 }
 
 // ============================================================================
-// Helper: Format recipe for list view
+// Helper: Format recipe for list view (compact version for grids/cards)
+// Converts snake_case DB columns to camelCase for the React frontend.
 // ============================================================================
 function formatRecipeListItem(array $r, array $likedSet, array $favoritedSet): array {
     $categories = $r['category'] ? array_map('trim', explode(',', $r['category'])) : [];
@@ -746,7 +783,8 @@ function formatRecipeListItem(array $r, array $likedSet, array $favoritedSet): a
 }
 
 // ============================================================================
-// Helper: Format recipe for detail view
+// Helper: Format recipe for detail view (full version with all relations)
+// Includes ingredients, instructions, images, reviews, and interaction status.
 // ============================================================================
 function formatRecipeDetail(
     array $recipe, array $ingredients, array $instructions, array $images,

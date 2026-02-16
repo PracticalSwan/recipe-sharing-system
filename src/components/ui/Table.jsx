@@ -1,3 +1,8 @@
+/**
+ * Composable table primitives: Table, TableHeader, TableBody,
+ * TableRow, TableHead, TableCell.
+ * Wraps a native <table> with horizontal overflow and consistent styling.
+ */
 import { cn } from '../../lib/utils';
 
 export function Table({ className, children, ...props }) {

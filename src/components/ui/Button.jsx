@@ -1,3 +1,9 @@
+/**
+ * Reusable button component with variant and size presets.
+ * Variants: primary, secondary, outline, ghost, danger.
+ * Sizes: sm, md, lg, icon.
+ * Shows a spinner when `isLoading` is true.
+ */
 import { Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 

@@ -1,3 +1,15 @@
+/**
+ * Recipe summary card displayed in grids.
+ * File: src/components/recipe/RecipeCard.jsx
+ *
+ * Shows recipe image, title, categories, difficulty, cook time,
+ * rating stars, like/save buttons, author link, and view/like counts.
+ *
+ * Props:
+ *   recipe          — recipe data object from the API
+ *   onFavoriteToggle — optional callback after like/favorite toggle
+ *   actionOverlay    — optional React element rendered over the image
+ */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, User, Heart, Eye, Bookmark } from 'lucide-react';
@@ -10,7 +22,7 @@ import { cn, normalizeCategories } from '../../lib/utils';
 export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
     const { user, canInteract, isPending, isSuspended } = useAuth();
 
-    // Use data directly from the API-provided recipe object
+    // --- Derived / local state from the recipe prop ---
     const [isLiked, setIsLiked] = useState(recipe.isLiked || false);
     const [isFavorited, setIsFavorited] = useState(recipe.isFavorited || false);
     const [likeCount, setLikeCount] = useState(recipe.likeCount || 0);
@@ -20,6 +32,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
 
     const categories = normalizeCategories(recipe.categories ?? recipe.category);
     const authorName = recipe.author?.username || `User ${recipe.author?.id || recipe.authorId}`;
+    // Tooltip text for disabled interaction states
     const likeDisabledText = isSuspended
         ? 'Suspended accounts cannot like recipes'
         : isPending
@@ -31,6 +44,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
             ? 'Pending accounts cannot save recipes'
             : 'Only active user accounts can save recipes';
 
+    /** Toggle like, update local count, and notify parent + global listeners. */
     const handleLikeClick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -44,6 +58,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
         } catch { /* ignore */ }
     };
 
+    /** Toggle favorite/save and dispatch 'favoriteToggled' event for AuthContext sync. */
     const handleSaveClick = async (e) => {
         e.preventDefault();
         e.stopPropagation();

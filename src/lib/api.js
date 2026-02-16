@@ -1,5 +1,19 @@
+/**
+ * Centralized API client for all backend endpoints.
+ * File: src/lib/api.js
+ *
+ * Exports domain-specific modules (auth, recipes, reviews, users, search,
+ * stats, activity) that wrap apiFetch() — a thin fetch wrapper handling
+ * JSON serialization, credentials (HttpOnly cookies), and error mapping.
+ *
+ * Usage:  import { recipes } from '@/lib/api'
+ *         const data = await recipes.list({ page: 1 })
+ */
+
+// Base URL from env, with trailing slashes stripped
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
+/** Pre-built avatar URLs from DiceBear API for user registration */
 export const DEFAULT_AVATARS = [
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
@@ -9,6 +23,7 @@ export const DEFAULT_AVATARS = [
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo',
 ];
 
+/** Custom error class carrying HTTP status and response data */
 class ApiError extends Error {
     constructor(message, status, data = null) {
         super(message);
@@ -18,6 +33,10 @@ class ApiError extends Error {
     }
 }
 
+/**
+ * Core fetch wrapper. Sends JSON requests with credentials (HttpOnly session
+ * cookie) and maps non-2xx responses to ApiError.
+ */
 async function apiFetch(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
     const config = {
@@ -47,6 +66,7 @@ async function apiFetch(endpoint, options = {}) {
     return data;
 }
 
+/** Build a query string from an object, omitting empty/null values */
 function buildQuery(params) {
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {

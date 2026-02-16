@@ -1,3 +1,8 @@
+/**
+ * Portal-based modal dialog.
+ * Locks body scroll while open, closes on Escape (configurable),
+ * and supports overlay-click dismissal.
+ */
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';

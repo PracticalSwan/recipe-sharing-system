@@ -1,11 +1,21 @@
 <?php
 // ============================================================================
 // Users API Endpoints
-// GET    /api/users          - List all users (admin, paginated)
-// GET    /api/users/{id}     - Get user profile
-// PUT    /api/users/{id}     - Update user profile
-// DELETE /api/users/{id}     - Delete user (admin)
-// PUT    /api/users/{id}/status - Update user status (admin)
+// File: backend/api/users.php
+//
+// Admin-facing user management plus public profile retrieval and self-update.
+// Includes an auto-inactivity check: users idle for >5 minutes are marked
+// 'inactive' on each admin list/stats request.
+//
+// Routes:
+//   GET    /api/users             - List all users (admin, paginated + search)
+//   GET    /api/users/{id}        - Get user profile (public fields + favorites)
+//   PUT    /api/users/{id}        - Update user profile (self or admin)
+//   DELETE /api/users/{id}        - Delete user and all related data (admin)
+//   PUT    /api/users/{id}/status - Change user status (admin: approve/suspend)
+//
+// Related tables: user, recipe, review, like_record, favorite, recipe_view,
+//                 search_history, session, activity_log
 // ============================================================================
 
 require_once __DIR__ . '/../config/database.php';
@@ -21,18 +31,20 @@ $route = $_GET['route'] ?? '';
 
 $segments = $route ? array_values(array_filter(explode('/', $route))) : [];
 
+// Route dispatcher
 if (empty($segments)) {
-    handleUsersList($pdo, $method);
+    handleUsersList($pdo, $method);                        // /api/users
 } elseif (count($segments) === 1 && is_numeric($segments[0])) {
-    handleUserById($pdo, $method, (int) $segments[0]);
+    handleUserById($pdo, $method, (int) $segments[0]);     // /api/users/{id}
 } elseif (count($segments) === 2 && is_numeric($segments[0]) && $segments[1] === 'status') {
-    handleUserStatus($pdo, $method, (int) $segments[0]);
+    handleUserStatus($pdo, $method, (int) $segments[0]);   // /api/users/{id}/status
 } else {
     errorResponse('Not found', 404);
 }
 
 // ============================================================================
-// GET /api/users - List users (admin only, paginated)
+// GET /api/users — List users with search & status filters (admin only)
+// Also auto-marks users inactive if idle > 5 minutes.
 // ============================================================================
 function handleUsersList(PDO $pdo, string $method): void {
     if ($method !== 'GET') {
@@ -40,6 +52,8 @@ function handleUsersList(PDO $pdo, string $method): void {
     }
 
     requireAdmin($pdo);
+
+    // Auto-inactivity: mark users idle for >5 min as 'inactive'
     $pdo->exec("
         UPDATE user
         SET status = 'inactive'
@@ -49,16 +63,19 @@ function handleUsersList(PDO $pdo, string $method): void {
           AND last_active < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
     ");
 
+    // Pagination parameters
     $page  = max(1, (int) ($_GET['page'] ?? 1));
     $limit = min(50, max(1, (int) ($_GET['limit'] ?? 20)));
     $offset = ($page - 1) * $limit;
     $search = $_GET['search'] ?? null;
     $status = $_GET['status'] ?? null;
 
+    // Build dynamic WHERE clause for search and status filters
     $where = [];
     $params = [];
 
     if ($search) {
+        // Search across multiple user fields (username, email, name)
         $where[] = "(u.username LIKE :search OR u.email LIKE :search2 OR u.first_name LIKE :search3 OR u.last_name LIKE :search4)";
         $searchTerm = '%' . $search . '%';
         $params[':search'] = $searchTerm;
@@ -73,12 +90,12 @@ function handleUsersList(PDO $pdo, string $method): void {
 
     $whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-    // Count
+    // Count total matching users for pagination metadata
     $countStmt = $pdo->prepare("SELECT COUNT(*) FROM user u $whereClause");
     $countStmt->execute($params);
     $total = (int) $countStmt->fetchColumn();
 
-    // Users with recipe/review counts
+    // Fetch users with aggregated recipe/review counts
     $sql = "
         SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.birthday,
                u.role, u.status, u.joined_date, u.last_active, u.avatar_url,
@@ -102,6 +119,7 @@ function handleUsersList(PDO $pdo, string $method): void {
     $stmt->execute();
     $users = $stmt->fetchAll();
 
+    // Format response: convert snake_case DB columns to camelCase
     $formatted = array_map(fn($u) => [
         'id'           => (int) $u['id'],
         'username'     => $u['username'],
@@ -135,7 +153,7 @@ function handleUsersList(PDO $pdo, string $method): void {
 }
 
 // ============================================================================
-// GET/PUT/DELETE /api/users/{id}
+// GET/PUT/DELETE /api/users/{id} — Dispatch by HTTP method
 // ============================================================================
 function handleUserById(PDO $pdo, string $method, int $id): void {
     switch ($method) {
@@ -154,9 +172,10 @@ function handleUserById(PDO $pdo, string $method, int $id): void {
 }
 
 // ============================================================================
-// GET /api/users/{id}
+// GET /api/users/{id} — Get user profile with recipe/review counts & favorites
 // ============================================================================
 function handleGetUser(PDO $pdo, int $id): void {
+    // Fetch user with aggregated stats (only published recipes for public count)
     $stmt = $pdo->prepare("
         SELECT u.id, u.username, u.first_name, u.last_name, u.email, u.birthday,
                u.role, u.status, u.joined_date, u.last_active, u.avatar_url,
@@ -204,12 +223,13 @@ function handleGetUser(PDO $pdo, int $id): void {
 }
 
 // ============================================================================
-// PUT /api/users/{id}
+// PUT /api/users/{id} — Update user profile (self or admin)
+// Supports dynamic field updates from an allow-list of editable fields.
 // ============================================================================
 function handleUpdateUser(PDO $pdo, int $id): void {
     $user = requireAuth($pdo);
 
-    // Can only update own profile or admin can update any
+    // Authorization: users can only edit their own profile; admins can edit any
     if ((int) $user['id'] !== $id && $user['role'] !== 'admin') {
         errorResponse('Not authorized', 403);
     }
@@ -219,10 +239,11 @@ function handleUpdateUser(PDO $pdo, int $id): void {
         errorResponse('Invalid JSON body');
     }
 
-    // Build dynamic update
+    // Build dynamic SET clause from allowed fields only (whitelist approach)
     $fields = [];
     $params = [':id' => $id];
 
+    // Map camelCase frontend keys to snake_case DB columns
     $allowedFields = [
         'username'     => 'username',
         'firstName'    => 'first_name',
@@ -243,7 +264,7 @@ function handleUpdateUser(PDO $pdo, int $id): void {
         }
     }
 
-    // Password change
+    // Password change: hash with bcrypt before storing
     if (!empty($data['password'])) {
         $fields[] = "password_hash = :password_hash";
         $params[':password_hash'] = password_hash($data['password'], PASSWORD_BCRYPT);
@@ -294,7 +315,9 @@ function handleUpdateUser(PDO $pdo, int $id): void {
 }
 
 // ============================================================================
-// DELETE /api/users/{id} - Admin only
+// DELETE /api/users/{id} — Admin only: delete user and all related data
+// Explicitly removes all child records (sessions, reviews, likes, favorites,
+// views, search history, recipes + their sub-records) before deleting the user.
 // ============================================================================
 function handleDeleteUser(PDO $pdo, int $id): void {
     $admin = requireAdmin($pdo);
@@ -359,7 +382,9 @@ function handleDeleteUser(PDO $pdo, int $id): void {
 }
 
 // ============================================================================
-// PUT /api/users/{id}/status - Admin: change user status
+// PUT /api/users/{id}/status — Admin: change user status
+// Supports: active, inactive, pending, suspended.
+// Logs moderation events (pending/suspended) to activity_log for audit.
 // ============================================================================
 function handleUserStatus(PDO $pdo, string $method, int $id): void {
     if ($method !== 'PUT') {
@@ -382,6 +407,7 @@ function handleUserStatus(PDO $pdo, string $method, int $id): void {
     }
 
     if ($data['status'] === 'active') {
+        // When activating, also refresh last_active timestamp
         $stmt = $pdo->prepare("UPDATE user SET status = :status, last_active = NOW() WHERE id = :id");
         $stmt->execute([':status' => $data['status'], ':id' => $id]);
     } else {
@@ -389,7 +415,7 @@ function handleUserStatus(PDO $pdo, string $method, int $id): void {
         $stmt->execute([':status' => $data['status'], ':id' => $id]);
     }
 
-    // Keep admin audit focused on moderation events.
+    // Only log moderation events (not routine active/inactive transitions)
     if (!in_array($data['status'], ['active', 'inactive'], true)) {
         $pdo->prepare("
             INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)

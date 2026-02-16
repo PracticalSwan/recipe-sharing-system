@@ -1,90 +1,53 @@
+<!-- prettier-ignore -->
+<div align="center">
+
 # Recipe Sharing System
 
-A collaborative web application that enables users to share, discover, and interact with recipes. The system features role-based access for Admins, Contributors, and regular Users, with a robust recipe approval workflow and comprehensive recipe management capabilities.
+[![Build Status](https://img.shields.io/badge/Build-Passing-green?style=flat-square)](package.json)
+[![Tests](https://img.shields.io/badge/Tests-127%2F127%20Passing-brightgreen?style=flat-square)](tests/e2e.spec.js)
+[![React](https://img.shields.io/badge/React-19.2.0-blue?style=flat-square&logo=react)](https://react.dev)
+[![Node](https://img.shields.io/badge/Node.js-18%2B-green?style=flat-square&logo=node.js)](https://nodejs.org)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+
+A collaborative web application for sharing, discovering, and interacting with recipes with role-based access control and comprehensive recipe management.
+
+</div>
+
+---
+
+## Overview
+
+A full-stack application with complete database integration featuring:
+
+- Frontend: React 19.2 + Vite 7.3 + Tailwind CSS 4.1
+- Backend: Plain PHP REST API with PDO + session-based authentication
+- Database: MySQL/MariaDB (cookhub) with 13 tables, views, stored procedures, and triggers
+- Testing: Playwright E2E test suite (127/127 tests passing)
+
+**Approval Workflow**: New users register with "Pending" status, admins review and activate accounts, contributors submit recipes for admin approval, and activity tracking provides insights into platform engagement.
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
-- [User Roles & Functions](#user-roles-functions)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Technologies](#technologies)
-- [Data & Database](#data-database)
-- [Available Scripts](#available-scripts)
-- [Documentation](#documentation)
-- [Test Data](#test-data)
-- [License](#license)
-- [Contributing](#contributing)
+- [Overview](#overview) • [Features](#features) • [Architecture](#architecture) • [User Roles](#user-roles) • [Getting Started](#getting-started) • [Usage](#usage) • [Tech Stack](#tech-stack) • [Database](#database) • [Test Data](#test-data) • [Documentation](#documentation) • [License](#license)
 
-<a id="overview"></a>
-## Overview
-
-The Recipe Sharing System is a full-stack application with complete database integration (all 6 phases implemented):
-
-- **Frontend:** React 19.2 + Vite 7.3 + Tailwind CSS 4.1
-- **Backend:** Plain PHP REST API (PDO + prepared statements + session-based auth)
-- **Database:** MySQL/MariaDB (cookhub) with 13 tables, views, stored procedures, and triggers
-- **Testing:** Playwright E2E test suite (127/127 tests passing)
-
-### Recent Fixes (2026-02-16)
-
-- Fixed author profile page showing "User not found" when navigating to another user's profile.
-- Fixed profile edit wiping user favorites (backend `PUT /users/{id}` now returns favorites in response).
-- Fixed login error message persisting after clearing/changing input fields.
-- Fixed "1 views" grammar on recipe detail page (now uses singular "view" for count of 1).
-- Removed non-functional "Forgot password?" placeholder link from login page.
-- Added `autocomplete` and `name` attributes to login and signup form inputs.
-- Fixed recipe card navigation so opening a recipe consistently stays on the detail route (`/#/recipes/:id`) instead of bouncing back to home.
-- Fixed recipe edit loading (`/#/recipes/edit/:id`) by aligning frontend payload parsing with the PHP API response shape.
-- Updated detail access logic so recipe owners can view their own non-published recipes.
-- Updated search keyword behavior to match recipe titles explicitly and re-verified filter behavior (difficulty/search combinations).
-- Fixed recipe update flow to preserve recipe status (editing no longer hides/removes recipes unexpectedly).
-- Fixed create recipe visibility for owners by allowing own-profile fetches to request `status=all`.
-- Fixed recipe view tracking to increment once per user per recipe.
-- Fixed review submission to enforce one review per user with update-on-resubmit behavior.
-- Fixed Reset Filters to clear all filter inputs and URL query params.
-- Fixed Edit Profile modal behavior so outside clicks do not close/discard the form.
-- Fixed suspended account tooltip/aria copy for like/save controls.
-- Fixed admin activity feed so active/inactive status churn is excluded from Recent Activity.
-- Fixed logout/account presence handling so active users become inactive on logout, with stale active users auto-synced to inactive.
-- Fixed create recipe form defaults so new recipes start with empty category, difficulty, prep time, cook time, and servings fields (no pre-filled values in create mode).
-- Comprehensive live browser testing verified all 14 feature areas (auth, home, search, recipe detail, reviews, CRUD, profile, favorites, admin dashboard/users/recipes, edge cases, security).
-- Expanded and re-verified E2E coverage with full Playwright regression runs (127 passing tests).
-
-### Approval Workflow
-
-The system features a comprehensive approval workflow where:
-
-1. New users register → Account created with "Pending" status
-2. Admin reviews and activates user accounts
-3. Contributors submit recipes → Admin approves before publication
-4. Activity tracking and analytics provide insights into platform engagement
-
-<a id="key-features"></a>
-## Key Features
+## Features
 
 - User authentication with role-based access control (Admin, Contributor, User)
 - Recipe submission with admin approval workflow
 - Comprehensive recipe management (Create, Read, Update, Delete)
 - Advanced recipe discovery (search, filtering, sorting)
 - User profile management
-- Recipe ratings and reviews (one review per user per recipe)
-- Recipe review updates via resubmission (upsert per user/recipe)
+- Recipe ratings and reviews with upsert capability
 - Favorites/saved recipes functionality
 - Per-user unique recipe view tracking
-- Interactive ingredient checklist to mark off ingredients while cooking
-- Admin dashboard with site analytics and metrics
-- User and recipe management tools for admins
-- Activity tracking system with real-time updates
-- Last active timestamp tracking (updated on logout with stale-active auto-sync)
+- Interactive ingredient checklist while cooking
+- Admin dashboard with real-time site analytics
+- User and recipe management for admins
+- Activity tracking with real-time updates
 - Daily Active Users (DAU) tracking with session heartbeat
-- Admin activity logging for audit trail (active/inactive state noise excluded from recent admin actions)
+- Admin activity logging for audit trail
 
-<a id="system-architecture"></a>
-## System Architecture
+## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -92,7 +55,7 @@ The system features a comprehensive approval workflow where:
 ├──────────────────────────────────────────────────────────────┤
 │  Authentication & Authorization                         │
 │  ├── Registration → Initial Status: Pending            │
-│  └── Role-based Access Control                     │
+│  └── Role-based Access Control                         │
 ├──────────────────────────────────────────────────────────────┤
 │  Admin Module  Contributor Module   Guest Module (Pending)  │
 │  ├── Dashboard   ├── Full Platform     ├── Browse Recipes    │
@@ -114,32 +77,23 @@ The system features a comprehensive approval workflow where:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-<a id="user-roles-functions"></a>
-## User Roles & Functions
+## User Roles
 
 ### Guest (Pending Users)
-New registrations start with pending status; can browse and search recipes while awaiting admin approval. Guests cannot create recipes, write reviews, or save favorites until accounts are activated by admin.
+New registrations start with pending status. Can browse and search recipes while awaiting admin approval. Cannot create recipes, write reviews, or save favorites until activated.
 
 ### Contributor (Active Users)
-Approved users with full platform access including:
+Approved users with full platform access:
 - Create and manage recipes
 - Search and browse content
 - Review and rate recipes
-- Save favorites
-- Like recipes
+- Save favorites and like recipes
 - Edit profile
 
 ### Admin Dashboard
 Access with admin credentials (`admin@cookhub.com` / `admin`)
 
 **Features:**
-- View real-time metrics and site-wide analytics
-- Track daily activity and user engagement
-- Recent Activity Feed showing latest admin actions
-- Manage user accounts (activate, deactivate, delete)
-- Recipe approval workflow (approve, reject, delete pending recipes)
-
-**Metrics Displayed:**
 
 | Metric | Description |
 |----------|-------------|
@@ -152,16 +106,15 @@ Access with admin credentials (`admin@cookhub.com` / `admin`)
 | Daily Views | Site-wide page views per day |
 | Daily Active Users (DAU) | Number of unique active users per day (with hourly heartbeat tracking) |
 
-<a id="installation"></a>
-## Installation
+## Getting Started
 
 ### Prerequisites
 
-- **Node.js** v18 or higher
-- **npm** v9+
-- **XAMPP** 8.x+ (Apache + MySQL + PHP)
+- Node.js v18 or higher
+- npm v9+
+- XAMPP 8.x+ (Apache + MySQL + PHP)
 
-### Quick Start
+### Installation
 
 ```bash
 # Clone repository
@@ -183,22 +136,18 @@ npm run dev
 
 The application will open at `http://localhost:5173/recipe-sharing-system-deploy/`
 
-> See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) for full setup instructions.
+> [!NOTE]
+> See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) for complete setup instructions.
 
-### Build for Production
+### Production Build
 
 ```bash
-# Build optimized bundle
 npm run build
-
-# Preview production build
 npm run preview
 ```
 
 <a id="usage"></a>
 ## Usage
-
-### Test Credentials
 
 **Admin Accounts:**
 
@@ -222,189 +171,46 @@ npm run preview
 | `lina@cookhub.com` | `lina123` | Lina Patel | Inactive |
 | `omar@cookhub.com` | `omar123` | Omar Hassan | Pending |
 
-> **Note:** These credentials are seeded by `database/05_seed_users.sql` when the database scripts are executed.
+> [!NOTE]
+> These credentials are seeded by `database/05_seed_users.sql` when the database scripts are executed.
 
-### Reset Seed Data (Database)
-
-To reset the system to the initial seeded state:
-
+**Reset Seed Data:**
 1. Drop and recreate the `cookhub` database.
 2. Re-run SQL scripts in order (`01_create_database.sql` through `14_backup_restore.sql`) as documented in `guides/SETUP_GUIDE_PHPMYADMIN.md`.
 3. Log in again from the frontend after the database is re-seeded.
 
-Seed execution note:
-`database/05_seed_users.sql` and `database/08_seed_stats.sql` now preserve the current `@DISABLE_TRIGGERS` state, so they work correctly both standalone and inside wrapper rebuild sequences.
-
-<a id="project-structure"></a>
-## Project Structure
-
-```
-recipe-sharing-system/
-├── database/                  # SQL database scripts (14 files)
-│   ├── 01_create_database.sql      # Database creation
-│   ├── 02_create_tables.sql       # 13 tables (user, recipe, review, etc.)
-│   ├── 03_create_indexes.sql       # Performance indexes
-│   ├── 04_create_views.sql         # 2 views (statistics, dashboard)
-│   ├── 05_seed_users.sql          # User accounts (12 users)
-│   ├── 06_seed_recipes.sql         # Recipe data + ingredients + instructions
-│   ├── 07_seed_reviews.sql         # Reviews + likes + favorites
-│   ├── 08_seed_stats.sql           # Daily stats + activity logs
-│   ├── 09_common_queries.sql       # Common SELECT queries
-│   ├── 10_admin_queries.sql        # Admin management queries
-│   ├── 11_analytics_queries.sql     # Analytics & trends
-│   ├── 12_stored_procedures.sql   # 4 procedures + 1 function
-│   ├── 13_triggers.sql            # 6 triggers for automation
-│   └── 14_backup_restore.sql      # Backup & restore commands
-├── guides/                    # Documentation guides
-│   ├── database_implementation_logic_explanation.md
-│   ├── SETUP_GUIDE_PHPMYADMIN.md
-│   └── SQL_SCRIPTS.md
-├── plan/                      # Development planning documents
-│   └── upgrade-database-integration-1.md  # MySQL + PHP backend migration plan
-├── src/
-│   ├── components/           # Reusable UI components
-│   │   ├── layout/          # Navigation & layout components
-│   │   ├── recipe/          # Recipe-specific components
-│   │   └── ui/              # Generic UI components
-│   ├── context/             # React context (AuthContext)
-│   ├── layouts/             # Layout templates
-│   ├── lib/                 # Utilities & helpers
-│   ├── pages/               # Page components
-│   │   ├── Auth/            # Authentication pages
-│   │   ├── Admin/           # Admin dashboard pages
-│   │   └── Recipe/          # Recipe & user pages
-│   ├── App.jsx              # Main application component
-│   ├── main.jsx             # Application entry point
-│   └── index.css            # Global styles
-├── backend/                   # PHP REST API
-│   ├── api/                 # API endpoint modules (7 files)
-│   ├── config/              # Database configuration
-│   └── helpers/             # Auth, CORS, response helpers
-├── docs/                      # Generated documentation
-│   ├── API_DOCUMENTATION.md   # Full API reference
-│   ├── DATABASE_SCHEMA.md     # Database schema docs
-│   ├── DEPLOYMENT_GUIDE.md    # Setup & deployment guide
-│   └── TESTING_GUIDE.md       # Testing documentation
-├── tests/                     # Playwright E2E tests
-│   └── e2e.spec.js            # 127 test scenarios
-├── public/                    # Static assets
-├── playwright.config.js       # Playwright configuration
-├── CHANGELOG.md               # Version changelog
-├── package.json               # Dependencies & scripts
-└── README.md                  # This file
-```
-
-<a id="technologies"></a>
-## Technologies
+## Tech Stack
 
 ### Frontend
+- React 19.2.0, React Router DOM 7.13.0
+- Tailwind CSS 4.1.18
+- Vite 7.2.4, ESLint 9.39.1
 
-- **React** (v19.2.0) - Modern UI library
-- **React Router DOM** (v7.13.0) - Client-side routing
-- **React DOM** (v19.2.0) - React rendering engine
+### Backend
+- Plain PHP REST API with PDO
+- Session-based authentication with HttpOnly cookies
 
-### Styling & UI
+### Database
+- MySQL/MariaDB with 13 normalized tables
+- Stored procedures, triggers, and views
 
-- **Tailwind CSS** (v4.1.18) - Utility-first CSS framework
-- **Tailwind CSS Vite Plugin** (v4.1.18) - Build tool integration
-- **Tailwind Merge** (v3.4.0) - Intelligent class merging
-- **Lucide React** (v0.562.0) - Icon library
+## Database
 
-### Build & Development
-
-- **Vite** (v7.2.4) - Fast build tool
-- **Vite React Plugin** (v5.1.1) - React optimization for Vite
-- **ESLint** (v9.39.1) - Code quality tool
-
-### Utilities
-
-- **Clsx** (v2.1.1) - Conditional className utility
-- **date-fns** (v4.1.0) - Date formatting and manipulation
-
-<a id="data-database"></a>
-## Data & Database
-
-### Current Storage: MySQL/MariaDB via PHP API
-
-The application now persists data in **MySQL/MariaDB** through the PHP API layer (`backend/api/*`). The legacy localStorage service has been removed from runtime usage (`src/lib/storage.js`).
-
-### Database Integration Status
-
-Database and API integration for Phases 1-5 is implemented as part of the CSX3006 Database Systems project plan.
+**Storage**: MySQL/MariaDB through PHP API layer (`backend/api/*`)
 
 **Database Features:**
 - 13 normalized tables (3NF design) with proper constraints
 - 2 views for complex queries (recipe statistics, user dashboard)
 - 4 stored procedures + 1 function for complex operations
-- Stored procedure parameters follow `p_` snake_case naming
 - 6 triggers for automatic logging and statistics updates
-- Complete seed data matching current localStorage structure
-- SQL scripts in `database/` are import-ready for phpMyAdmin with minimal (SQL-only) formatting
-- Full RESTful API in plain PHP with PDO
+- Complete seed data and RESTful API with PDO
 - Session-based authentication with HttpOnly cookies
 
-**Database Tables:**
+**Tables:** `user`, `recipe`, `ingredient`, `instruction`, `recipe_image`, `review`, `favorite`, `like_record`, `recipe_view`, `search_history`, `daily_stat`, `activity_log`, `session`
 
-| Table | Description |
-|--------|-------------|
-| `user` | User accounts with roles and status |
-| `recipe` | Recipe metadata with status |
-| `ingredient` | Recipe ingredients with quantity/unit |
-| `instruction` | Step-by-step cooking instructions |
-| `recipe_image` | Multiple images per recipe |
-| `review` | Star ratings + comments |
-| `favorite` | Saved/bookmarked recipes |
-| `like_record` | Recipe likes |
-| `recipe_view` | View tracking (authenticated users) |
-| `search_history` | Search query history |
-| `daily_stat` | Daily aggregation (views, active users, new users) |
-| `activity_log` | Admin action audit trail |
-| `session` | Server-side session tokens |
-
-> **Progress:** View detailed implementation plan at [plan/upgrade-database-integration-1.md](plan/upgrade-database-integration-1.md) (100% complete — all 6 phases implemented)
-
-<a id="available-scripts"></a>
-## Available Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build optimized production bundle |
-| `npm run preview` | Preview production build locally |
-| `npm run lint` | Run ESLint to check code quality |
-| `npx playwright test` | Run E2E test suite (127 tests) |
-| `npx playwright test --headed` | Run tests with visible browser |
-| `npx playwright show-report` | View HTML test report |
-
-<a id="documentation"></a>
-## Documentation
-
-### API & Backend
-
-- [API Documentation](docs/API_DOCUMENTATION.md) — Complete REST API reference (40+ endpoints)
-- [Database Schema](docs/DATABASE_SCHEMA.md) — Full schema with ER diagram and table definitions
-- [Database README](database/README.md) — Database setup and SQL script reference
-
-### Setup & Deployment
-
-- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) — XAMPP setup, database, and production deployment
-- [Database Setup Guide](guides/SETUP_GUIDE_PHPMYADMIN.md) — Step-by-step phpMyAdmin configuration
-
-### Testing
-
-- [Testing Guide](docs/TESTING_GUIDE.md) — Playwright E2E strategy and execution guide
-
-### Planning & Design
-
-- [Implementation Plan](plan/upgrade-database-integration-1.md) — MySQL + PHP backend migration plan (100% complete)
-- [Database Logic Explanation](guides/database_implementation_logic_explanation.md) — Detailed SQL scripts documentation
-- [SQL Scripts Reference](guides/SQL_SCRIPTS.md) — Complete SQL scripts catalog
-- [Changelog](CHANGELOG.md) — Version history
-
-<a id="test-data"></a>
 ## Test Data
 
-The application comes with comprehensive seed data for immediate exploration including:
+The application includes comprehensive seed data for immediate exploration:
 
 - 3 Admin accounts with different activity levels
 - 9 User accounts spanning all statuses (Active, Inactive, Pending, Suspended)
@@ -414,14 +220,24 @@ The application comes with comprehensive seed data for immediate exploration inc
 - Sample favorites/bookmarks for user accounts
 - Historical daily stats for analytics dashboard
 
-This rich seed data allows you to immediately explore all features without creating accounts or recipes from scratch.
+> [!TIP]
+> You can immediately explore all features without creating accounts or recipes from scratch.
 
-<a id="license"></a>
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [API Documentation](docs/API_DOCUMENTATION.md) | Complete REST API reference (40+ endpoints) |
+| [Database Schema](docs/DATABASE_SCHEMA.md) | Full schema with ER diagram and table definitions |
+| [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) | XAMPP setup, database, and production deployment |
+| [Testing Guide](docs/TESTING_GUIDE.md) | Playwright E2E strategy and execution guide |
+| [Implementation Plan](plan/upgrade-database-integration-1.md) | MySQL + PHP backend migration plan (100% complete) |
+| [Changelog](CHANGELOG.md) | Version history |
+
+---
+
 ## License
 
 See [LICENSE](LICENSE) file for details.
-
-<a id="contributing"></a>
-## Contributing
-
-For issues, questions, or contributions, please contact the development team or submit an issue through the project repository.

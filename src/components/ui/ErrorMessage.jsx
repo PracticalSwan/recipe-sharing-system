@@ -1,3 +1,7 @@
+/**
+ * Inline error message with optional retry button.
+ * Used for data-fetching failures inside page sections.
+ */
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button } from './Button';

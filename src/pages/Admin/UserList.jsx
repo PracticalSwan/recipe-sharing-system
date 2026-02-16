@@ -1,3 +1,12 @@
+/**
+ * Admin user management page.
+ * File: src/pages/Admin/UserList.jsx
+ *
+ * Lists all users in a searchable, role-filterable table.
+ * Actions per user: approve (active), suspend, delete.
+ * Online status is derived from lastActive within SESSION_TIMEOUT.
+ * Refreshes every 30 seconds to update online indicators.
+ */
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../../lib/api';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
@@ -8,7 +17,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Search, Trash2, Ban, ShieldCheck } from 'lucide-react';
 
-// Session timeout in milliseconds (5 minutes)
+/** Session timeout threshold for online/offline detection (5 minutes). */
 const SESSION_TIMEOUT = 5 * 60 * 1000;
 
 export function UserList() {

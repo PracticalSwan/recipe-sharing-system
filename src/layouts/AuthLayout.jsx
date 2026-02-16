@@ -1,3 +1,11 @@
+/**
+ * Authentication page layout (login & signup).
+ * File: src/layouts/AuthLayout.jsx
+ *
+ * Two-column split layout:
+ *   • Left: centered form area (rendered via <Outlet />)
+ *   • Right: branded hero panel with logo (hidden on mobile)
+ */
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Logo from '../assets/Logo.png';

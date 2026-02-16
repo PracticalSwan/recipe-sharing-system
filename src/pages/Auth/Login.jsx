@@ -1,3 +1,10 @@
+/**
+ * Login page.
+ * File: src/pages/Auth/Login.jsx
+ *
+ * Renders email + password form. On success, navigates to the home feed.
+ * Shows demo credentials for quick testing.
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';

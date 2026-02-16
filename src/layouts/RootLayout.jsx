@@ -1,3 +1,11 @@
+/**
+ * Authenticated user layout.
+ * File: src/layouts/RootLayout.jsx
+ *
+ * Wraps user-facing pages with the top Navbar and a centered content area.
+ * Redirects to /login if unauthenticated, or /admin if user is an admin.
+ * Includes a skip-to-content link for keyboard accessibility.
+ */
 import React from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';

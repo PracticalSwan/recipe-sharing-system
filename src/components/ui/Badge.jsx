@@ -1,3 +1,7 @@
+/**
+ * Inline status / category badge.
+ * Variants: default, success, warning, error, outline.
+ */
 import { cn } from "../../lib/utils";
 
 export function Badge({ className, variant = "default", children, ...props }) {

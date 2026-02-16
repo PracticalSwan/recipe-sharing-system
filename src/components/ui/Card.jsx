@@ -1,3 +1,7 @@
+/**
+ * Composable card primitives: Card, CardHeader, CardTitle, CardContent, CardFooter.
+ * Each sub-component applies default padding and styling via cn().
+ */
 import { cn } from '../../lib/utils';
 
 export function Card({ className, children, ...props }) {

@@ -1,3 +1,15 @@
+/**
+ * Recipe detail page.
+ * File: src/pages/Recipe/RecipeDetail.jsx
+ *
+ * Loads a single recipe by :id, records a page view, and displays:
+ *   • Image, categories, author, rating stars, cook time, difficulty
+ *   • Like / Save / Edit / Delete action buttons
+ *   • Checkable ingredient list (click to cross off while cooking)
+ *   • Numbered instruction steps
+ *   • Review form (upsert) and review list
+ * Non-published recipes are only visible to the author or admins.
+ */
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../lib/api';

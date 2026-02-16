@@ -1,3 +1,16 @@
+/**
+ * Authentication context and provider.
+ * File: src/context/AuthContext.jsx
+ *
+ * Manages the global auth state for the entire app. On mount, checks for
+ * an existing session via GET /auth/me. While logged in, sends a heartbeat
+ * every 60 seconds to keep the session alive. Listens for 'favoriteToggled'
+ * events to re-sync the user's favorite list.
+ *
+ * Exports:
+ *   <AuthProvider>  — wrap the app tree to enable auth
+ *   useAuth()       — hook returning { user, login, logout, signup, ... }
+ */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 
@@ -7,7 +20,7 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Check session on mount
+    // Check for existing session on initial mount
     useEffect(() => {
         let cancelled = false;
         api.auth.me()
@@ -15,7 +28,7 @@ export function AuthProvider({ children }) {
                 if (!cancelled) setUser(data.user);
             })
             .catch(() => {
-                // No active session – stay logged out
+                // No active session — user stays logged out
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -23,7 +36,7 @@ export function AuthProvider({ children }) {
         return () => { cancelled = true; };
     }, []);
 
-    // Heartbeat interval while logged in
+    // Send heartbeat every 60s while logged in (extends sliding-window session)
     useEffect(() => {
         if (!user?.id) return;
 
@@ -34,7 +47,7 @@ export function AuthProvider({ children }) {
         return () => clearInterval(heartbeat);
     }, [user?.id]);
 
-    // Re-fetch user to sync favorites after toggle
+    // Re-fetch user data to sync favorites after a like/favorite toggle
     const refreshUser = useCallback(async () => {
         try {
             const data = await api.auth.me();
@@ -42,11 +55,8 @@ export function AuthProvider({ children }) {
         } catch { /* ignore */ }
     }, []);
 
+    // Listen for custom 'favoriteToggled' events dispatched by recipe components
     useEffect(() => {
-        if (!user?.id) return;
-
-        const syncCurrentUser = () => refreshUser();
-        window.addEventListener('favoriteToggled', syncCurrentUser);
         return () => window.removeEventListener('favoriteToggled', syncCurrentUser);
     }, [user?.id, refreshUser]);
 
@@ -78,6 +88,7 @@ export function AuthProvider({ children }) {
         setUser(updatedUser);
     };
 
+    // Derived auth states for convenient access in components
     const isAdmin = user?.role === 'admin';
     const isPending = user?.status === 'pending';
     const isSuspended = user?.status === 'suspended';
@@ -104,6 +115,7 @@ export function AuthProvider({ children }) {
     );
 }
 
+/** Hook to access auth context. Must be used inside <AuthProvider>. */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     const context = useContext(AuthContext);

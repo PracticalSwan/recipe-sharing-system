@@ -1,3 +1,11 @@
+/**
+ * Home / Discover page.
+ * File: src/pages/Recipe/Home.jsx
+ *
+ * Displays a hero search bar and a grid of the latest published recipes.
+ * Refreshes automatically when 'favoriteToggled' or 'recipeUpdated'
+ * events are dispatched (e.g., after liking or creating a recipe).
+ */
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../../lib/api';
 import { RecipeCard } from '../../components/recipe/RecipeCard';

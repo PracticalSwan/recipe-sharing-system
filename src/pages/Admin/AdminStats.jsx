@@ -1,10 +1,19 @@
+/**
+ * Admin dashboard overview page.
+ * File: src/pages/Admin/AdminStats.jsx
+ *
+ * Fetches dashboard stats from the API and displays KPI cards
+ * (total users, new today, contributors, published/pending recipes,
+ * daily views, DAU). Refreshes every 30 seconds.
+ * Includes a recent moderation activity feed and system health status.
+ */
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import api from '../../lib/api';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Users, FileText, Activity, UserPlus, ChefHat, Eye } from 'lucide-react';
 
-// StatCard component moved outside to prevent recreation on each render
+/** Reusable KPI card with icon, title, large value, and subtext. */
 const StatCard = ({ title, value, icon, subtext }) => {
     const Icon = icon;
     return (

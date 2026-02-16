@@ -1,9 +1,19 @@
 <?php
 // ============================================================================
-// Stats API Endpoints (Admin)
-// GET /api/stats          - Dashboard summary stats
-// GET /api/stats/dashboard - Dashboard summary stats (alias)
-// GET /api/stats/daily    - Daily stats history
+// Stats API Endpoints (Admin Dashboard)
+// File: backend/api/stats.php
+//
+// Provides aggregated statistics for the admin dashboard. Includes totals,
+// weekly/daily breakdowns, status distributions, category distribution,
+// top recipes by views, and recent admin activity.
+//
+// Routes:
+//   GET /api/stats            - Full dashboard summary
+//   GET /api/stats/dashboard   - Same as above (alias)
+//   GET /api/stats/daily       - Daily time-series stats (last N days)
+//
+// Related tables: user, recipe, review, recipe_view, activity_log,
+//                 recipe_image, daily_stat
 // ============================================================================
 
 require_once __DIR__ . '/../config/database.php';
@@ -23,19 +33,23 @@ if ($method !== 'GET') {
     errorResponse('Method not allowed', 405);
 }
 
+// Route dispatcher
 if (empty($segments) || $segments[0] === 'dashboard') {
-    handleDashboardStats($pdo);
+    handleDashboardStats($pdo);   // Full dashboard summary
 } elseif ($segments[0] === 'daily') {
-    handleDailyStats($pdo);
+    handleDailyStats($pdo);       // Time-series daily stats
 } else {
     errorResponse('Not found', 404);
 }
 
 // ============================================================================
-// GET /api/stats - Dashboard summary
+// GET /api/stats — Dashboard summary with totals, breakdowns, top recipes,
+//                  recent activity, and category distribution.
 // ============================================================================
 function handleDashboardStats(PDO $pdo): void {
     requireAdmin($pdo);
+
+    // Auto-inactivity check: mark users idle >5 min as 'inactive'
     $pdo->exec("
         UPDATE user
         SET status = 'inactive'
@@ -45,29 +59,29 @@ function handleDashboardStats(PDO $pdo): void {
           AND last_active < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
     ");
 
-    // Total counts
+    // ----- Total counts across all records -----
     $totalUsers   = (int) $pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
     $totalRecipes = (int) $pdo->query("SELECT COUNT(*) FROM recipe")->fetchColumn();
     $totalReviews = (int) $pdo->query("SELECT COUNT(*) FROM review")->fetchColumn();
     $totalViews   = (int) $pdo->query("SELECT COUNT(*) FROM recipe_view")->fetchColumn();
 
-    // Status breakdowns
+    // ----- Status breakdowns (for pie charts / status badges) -----
     $usersByStatus = $pdo->query("SELECT status, COUNT(*) AS count FROM user GROUP BY status")->fetchAll();
     $recipesByStatus = $pdo->query("SELECT status, COUNT(*) AS count FROM recipe GROUP BY status")->fetchAll();
 
-    // New this week
+    // ----- "This week" metrics (last 7 days) -----
     $newUsersWeek   = (int) $pdo->query("SELECT COUNT(*) FROM user WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
     $newRecipesWeek = (int) $pdo->query("SELECT COUNT(*) FROM recipe WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
     $newReviewsWeek = (int) $pdo->query("SELECT COUNT(*) FROM review WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
 
-    // Today stats
+    // ----- "Today" metrics -----
     $newUsersToday        = (int) $pdo->query("SELECT COUNT(*) FROM user WHERE DATE(created_at) = CURDATE()")->fetchColumn();
     $newContributorsToday = (int) $pdo->query("SELECT COUNT(*) FROM user WHERE DATE(created_at) = CURDATE() AND role = 'user' AND status != 'pending'")->fetchColumn();
     $contributors         = (int) $pdo->query("SELECT COUNT(*) FROM user WHERE role = 'user' AND status != 'pending'")->fetchColumn();
     $dailyViews           = (int) $pdo->query("SELECT COUNT(*) FROM recipe_view WHERE DATE(viewed_at) = CURDATE()")->fetchColumn();
     $dailyActiveUsers     = (int) $pdo->query("SELECT COUNT(DISTINCT id) FROM user WHERE DATE(last_active) = CURDATE()")->fetchColumn();
 
-    // Recent activity (last 10)
+    // ----- Recent admin activity (last 10 actions, excluding routine status transitions) -----
     $recentActivity = $pdo->query("
         SELECT al.id, al.action_type AS actionType, al.target_type AS targetType,
                al.target_id AS targetId, al.description, al.created_at AS createdAt,
@@ -85,7 +99,7 @@ function handleDashboardStats(PDO $pdo): void {
         LIMIT 10
     ")->fetchAll();
 
-    // Top recipes by views
+    // ----- Top 5 recipes by total views -----
     $topRecipes = $pdo->query("
         SELECT r.id, r.title,
                (SELECT ri.image_url FROM recipe_image ri WHERE ri.recipe_id = r.id ORDER BY ri.display_order ASC LIMIT 1) AS main_image,
@@ -100,7 +114,7 @@ function handleDashboardStats(PDO $pdo): void {
         LIMIT 5
     ")->fetchAll();
 
-    // Format status maps
+    // Convert status query results into key-value maps
     $userStatusMap = [];
     foreach ($usersByStatus as $row) {
         $userStatusMap[$row['status']] = (int) $row['count'];
@@ -110,7 +124,7 @@ function handleDashboardStats(PDO $pdo): void {
         $recipeStatusMap[$row['status']] = (int) $row['count'];
     }
 
-    // Category distribution
+    // ----- Category distribution (for charts) -----
     $categoryDist = $pdo->query("
         SELECT category, COUNT(*) AS count
         FROM recipe
@@ -156,11 +170,14 @@ function handleDashboardStats(PDO $pdo): void {
 }
 
 // ============================================================================
-// GET /api/stats/daily - Daily stats (last 30 days)
+// GET /api/stats/daily — Daily time-series stats (default: last 30 days)
+// Returns new users, recipes, reviews, views, and active users per day.
+// Uses the daily_stat table with correlated subqueries for recipe/review counts.
 // ============================================================================
 function handleDailyStats(PDO $pdo): void {
     requireAdmin($pdo);
 
+    // Configurable range via ?days= query param (1-90, default 30)
     $days = min(90, max(1, (int) ($_GET['days'] ?? 30)));
 
     $stmt = $pdo->prepare("

@@ -1,3 +1,6 @@
+/**
+ * CSS-only loading spinner with sm / md / lg size presets.
+ */
 import React from 'react';
 
 export function LoadingSpinner({ size = 'md', className = '' }) {

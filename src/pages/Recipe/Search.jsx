@@ -1,3 +1,12 @@
+/**
+ * Advanced search page with filters and history.
+ * File: src/pages/Recipe/Search.jsx
+ *
+ * Supports keyword search, multi-select category filter, difficulty filter,
+ * and sort order. Filter state is persisted in URL search params so
+ * back/forward/refresh restores the view. Debounces keyword input
+ * (1.5 s) before saving to the user's search history.
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../lib/api';
@@ -35,7 +44,7 @@ export function Search() {
     const hasMountedRef = useRef(false);
     const lastLoggedKeywordRef = useRef('');
 
-    // Debounce keyword input so history is only saved after user finishes typing
+    // Debounce keyword input so history is only saved after the user stops typing
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedKeyword(filters.keyword);

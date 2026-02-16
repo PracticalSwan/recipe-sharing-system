@@ -1,3 +1,14 @@
+/**
+ * User profile page (own profile or public view).
+ * File: src/pages/Recipe/Profile.jsx
+ *
+ * If :userId is absent or matches the current user, shows the "own" profile
+ * with edit profile modal, recipe status badges, and edit/delete overlays.
+ * Otherwise displays a public read-only view of another user.
+ *
+ * Tabs: My Recipes | Favorites.
+ * Listens to 'favoriteToggled' and 'recipeUpdated' events to refresh lists.
+ */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';

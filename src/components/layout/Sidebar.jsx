@@ -1,9 +1,18 @@
+/**
+ * Admin sidebar navigation.
+ * File: src/components/layout/Sidebar.jsx
+ *
+ * Fixed left sidebar (w-64) with nav links (Dashboard, Users, Recipes)
+ * and a sign-out button. Active link is highlighted using the current
+ * route path. Used exclusively inside AdminLayout.
+ */
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 import { LayoutDashboard, Users, FileText, LogOut, Settings } from 'lucide-react';
 
+/** Admin navigation menu items — each maps to an admin route. */
 const NAV_ITEMS = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Users', href: '/admin/users', icon: Users },

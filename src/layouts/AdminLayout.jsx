@@ -1,3 +1,11 @@
+/**
+ * Admin dashboard layout.
+ * File: src/layouts/AdminLayout.jsx
+ *
+ * Fixed sidebar + scrollable main content area. Requires admin role;
+ * redirects non-admins to home and unauthenticated users to login.
+ * Includes a skip-to-content link for keyboard accessibility.
+ */
 import React from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';

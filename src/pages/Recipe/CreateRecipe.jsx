@@ -1,3 +1,13 @@
+/**
+ * Create / Edit recipe form.
+ * File: src/pages/Recipe/CreateRecipe.jsx
+ *
+ * Dual-mode page: creates a new recipe or edits an existing one
+ * (determined by the presence of :id in the route).
+ * Validates all fields client-side before submitting.
+ * Dynamic list builders for ingredients and instruction steps.
+ * Blocked users (pending / suspended) see a read-only info message.
+ */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../lib/api';
@@ -8,6 +18,7 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
 import { Plus, Trash2, UploadCloud, ArrowLeft } from 'lucide-react';
 
+/** Blank form template used when creating a brand-new recipe. */
 const EMPTY_FORM_DATA = {
     title: '',
     description: '',

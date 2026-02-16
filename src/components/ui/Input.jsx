@@ -1,3 +1,7 @@
+/**
+ * Styled text input with label and validation error display.
+ * Supports aria-invalid / aria-describedby for accessible error states.
+ */
 import { cn } from '../../lib/utils';
 
 export function Input({

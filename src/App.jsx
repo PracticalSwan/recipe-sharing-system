@@ -1,3 +1,16 @@
+/**
+ * Root application component with route definitions.
+ * File: src/App.jsx
+ *
+ * Uses HashRouter (for static hosting compatibility) and organizes routes
+ * into three layout groups:
+ *   1. AuthLayout   — login/signup (public, no navbar)
+ *   2. RootLayout   — authenticated user pages (navbar + sidebar)
+ *   3. AdminLayout  — admin-only pages (requires role='admin')
+ *
+ * The AuthProvider wraps the entire tree so any component can access
+ * the current user via useAuth().
+ */
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AuthLayout } from './layouts/AuthLayout';
@@ -21,33 +34,32 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Auth Routes */}
+          {/* Auth Routes — public pages (no navbar) */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
           </Route>
 
-          {/* User Routes (Protected) */}
+          {/* User Routes — require authentication */}
           <Route element={<RootLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
             <Route path="/recipes/create" element={<CreateRecipe />} />
-            <Route path="/recipes/edit/:id" element={<CreateRecipe />} />
+            <Route path="/recipes/edit/:id" element={<CreateRecipe />} />   {/* Reuses CreateRecipe in edit mode */}
             <Route path="/recipes/:id" element={<RecipeDetail />} />
-            {/* My Recipes will share Profile view or be separate? Plan said "Profile tabs". */}
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/users/:userId" element={<Profile />} />
-            <Route path="/recipes/my-recipes" element={<Profile activeTab="recipes" />} /> {/* Alias to Profile */}
+            <Route path="/profile" element={<Profile />} />                 {/* Own profile */}
+            <Route path="/users/:userId" element={<Profile />} />           {/* Other user's profile */}
+            <Route path="/recipes/my-recipes" element={<Profile activeTab="recipes" />} />
           </Route>
 
-          {/* Admin Routes (Protected + Role Check) */}
+          {/* Admin Routes — require role='admin' */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminStats />} />
             <Route path="users" element={<UserList />} />
             <Route path="recipes" element={<AdminRecipes />} />
           </Route>
 
-          {/* Catch All */}
+          {/* Catch-all: redirect unknown paths to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

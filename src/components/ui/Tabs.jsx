@@ -1,3 +1,9 @@
+/**
+ * Controlled / uncontrolled tab primitives using React context.
+ * Components: Tabs (root), TabsList, TabsTrigger, TabsContent.
+ * Supports both `value + onValueChange` (controlled) and
+ * `defaultValue` (uncontrolled) patterns.
+ */
 import { createContext, useContext, useState } from 'react';
 import { cn } from '../../lib/utils';
 

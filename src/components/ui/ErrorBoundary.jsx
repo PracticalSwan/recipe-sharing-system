@@ -1,3 +1,8 @@
+/**
+ * React class-based error boundary.
+ * Catches unhandled render errors and shows a "Reload page" fallback
+ * instead of a white screen.
+ */
 import React from 'react';
 
 export class ErrorBoundary extends React.Component {
