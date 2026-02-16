@@ -91,7 +91,6 @@ Run scripts in numerical order:
 | 11 | `11_analytics_queries.sql` | Analytics query examples |
 | 12 | `12_stored_procedures.sql` | Stored procedures & functions |
 | 13 | `13_triggers.sql` | Database triggers |
-| 14 | `14_backup_restore.sql` | Backup & restore procedures |
 
 Or use the master script: `run_all_scripts.sql`
 
