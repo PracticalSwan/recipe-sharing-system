@@ -57,8 +57,9 @@ export function AuthProvider({ children }) {
 
     // Listen for custom 'favoriteToggled' events dispatched by recipe components
     useEffect(() => {
-        return () => window.removeEventListener('favoriteToggled', syncCurrentUser);
-    }, [user?.id, refreshUser]);
+        window.addEventListener('favoriteToggled', refreshUser);
+        return () => window.removeEventListener('favoriteToggled', refreshUser);
+    }, [refreshUser]);
 
     const login = async (email, password) => {
         try {
