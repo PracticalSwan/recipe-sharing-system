@@ -9,7 +9,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: 'http://localhost:5173/',
+    baseURL: 'http://localhost:5173/recipe-sharing-system-deploy/',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     headless: false,
