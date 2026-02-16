@@ -83,12 +83,11 @@ function handleRecipesList(PDO $pdo, string $method): void {
     $where = [];
     $params = [];
 
-    if ($status === 'all') {
-        $isAdmin = $currentUser && $currentUser['role'] === 'admin';
-        $isOwnAuthorView = $authorId && $currentUserId && $authorId === $currentUserId;
-        if (!$isAdmin && !$isOwnAuthorView) {
-            $status = 'published';
-        }
+    $isAdmin = $currentUser && $currentUser['role'] === 'admin';
+    $isOwnAuthorView = $authorId && $currentUserId && $authorId === $currentUserId;
+
+    if (!$isAdmin && !$isOwnAuthorView && $status !== 'published') {
+        $status = 'published';
     }
 
     if ($status !== 'all') {
@@ -319,6 +318,15 @@ function handleGetRecipe(PDO $pdo, int $id): void {
     $recipe = fetchFullRecipe($pdo, $id, $currentUserId);
     if (!$recipe) {
         errorResponse('Recipe not found', 404);
+    }
+
+    // Authorization: only author or admin can view non-published recipes
+    if ($recipe['status'] !== 'published') {
+        $isAdmin = $currentUser && $currentUser['role'] === 'admin';
+        $isAuthor = $currentUserId && (int)$recipe['author']['id'] === $currentUserId;
+        if (!$isAdmin && !$isAuthor) {
+            errorResponse('Recipe not found', 404);
+        }
     }
 
     jsonResponse($recipe);
