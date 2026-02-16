@@ -16,6 +16,9 @@ function setCorsHeaders(): void {
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization');
     header('Content-Type: application/json; charset=UTF-8');
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
 
     // Security headers
     header('X-Content-Type-Options: nosniff');
