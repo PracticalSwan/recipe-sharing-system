@@ -19,7 +19,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit, Check } from 'lucide-react';
+import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit, Check, Copy } from 'lucide-react';
 import { cn, normalizeCategories } from '../../lib/utils';
 
 export function RecipeDetail() {
@@ -38,6 +38,7 @@ export function RecipeDetail() {
     const [deleteReviewId, setDeleteReviewId] = useState(null);
     const [checkedIngredients, setCheckedIngredients] = useState({});
     const [loading, setLoading] = useState(true);
+    const [copied, setCopied] = useState(false);
 
     const toggleIngredient = (index) => {
         setCheckedIngredients(prev => ({
@@ -143,6 +144,18 @@ export function RecipeDetail() {
             setReviews(reviewData.reviews || []);
         } catch { /* ignore */ }
         setDeleteReviewId(null);
+    };
+
+    const handleCopyIngredients = () => {
+        if (!recipe?.ingredients) return;
+        const text = recipe.ingredients
+            .map(ing => `${ing.quantity} ${ing.unit} ${ing.name}`)
+            .join('\n');
+
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
     };
 
     const handleEditRecipe = () => {
@@ -313,14 +326,25 @@ export function RecipeDetail() {
                     <CardContent className="p-5">
                         <div className="flex justify-between items-center mb-3">
                             <h3 className="text-lg font-bold">Ingredients</h3>
-                            {Object.values(checkedIngredients).some(Boolean) && (
+                            <div className="flex items-center gap-3">
+                                {Object.values(checkedIngredients).some(Boolean) && (
+                                    <button
+                                        onClick={() => setCheckedIngredients({})}
+                                        className="text-[13px] text-cool-gray-40 hover:text-cool-gray-90 underline transition-colors"
+                                    >
+                                        Reset
+                                    </button>
+                                )}
                                 <button
-                                    onClick={() => setCheckedIngredients({})}
-                                    className="text-[13px] text-cool-gray-40 hover:text-cool-gray-90 underline"
+                                    onClick={handleCopyIngredients}
+                                    className="text-[13px] text-cool-gray-40 hover:text-cool-gray-90 flex items-center gap-1 transition-colors"
+                                    title="Copy ingredients to clipboard"
+                                    aria-label="Copy ingredients to clipboard"
                                 >
-                                    Reset
+                                    {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                                    {copied ? 'Copied' : 'Copy'}
                                 </button>
-                            )}
+                            </div>
                         </div>
                         <ul className="space-y-2">
                             {(recipe.ingredients || []).map((ing, i) => (

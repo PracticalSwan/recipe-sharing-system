@@ -17,3 +17,7 @@
 ## 2025-05-24 - [Form Input Accessibility and Required Indicators]
 **Learning:** Form inputs often lack visual 'required' indicators and proper ARIA associations for error messages. This makes it difficult for users to know which fields are mandatory and prevents screen reader users from hearing error messages associated with the correct input field.
 **Action:** Enhance the `Input` component to automatically show a red asterisk when `required` is true (using `aria-hidden="true"` to avoid noise). Use `aria-describedby` to link the input to its error message ID, and apply `aria-invalid` when errors are present. Add `transition-all` for smoother focus states.
+
+## 2025-05-25 - [Redundant Alt Text and Focused UX Improvements]
+**Learning:** Adding alt text to images that are immediately adjacent to descriptive text (like a username next to an avatar) creates redundant announcements for screen reader users. Furthermore, focusing on a single, high-impact micro-UX improvement is more effective than bundling multiple minor changes.
+**Action:** Keep alt text empty (`alt=""`) for decorative or redundant images. Prioritize one clear "delightful" feature per PR to maintain focus and stay within scope constraints.
