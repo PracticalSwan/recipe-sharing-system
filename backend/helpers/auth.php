@@ -48,7 +48,8 @@ function getCurrentUser(PDO $pdo): ?array {
 }
 
 /**
- * Requires authentication. Returns user data or sends 401 and exits.
+ * Requires authentication and an active account.
+ * Returns user data or sends 401/403 and exits.
  * Used as a guard at the top of protected API endpoints.
  */
 function requireAuth(PDO $pdo): array {
@@ -58,6 +59,20 @@ function requireAuth(PDO $pdo): array {
         echo json_encode(['error' => 'Authentication required']);
         exit;
     }
+
+    // Only allow active or inactive users (suspended/pending are restricted)
+    if ($user['status'] === 'suspended') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Your account has been suspended. Please contact support.']);
+        exit;
+    }
+
+    if ($user['status'] === 'pending') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Your account is pending approval.']);
+        exit;
+    }
+
     return $user;
 }
 
