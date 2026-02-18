@@ -199,13 +199,15 @@ function handleGetUser(PDO $pdo, int $id): void {
     $stmt->execute([':id' => $id]);
     $favorites = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-    jsonResponse([
+    // Authorization check for sensitive fields (email, birthday)
+    $currentUser = getCurrentUser($pdo);
+    $canSeeSensitive = $currentUser && ((int)$currentUser['id'] === $id || $currentUser['role'] === 'admin');
+
+    $response = [
         'id'           => (int) $u['id'],
         'username'     => $u['username'],
         'firstName'    => $u['first_name'],
         'lastName'     => $u['last_name'],
-        'email'        => $u['email'],
-        'birthday'     => $u['birthday'],
         'role'         => $u['role'],
         'status'       => $u['status'],
         'joinedDate'   => $u['joined_date'],
@@ -219,7 +221,14 @@ function handleGetUser(PDO $pdo, int $id): void {
         'favorites'    => array_map('intval', $favorites),
         'createdAt'    => $u['created_at'],
         'updatedAt'    => $u['updated_at'],
-    ]);
+    ];
+
+    if ($canSeeSensitive) {
+        $response['email'] = $u['email'];
+        $response['birthday'] = $u['birthday'];
+    }
+
+    jsonResponse($response);
 }
 
 // ============================================================================
@@ -237,6 +246,28 @@ function handleUpdateUser(PDO $pdo, int $id): void {
     $data = json_decode(file_get_contents('php://input'), true);
     if (!$data) {
         errorResponse('Invalid JSON body');
+    }
+
+    // ----- Input Validation -----
+    // Email validation: format and uniqueness check
+    if (isset($data['email'])) {
+        $email = filter_var(trim($data['email']), FILTER_VALIDATE_EMAIL);
+        if (!$email) {
+            errorResponse('Invalid email format');
+        }
+        $stmt = $pdo->prepare("SELECT id FROM user WHERE email = :email AND id != :id");
+        $stmt->execute([':email' => $email, ':id' => $id]);
+        if ($stmt->fetch()) {
+            errorResponse('Email is already taken by another user');
+        }
+        $data['email'] = $email; // Store sanitized version
+    }
+
+    // Password validation: minimum complexity (length)
+    if (isset($data['password']) && !empty($data['password'])) {
+        if (strlen($data['password']) < 6) {
+            errorResponse('Password must be at least 6 characters');
+        }
     }
 
     // Build dynamic SET clause from allowed fields only (whitelist approach)

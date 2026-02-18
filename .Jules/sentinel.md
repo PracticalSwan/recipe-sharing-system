@@ -9,3 +9,8 @@
 **Vulnerability:** The backend `requireAuth` helper only verified the existence of a valid session but did not check the user's account status (`suspended` or `pending`). This allowed restricted users to perform authenticated actions (like, favorite, review, create recipes) if they already had an active session.
 **Learning:** Authentication (identity verification) and Authorization (permission verification) are distinct steps. Even if a user is authenticated, their account state must be validated for every protected operation.
 **Prevention:** Centralize authorization logic to include account status checks. All protected endpoints using `requireAuth` now automatically benefit from status-based access control.
+
+## 2025-05-24 - [Sensitive Data Exposure in User Profiles]
+**Vulnerability:** Public user profile endpoint (`GET /api/users/{id}`) was returning sensitive PII, including `email` and `birthday`, for any user in the system to any authenticated or unauthenticated requester.
+**Learning:** Standard "fetch by ID" endpoints often default to returning the entire row from the database. This creates a data leakage risk even if the frontend UI correctly filters the data, as the raw API response remains accessible.
+**Prevention:** Implement a whitelist approach for all public-facing API responses. Explicitly filter sensitive fields and only include them if the requester is the resource owner or an administrator.
