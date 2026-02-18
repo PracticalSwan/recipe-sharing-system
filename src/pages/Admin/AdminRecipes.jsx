@@ -1,11 +1,4 @@
-/**
- * Admin recipe management page.
- * File: src/pages/Admin/AdminRecipes.jsx
- *
- * Three-tab view (Pending / Published / Rejected) backed by a shared
- * RecipeTable component. Admins can preview full recipe details in a
- * modal, approve or reject pending submissions, and delete recipes.
- */
+// Admin recipe management - view, approve, reject, and delete recipes by status
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../lib/api';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
@@ -17,7 +10,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Eye, Check, X, Trash2 } from 'lucide-react';
 import { normalizeCategories } from '../../lib/utils';
 
-/** Reusable recipe table filtered by a given status. */
+// Reusable table component for filtered recipe list
 const RecipeTable = ({ statusFilter, recipes, handlePreview, updateStatus, handleDelete }) => {
     const filtered = recipes.filter(r => r.status === statusFilter);
 

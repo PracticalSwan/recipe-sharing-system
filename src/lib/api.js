@@ -1,19 +1,10 @@
-/**
- * Centralized API client for all backend endpoints.
- * File: src/lib/api.js
- *
- * Exports domain-specific modules (auth, recipes, reviews, users, search,
- * stats, activity) that wrap apiFetch() — a thin fetch wrapper handling
- * JSON serialization, credentials (HttpOnly cookies), and error mapping.
- *
- * Usage:  import { recipes } from '@/lib/api'
- *         const data = await recipes.list({ page: 1 })
- */
+// Centralized API client for all backend endpoints
+// Usage: import { recipes } from '@/lib/api'; const data = await recipes.list({ page: 1 })
 
 // Base URL from env, with trailing slashes stripped
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
-/** Pre-built avatar URLs from DiceBear API for user registration */
+// Pre-built avatar URLs from DiceBear API for user registration
 export const DEFAULT_AVATARS = [
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
@@ -23,7 +14,7 @@ export const DEFAULT_AVATARS = [
     'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo',
 ];
 
-/** Custom error class carrying HTTP status and response data */
+// Custom error class carrying HTTP status and response data
 class ApiError extends Error {
     constructor(message, status, data = null) {
         super(message);
@@ -33,10 +24,7 @@ class ApiError extends Error {
     }
 }
 
-/**
- * Core fetch wrapper. Sends JSON requests with credentials (HttpOnly session
- * cookie) and maps non-2xx responses to ApiError.
- */
+// Core fetch wrapper: sends JSON requests with credentials and maps errors to ApiError
 async function apiFetch(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
     const config = {
@@ -66,7 +54,7 @@ async function apiFetch(endpoint, options = {}) {
     return data;
 }
 
-/** Build a query string from an object, omitting empty/null values */
+// Build a query string from an object, omitting empty/null values
 function buildQuery(params) {
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
@@ -78,8 +66,7 @@ function buildQuery(params) {
     return str ? `?${str}` : '';
 }
 
-// ─── Auth ──────────────────────────────────────────────────────────────────────
-
+// Auth endpoints
 export const auth = {
     async login(email, password) {
         const res = await apiFetch('/auth/login', {
@@ -111,8 +98,7 @@ export const auth = {
     },
 };
 
-// ─── Recipes ───────────────────────────────────────────────────────────────────
-
+// Recipe endpoints
 export const recipes = {
     async list(params = {}) {
         const res = await apiFetch(`/recipes${buildQuery(params)}`);
@@ -168,8 +154,7 @@ export const recipes = {
     },
 };
 
-// ─── Reviews ───────────────────────────────────────────────────────────────────
-
+// Review endpoints
 export const reviews = {
     async list(recipeId) {
         const res = await apiFetch(`/reviews?recipeId=${recipeId}`);
@@ -197,8 +182,7 @@ export const reviews = {
     },
 };
 
-// ─── Users ─────────────────────────────────────────────────────────────────────
-
+// User endpoints
 export const users = {
     async list(params = {}) {
         const res = await apiFetch(`/users${buildQuery(params)}`);
@@ -231,8 +215,7 @@ export const users = {
     },
 };
 
-// ─── Search ────────────────────────────────────────────────────────────────────
-
+// Search endpoints
 export const search = {
     async recipes(params = {}) {
         const res = await apiFetch(`/search${buildQuery(params)}`);
@@ -261,8 +244,7 @@ export const search = {
     },
 };
 
-// ─── Stats ─────────────────────────────────────────────────────────────────────
-
+// Stats endpoints
 export const stats = {
     async dashboard() {
         const res = await apiFetch('/stats/dashboard');
@@ -275,8 +257,7 @@ export const stats = {
     },
 };
 
-// ─── Activity ──────────────────────────────────────────────────────────────────
-
+// Activity endpoints
 export const activity = {
     async list(params = {}) {
         const res = await apiFetch(`/activity${buildQuery(params)}`);
@@ -284,7 +265,6 @@ export const activity = {
     },
 };
 
-// ─── Convenience bundle ────────────────────────────────────────────────────────
-
+// Convenience bundle
 const api = { auth, recipes, reviews, users, search, stats, activity };
 export default api;

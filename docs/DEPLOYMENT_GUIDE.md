@@ -10,6 +10,7 @@ Step-by-step deployment guide for the CookHub Recipe Sharing System.
 | Node.js | 18+ | Vite dev server / build |
 | npm | 9+ | Package management |
 | Git | Any | Source control |
+| Chrome/Edge | Latest | For testing application |
 
 ---
 
@@ -234,7 +235,7 @@ Copy to your web server:
 - [ ] Enable HTTPS
 - [ ] Set `session.cookie_secure = true` in PHP
 - [ ] Disable `display_errors` in `php.ini`
-- [ ] Set up database backups (see `database/14_backup_restore.sql`)
+- [ ] Set up database backups
 - [ ] Review error logging configuration
 
 ---

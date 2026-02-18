@@ -1,21 +1,5 @@
 <?php
-// ============================================================================
-// Stats API Endpoints (Admin Dashboard)
-// File: backend/api/stats.php
-//
-// Provides aggregated statistics for the admin dashboard. Includes totals,
-// weekly/daily breakdowns, status distributions, category distribution,
-// top recipes by views, and recent admin activity.
-//
-// Routes:
-//   GET /api/stats            - Full dashboard summary
-//   GET /api/stats/dashboard   - Same as above (alias)
-//   GET /api/stats/daily       - Daily time-series stats (last N days)
-//
-// Related tables: user, recipe, review, recipe_view, activity_log,
-//                 recipe_image, daily_stat
-// ============================================================================
-
+// Stats API (admin): dashboard statistics and analytics
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/cors.php';
 require_once __DIR__ . '/../helpers/auth.php';
@@ -26,7 +10,6 @@ setCorsHeaders();
 $pdo = Database::getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
-
 $segments = $route ? array_values(array_filter(explode('/', $route))) : [];
 
 if ($method !== 'GET') {
@@ -35,9 +18,9 @@ if ($method !== 'GET') {
 
 // Route dispatcher
 if (empty($segments) || $segments[0] === 'dashboard') {
-    handleDashboardStats($pdo);   // Full dashboard summary
+    handleDashboardStats($pdo);
 } elseif ($segments[0] === 'daily') {
-    handleDailyStats($pdo);       // Time-series daily stats
+    handleDailyStats($pdo);
 } else {
     errorResponse('Not found', 404);
 }
@@ -169,15 +152,10 @@ function handleDashboardStats(PDO $pdo): void {
     ]);
 }
 
-// ============================================================================
-// GET /api/stats/daily — Daily time-series stats (default: last 30 days)
-// Returns new users, recipes, reviews, views, and active users per day.
-// Uses the daily_stat table with correlated subqueries for recipe/review counts.
-// ============================================================================
+// GET /api/stats/daily — Daily time-series stats (default: 30 days)
 function handleDailyStats(PDO $pdo): void {
     requireAdmin($pdo);
 
-    // Configurable range via ?days= query param (1-90, default 30)
     $days = min(90, max(1, (int) ($_GET['days'] ?? 30)));
 
     $stmt = $pdo->prepare("
@@ -187,16 +165,8 @@ function handleDailyStats(PDO $pdo): void {
             ds.page_view_count AS totalViews,
             ds.active_user_count AS activeUsers,
             ds.recipe_view_count AS recipeViews,
-            (
-                SELECT COUNT(*)
-                FROM recipe r
-                WHERE DATE(r.created_at) = ds.stat_date
-            ) AS newRecipes,
-            (
-                SELECT COUNT(*)
-                FROM review rv
-                WHERE DATE(rv.created_at) = ds.stat_date
-            ) AS newReviews
+            (SELECT COUNT(*) FROM recipe r WHERE DATE(r.created_at) = ds.stat_date) AS newRecipes,
+            (SELECT COUNT(*) FROM review rv WHERE DATE(rv.created_at) = ds.stat_date) AS newReviews
         FROM daily_stat ds
         WHERE ds.stat_date >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
         ORDER BY ds.stat_date ASC
@@ -206,8 +176,8 @@ function handleDailyStats(PDO $pdo): void {
 
     $rows = $stmt->fetchAll();
     $formatted = array_map(fn($row) => [
-        'statDate' => $row['statDate'],
-        'newUsers' => (int) $row['newUsers'],
+        'statDate'   => $row['statDate'],
+        'newUsers'   => (int) $row['newUsers'],
         'newRecipes' => (int) $row['newRecipes'],
         'newReviews' => (int) $row['newReviews'],
         'totalViews' => (int) $row['totalViews'],

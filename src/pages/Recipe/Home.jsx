@@ -1,11 +1,4 @@
-/**
- * Home / Discover page.
- * File: src/pages/Recipe/Home.jsx
- *
- * Displays a hero search bar and a grid of the latest published recipes.
- * Refreshes automatically when 'favoriteToggled' or 'recipeUpdated'
- * events are dispatched (e.g., after liking or creating a recipe).
- */
+// Home page - search bar and feed of latest published recipes
 import React, { useCallback, useEffect, useState } from 'react';
 import api from '../../lib/api';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
@@ -55,7 +48,7 @@ export function Home() {
 
     return (
         <div className="space-y-8 animate-page-in">
-            {/* Hero Section */}
+            {/* Hero search section */}
             <section className="relative -mt-8 py-16 px-4 text-center bg-cool-gray-90 text-white rounded-b-3xl mb-10 overflow-hidden">
                 <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1495521841625-f46248f59218?auto=format&fit=crop&q=80')] bg-cover bg-center" />
                 <div className="relative z-10 max-w-2xl mx-auto space-y-5">
@@ -84,7 +77,7 @@ export function Home() {
                 </div>
             </section>
 
-            {/* Featured/Feed Section */}
+            {/* Recipe feed */}
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-cool-gray-90">Fresh from the Kitchen</h2>

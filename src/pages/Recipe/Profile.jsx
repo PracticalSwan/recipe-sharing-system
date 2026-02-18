@@ -1,15 +1,5 @@
-/**
- * User profile page (own profile or public view).
- * File: src/pages/Recipe/Profile.jsx
- *
- * If :userId is absent or matches the current user, shows the "own" profile
- * with edit profile modal, recipe status badges, and edit/delete overlays.
- * Otherwise displays a public read-only view of another user.
- *
- * Tabs: My Recipes | Favorites.
- * Listens to 'favoriteToggled' and 'recipeUpdated' events to refresh lists.
- */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+// User profile page - own profile (editable) or public view (read-only)
+import React, { useCallback, useEffect, useState } from 'react';
 import { useSearchParams, Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api, { DEFAULT_AVATARS } from '../../lib/api';
@@ -31,14 +21,17 @@ export function Profile() {
 
     const isOwnProfile = !userId || (currentUser && String(currentUser.id) === String(userId));
 
-    const [profileUser, setProfileUser] = useState(isOwnProfile ? currentUser : null);
-    const [loading, setLoading] = useState(!isOwnProfile);
+    const [fetchedProfile, setFetchedProfile] = useState({ userId: null, user: null });
+
+    const profileUser = isOwnProfile ? currentUser : fetchedProfile.user;
+    const loading = !isOwnProfile && !!userId && fetchedProfile.userId !== userId;
 
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({});
     const [deleteRecipeId, setDeleteRecipeId] = useState(null);
     const [myRecipes, setMyRecipes] = useState([]);
     const [favorites, setFavorites] = useState([]);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const buildEditForm = (user) => ({
         username: user?.username || '',
@@ -51,54 +44,51 @@ export function Profile() {
         avatarUrl: user?.avatarUrl || DEFAULT_AVATARS[0]
     });
 
-    // Load profile user for other users
+    // Load profile data for other users
     useEffect(() => {
-        if (isOwnProfile) {
-            setProfileUser(currentUser);
-            return;
-        }
-        if (!userId) return;
-        setLoading(true);
+        if (isOwnProfile || !userId) return;
+        let cancelled = false;
         api.users.get(userId)
-            .then(data => setProfileUser(data))
-            .catch(() => setProfileUser(null))
-            .finally(() => setLoading(false));
-    }, [userId, currentUser, isOwnProfile]);
+            .then(data => { if (!cancelled) setFetchedProfile({ userId, user: data }); })
+            .catch(() => { if (!cancelled) setFetchedProfile({ userId, user: null }); });
+        return () => { cancelled = true; };
+    }, [userId, isOwnProfile]);
 
     // Load recipes
-    const loadRecipes = useCallback(async () => {
+    useEffect(() => {
         if (!profileUser) return;
-        try {
-            const data = await api.recipes.list({
-                authorId: profileUser.id,
-                status: isOwnProfile ? 'all' : 'published',
-            });
-            const all = data.recipes || [];
-            setMyRecipes(isOwnProfile ? all : all.filter(r => r.status === 'published'));
-        } catch { setMyRecipes([]); }
-    }, [profileUser, isOwnProfile]);
+        let cancelled = false;
+        api.recipes.list({
+            authorId: profileUser.id,
+            status: isOwnProfile ? 'all' : 'published',
+        })
+            .then(data => {
+                if (cancelled) return;
+                const all = data.recipes || [];
+                setMyRecipes(isOwnProfile ? all : all.filter(r => r.status === 'published'));
+            })
+            .catch(() => { if (!cancelled) setMyRecipes([]); });
+        return () => { cancelled = true; };
+    }, [profileUser, isOwnProfile, refreshKey]);
 
-    // Load favorites
-    const loadFavorites = useCallback(async () => {
-        if (!profileUser?.favorites?.length) {
-            setFavorites([]);
-            return;
-        }
-        try {
-            const data = await api.recipes.list({ status: 'published' });
-            const all = data.recipes || [];
-            const favIds = profileUser.favorites.map(id => Number(id));
-            setFavorites(all.filter(r => favIds.includes(r.id)));
-        } catch { setFavorites([]); }
-    }, [profileUser]);
-
-    useEffect(() => { loadRecipes(); }, [loadRecipes]);
-    useEffect(() => { loadFavorites(); }, [loadFavorites]);
+    // Load user's favorite recipes
+    useEffect(() => {
+        if (!profileUser?.favorites?.length) return;
+        let cancelled = false;
+        api.recipes.list({ status: 'published' })
+            .then(data => {
+                if (cancelled) return;
+                const all = data.recipes || [];
+                const favIds = profileUser.favorites.map(id => Number(id));
+                setFavorites(all.filter(r => favIds.includes(r.id)));
+            })
+            .catch(() => { if (!cancelled) setFavorites([]); });
+        return () => { cancelled = true; };
+    }, [profileUser, refreshKey]);
 
     const triggerRefresh = useCallback(() => {
-        loadRecipes();
-        loadFavorites();
-    }, [loadRecipes, loadFavorites]);
+        setRefreshKey(k => k + 1);
+    }, []);
 
     useEffect(() => {
         const handleRefresh = () => triggerRefresh();

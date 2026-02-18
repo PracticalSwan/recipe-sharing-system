@@ -1,21 +1,5 @@
 <?php
-// ============================================================================
-// Reviews API Endpoints
-// File: backend/api/reviews.php
-//
-// CRUD operations for recipe reviews. Each user can have exactly one review
-// per recipe (enforced via upsert in create). Reviews include a 1-5 star
-// rating and optional comment text.
-//
-// Routes:
-//   GET    /api/reviews?recipeId={id} - Get all reviews for a recipe
-//   POST   /api/reviews               - Create or update a review (upsert)
-//   PUT    /api/reviews/{id}          - Update an existing review
-//   DELETE /api/reviews/{id}          - Delete a review
-//
-// Related tables: review, user
-// ============================================================================
-
+// Reviews API: CRUD for recipe reviews (one review per user per recipe)
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/cors.php';
 require_once __DIR__ . '/../helpers/auth.php';
@@ -26,24 +10,23 @@ setCorsHeaders();
 $pdo = Database::getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
-
 $segments = $route ? array_values(array_filter(explode('/', $route))) : [];
 
-// Route dispatcher: /api/reviews or /api/reviews/{id}
+// Route dispatcher
 if (empty($segments)) {
     if ($method === 'GET') {
-        handleGetReviews($pdo);       // List reviews for a recipe
+        handleGetReviews($pdo);
     } elseif ($method === 'POST') {
-        handleCreateReview($pdo);     // Create/upsert a review
+        handleCreateReview($pdo);
     } else {
         errorResponse('Method not allowed', 405);
     }
 } elseif (count($segments) === 1 && is_numeric($segments[0])) {
     $reviewId = (int) $segments[0];
     if ($method === 'PUT') {
-        handleUpdateReview($pdo, $reviewId);   // Edit review
+        handleUpdateReview($pdo, $reviewId);
     } elseif ($method === 'DELETE') {
-        handleDeleteReview($pdo, $reviewId);   // Remove review
+        handleDeleteReview($pdo, $reviewId);
     } else {
         errorResponse('Method not allowed', 405);
     }
@@ -51,10 +34,7 @@ if (empty($segments)) {
     errorResponse('Not found', 404);
 }
 
-// ============================================================================
-// GET /api/reviews?recipeId={id} — Fetch all reviews for a specific recipe
-// Returns reviews sorted newest-first, each with the reviewer's profile info.
-// ============================================================================
+// GET /api/reviews?recipeId={id} — Get all reviews for a recipe
 function handleGetReviews(PDO $pdo): void {
     $recipeId = isset($_GET['recipeId']) ? (int) $_GET['recipeId'] : null;
     if (!$recipeId) {
@@ -90,11 +70,7 @@ function handleGetReviews(PDO $pdo): void {
     jsonResponse(['reviews' => $formatted]);
 }
 
-// ============================================================================
-// POST /api/reviews — Create or update a review (upsert pattern)
-// Each user may have at most one review per recipe. If a review already
-// exists, it is updated instead of creating a duplicate.
-// ============================================================================
+// POST /api/reviews — Create or update review (upsert: one per user per recipe)
 function handleCreateReview(PDO $pdo): void {
     $user = requireAuth($pdo);
     $data = json_decode(file_get_contents('php://input'), true);
@@ -102,12 +78,10 @@ function handleCreateReview(PDO $pdo): void {
         errorResponse('Invalid JSON body');
     }
 
-    // Validate required fields
     if (empty($data['recipeId']) || empty($data['rating'])) {
         errorResponse('recipeId and rating are required');
     }
 
-    // Rating must be 1-5 stars
     $rating = (int) $data['rating'];
     if ($rating < 1 || $rating > 5) {
         errorResponse('Rating must be between 1 and 5');
@@ -115,7 +89,6 @@ function handleCreateReview(PDO $pdo): void {
 
     $recipeId = (int) $data['recipeId'];
 
-    // Verify the recipe exists before allowing a review
     $stmt = $pdo->prepare("SELECT id FROM recipe WHERE id = :id");
     $stmt->execute([':id' => $recipeId]);
     if (!$stmt->fetch()) {
@@ -124,42 +97,24 @@ function handleCreateReview(PDO $pdo): void {
 
     $comment = trim($data['comment'] ?? '');
 
-    // Check if user already reviewed this recipe (upsert: update if exists)
+    // Check for existing review (upsert pattern)
     $stmt = $pdo->prepare("SELECT id FROM review WHERE user_id = :uid AND recipe_id = :rid");
     $stmt->execute([':uid' => $user['id'], ':rid' => $recipeId]);
     $existing = $stmt->fetch();
 
     $statusCode = 201;
     if ($existing) {
-        // Existing review found → update it (200 OK)
         $reviewId = (int) $existing['id'];
-        $stmt = $pdo->prepare("
-            UPDATE review
-            SET rating = :rating, comment = :comment
-            WHERE id = :id
-        ");
-        $stmt->execute([
-            ':rating' => $rating,
-            ':comment' => $comment,
-            ':id' => $reviewId,
-        ]);
+        $pdo->prepare("UPDATE review SET rating = :rating, comment = :comment WHERE id = :id")
+            ->execute([':rating' => $rating, ':comment' => $comment, ':id' => $reviewId]);
         $statusCode = 200;
     } else {
-        // No existing review → create new (201 Created)
-        $stmt = $pdo->prepare("
-            INSERT INTO review (user_id, recipe_id, rating, comment)
-            VALUES (:user_id, :recipe_id, :rating, :comment)
-        ");
-        $stmt->execute([
-            ':user_id'   => $user['id'],
-            ':recipe_id' => $recipeId,
-            ':rating'    => $rating,
-            ':comment'   => $comment,
-        ]);
+        $pdo->prepare("INSERT INTO review (user_id, recipe_id, rating, comment) VALUES (:user_id, :recipe_id, :rating, :comment)")
+            ->execute([':user_id' => $user['id'], ':recipe_id' => $recipeId, ':rating' => $rating, ':comment' => $comment]);
         $reviewId = (int) $pdo->lastInsertId();
     }
 
-    // Re-fetch the review with user info to return in response
+    // Fetch updated review with user info
     $stmt = $pdo->prepare("
         SELECT rv.id, rv.rating, rv.comment, rv.created_at, rv.updated_at,
                u.id AS user_id, u.username, u.avatar_url, u.first_name, u.last_name
@@ -186,9 +141,7 @@ function handleCreateReview(PDO $pdo): void {
     ], $statusCode);
 }
 
-// ============================================================================
-// PUT /api/reviews/{id} — Update an existing review (owner or admin)
-// ============================================================================
+// PUT /api/reviews/{id} — Update review (owner or admin)
 function handleUpdateReview(PDO $pdo, int $id): void {
     $user = requireAuth($pdo);
     $data = json_decode(file_get_contents('php://input'), true);
@@ -196,7 +149,6 @@ function handleUpdateReview(PDO $pdo, int $id): void {
         errorResponse('Invalid JSON body');
     }
 
-    // Verify review exists and check ownership
     $stmt = $pdo->prepare("SELECT * FROM review WHERE id = :id");
     $stmt->execute([':id' => $id]);
     $review = $stmt->fetch();
@@ -212,23 +164,16 @@ function handleUpdateReview(PDO $pdo, int $id): void {
         errorResponse('Rating must be between 1 and 5');
     }
 
-    $stmt = $pdo->prepare("UPDATE review SET rating = :rating, comment = :comment WHERE id = :id");
-    $stmt->execute([
-        ':rating'  => $rating,
-        ':comment' => trim($data['comment'] ?? $review['comment']),
-        ':id'      => $id,
-    ]);
+    $pdo->prepare("UPDATE review SET rating = :rating, comment = :comment WHERE id = :id")
+        ->execute([':rating' => $rating, ':comment' => trim($data['comment'] ?? $review['comment']), ':id' => $id]);
 
     successResponse(null, 'Review updated');
 }
 
-// ============================================================================
-// DELETE /api/reviews/{id} — Remove a review (owner or admin)
-// ============================================================================
+// DELETE /api/reviews/{id} — Delete review (owner or admin)
 function handleDeleteReview(PDO $pdo, int $id): void {
     $user = requireAuth($pdo);
 
-    // Verify review exists and check ownership or admin privileges
     $stmt = $pdo->prepare("SELECT * FROM review WHERE id = :id");
     $stmt->execute([':id' => $id]);
     $review = $stmt->fetch();

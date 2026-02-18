@@ -1,17 +1,8 @@
-/**
- * Top navigation bar for authenticated users.
- * File: src/components/layout/Navbar.jsx
- *
- * Shows logo, navigation links (Discover, My Recipes),
- * create button, profile avatar, and logout button.
- * Interactive actions are hidden when the user cannot interact
- * (pending / suspended accounts).
- */
-import React from 'react';
+// Top navigation bar for authenticated users (hides actions for pending/suspended accounts)
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
-import { LogOut, User, PlusCircle, Search } from 'lucide-react';
+import { LogOut, User, PlusCircle } from 'lucide-react';
 
 export function Navbar() {
     const { user, logout, canInteract } = useAuth();
@@ -25,18 +16,21 @@ export function Navbar() {
     return (
         <nav className="sticky top-0 z-40 w-full border-b border-cool-gray-20 bg-white/80 backdrop-blur-md">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+                {/* Left: Logo and navigation links */}
                 <div className="flex items-center gap-6">
                     <Link to="/" className="flex items-center gap-2">
                         <span className="text-xl font-bold text-cool-gray-90">CookHub</span>
                     </Link>
                     <div className="hidden md:flex items-center gap-4">
                         <Link to="/" className="text-sm font-medium text-cool-gray-60 hover:text-cool-gray-90">Discover</Link>
+                        {/* Only show for active users */}
                         {canInteract && (
                             <Link to="/recipes/my-recipes" className="text-sm font-medium text-cool-gray-60 hover:text-cool-gray-90">My Recipes</Link>
                         )}
                     </div>
                 </div>
 
+                {/* Right: Create button, profile avatar, logout */}
                 <div className="flex items-center gap-4">
                     {canInteract && (
                         <Link to="/recipes/create">

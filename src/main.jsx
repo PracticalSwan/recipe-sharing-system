@@ -1,11 +1,4 @@
-/**
- * Application entry point.
- * File: src/main.jsx
- *
- * Mounts the React app into the DOM. Wraps the root <App> component
- * in StrictMode (development warnings) and an ErrorBoundary (graceful
- * crash recovery in production).
- */
+// Application entry point: mounts React app into DOM with error boundary
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

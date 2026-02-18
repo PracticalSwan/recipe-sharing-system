@@ -60,7 +60,6 @@ playwright-report/
 test-results/
 tests/
 playwright.config.js
-.playwright-mcp/
 
 # OS specific files
 Thumbs.db
@@ -72,8 +71,6 @@ Thumbs.db
 *.code-workspace
 .vscode/settings.json
 .github/
-.claude/
-CLAUDE.md
 
 # Temporary files
 tmp/

@@ -1,13 +1,4 @@
-/**
- * Create / Edit recipe form.
- * File: src/pages/Recipe/CreateRecipe.jsx
- *
- * Dual-mode page: creates a new recipe or edits an existing one
- * (determined by the presence of :id in the route).
- * Validates all fields client-side before submitting.
- * Dynamic list builders for ingredients and instruction steps.
- * Blocked users (pending / suspended) see a read-only info message.
- */
+// Create/edit recipe form - validates inputs, supports ingredients and instructions
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../lib/api';
@@ -18,7 +9,7 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
 import { Plus, Trash2, UploadCloud, ArrowLeft } from 'lucide-react';
 
-/** Blank form template used when creating a brand-new recipe. */
+// Blank form template for new recipes
 const EMPTY_FORM_DATA = {
     title: '',
     description: '',
@@ -46,7 +37,7 @@ export function CreateRecipe() {
     const [errors, setErrors] = useState({});
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
-    // Load recipe data if in edit mode
+    // Load existing recipe data when editing
     useEffect(() => {
         if (!canInteract || isBlocked) return;
         if (!isEditMode) return;
@@ -111,7 +102,7 @@ export function CreateRecipe() {
         });
     };
 
-    // Ingredients Logic
+    // Ingredient list handlers
     const addIngredient = () => setIngredients([...ingredients, { name: '', quantity: '', unit: '' }]);
     const removeIngredient = (index) => setIngredients(ingredients.filter((_, i) => i !== index));
     const updateIngredient = (index, field, value) => {
@@ -120,7 +111,7 @@ export function CreateRecipe() {
         setIngredients(newIngs);
     };
 
-    // Instructions Logic
+    // Instruction list handlers
     const addInstruction = () => setInstructions([...instructions, '']);
     const removeInstruction = (index) => setInstructions(instructions.filter((_, i) => i !== index));
     const updateInstruction = (index, value) => {
@@ -129,11 +120,11 @@ export function CreateRecipe() {
         setInstructions(newInst);
     };
 
-    // Validation function
+    // Client-side form validation
     const validateForm = () => {
         const newErrors = {};
 
-        // Title validation: 3-100 characters
+        // Validate title
         if (!formData.title.trim()) {
             newErrors.title = 'Title is required';
         } else if (formData.title.trim().length < 3) {
@@ -142,7 +133,7 @@ export function CreateRecipe() {
             newErrors.title = 'Title must be less than 100 characters';
         }
 
-        // Description validation: 10-500 characters
+        // Validate description
         if (!formData.description.trim()) {
             newErrors.description = 'Description is required';
         } else if (formData.description.trim().length < 10) {
@@ -151,7 +142,7 @@ export function CreateRecipe() {
             newErrors.description = 'Description must be less than 500 characters';
         }
 
-        // Categories validation: 1-3 selections
+        // Validate categories
         const selectedCategories = formData.categories || [];
         if (selectedCategories.length < 1) {
             newErrors.categories = 'Select at least 1 category';

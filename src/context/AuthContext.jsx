@@ -1,17 +1,5 @@
-/**
- * Authentication context and provider.
- * File: src/context/AuthContext.jsx
- *
- * Manages the global auth state for the entire app. On mount, checks for
- * an existing session via GET /auth/me. While logged in, sends a heartbeat
- * every 60 seconds to keep the session alive. Listens for 'favoriteToggled'
- * events to re-sync the user's favorite list.
- *
- * Exports:
- *   <AuthProvider>  — wrap the app tree to enable auth
- *   useAuth()       — hook returning { user, login, logout, signup, ... }
- */
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+// Authentication context: manages global auth state, session persistence, and user interactions
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 
 const AuthContext = createContext(null);
@@ -20,7 +8,7 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Check for existing session on initial mount
+    // Check for existing session on mount
     useEffect(() => {
         let cancelled = false;
         api.auth.me()
@@ -28,7 +16,7 @@ export function AuthProvider({ children }) {
                 if (!cancelled) setUser(data.user);
             })
             .catch(() => {
-                // No active session — user stays logged out
+                // No active session
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);
@@ -36,7 +24,7 @@ export function AuthProvider({ children }) {
         return () => { cancelled = true; };
     }, []);
 
-    // Send heartbeat every 60s while logged in (extends sliding-window session)
+    // Send heartbeat every 60s to keep session alive
     useEffect(() => {
         if (!user?.id) return;
 
@@ -47,7 +35,7 @@ export function AuthProvider({ children }) {
         return () => clearInterval(heartbeat);
     }, [user?.id]);
 
-    // Re-fetch user data to sync favorites after a like/favorite toggle
+    // Re-fetch user data (used after favorite toggles)
     const refreshUser = useCallback(async () => {
         try {
             const data = await api.auth.me();
@@ -55,12 +43,13 @@ export function AuthProvider({ children }) {
         } catch { /* ignore */ }
     }, []);
 
-    // Listen for custom 'favoriteToggled' events dispatched by recipe components
+    // Listen for favorite toggle events from recipe components
     useEffect(() => {
         window.addEventListener('favoriteToggled', refreshUser);
         return () => window.removeEventListener('favoriteToggled', refreshUser);
     }, [refreshUser]);
 
+    // Log in user with email and password
     const login = async (email, password) => {
         try {
             const loggedUser = await api.auth.login(email, password);
@@ -71,6 +60,7 @@ export function AuthProvider({ children }) {
         }
     };
 
+    // Log out current user and clear state
     const logout = async () => {
         try {
             await api.auth.logout();
@@ -78,18 +68,20 @@ export function AuthProvider({ children }) {
         setUser(null);
     };
 
+    // Register new user account
     const signup = async (userData) => {
         const registeredUser = await api.auth.register(userData);
         setUser(registeredUser);
     };
 
+    // Update current user's profile data
     const updateProfile = async (updates) => {
         if (!user) return;
         const updatedUser = await api.users.update(user.id, updates);
         setUser(updatedUser);
     };
 
-    // Derived auth states for convenient access in components
+    // Computed auth states for easy access in components
     const isAdmin = user?.role === 'admin';
     const isPending = user?.status === 'pending';
     const isSuspended = user?.status === 'suspended';
@@ -116,7 +108,7 @@ export function AuthProvider({ children }) {
     );
 }
 
-/** Hook to access auth context. Must be used inside <AuthProvider>. */
+// Hook to access auth context (must be used inside AuthProvider)
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     const context = useContext(AuthContext);

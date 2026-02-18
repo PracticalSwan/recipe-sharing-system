@@ -1,12 +1,4 @@
-/**
- * Advanced search page with filters and history.
- * File: src/pages/Recipe/Search.jsx
- *
- * Supports keyword search, multi-select category filter, difficulty filter,
- * and sort order. Filter state is persisted in URL search params so
- * back/forward/refresh restores the view. Debounces keyword input
- * (1.5 s) before saving to the user's search history.
- */
+// Advanced search - keyword, category, difficulty filters with history and URL persistence
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../../lib/api';
@@ -44,7 +36,7 @@ export function Search() {
     const hasMountedRef = useRef(false);
     const lastLoggedKeywordRef = useRef('');
 
-    // Debounce keyword input so history is only saved after the user stops typing
+    // Debounce keyword input before saving to search history
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedKeyword(filters.keyword);
@@ -53,7 +45,7 @@ export function Search() {
     }, [filters.keyword]);
 
     useEffect(() => {
-        // Sync filters with URL params (back/forward/refresh)
+        // Sync filters with URL params
         const nextFilters = {
             keyword: query,
             category: urlCategory === 'All' ? [] : urlCategory.split(',').filter(Boolean),
@@ -68,7 +60,7 @@ export function Search() {
     }, [query, urlCategory, urlDifficulty, urlSort]);
 
     useEffect(() => {
-        // Persist filters to URL so back/refresh restores state
+        // Persist filters to URL
         const nextParams = {};
         if (filters.keyword) nextParams.q = filters.keyword;
         if (Array.isArray(filters.category) && filters.category.length > 0) {

@@ -1,12 +1,5 @@
-/**
- * Signup (registration) page.
- * File: src/pages/Auth/Signup.jsx
- *
- * Collects first name, last name, birthday, email, and password.
- * Auto-generates a DiceBear avatar URL from the first name.
- * Client-side validation before calling AuthContext.signup().
- */
-import React, { useState } from 'react';
+// Signup page: registration form with auto-generated DiceBear avatar
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
@@ -26,14 +19,17 @@ export function Signup() {
     const { signup } = useAuth();
     const navigate = useNavigate();
 
+    // Update form state on input change
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
     };
 
+    // Validate and submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
+        // Client-side validation
         if (!formData.firstName.trim() || !formData.lastName.trim()) {
             setError('First name and last name are required');
             return;
@@ -78,12 +74,15 @@ export function Signup() {
 
     return (
         <div className="space-y-6">
+            {/* Page header */}
             <div className="space-y-2 text-center">
                 <h2 className="text-3xl font-bold tracking-tight text-cool-gray-90">Get Started</h2>
                 <p className="text-cool-gray-60">Create a new account to join the community</p>
             </div>
 
+            {/* Signup form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Name fields in grid */}
                 <div className="grid grid-cols-2 gap-4">
                     <Input
                         id="firstName"
@@ -148,6 +147,7 @@ export function Signup() {
                     required
                 />
 
+                {/* Error message display */}
                 {error && (
                     <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
                         {error}
@@ -159,6 +159,7 @@ export function Signup() {
                 </Button>
             </form>
 
+            {/* Login link */}
             <div className="text-center text-sm text-cool-gray-60">
                 Already have an account?{' '}
                 <Link to="/login" className="font-semibold text-cool-gray-90 hover:underline">

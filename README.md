@@ -4,7 +4,6 @@
 # Recipe Sharing System
 
 [![Build Status](https://img.shields.io/badge/Build-Passing-green?style=flat-square)](package.json)
-[![Tests](https://img.shields.io/badge/Tests-127%2F127%20Passing-brightgreen?style=flat-square)](tests/e2e.spec.js)
 [![React](https://img.shields.io/badge/React-19.2.0-blue?style=flat-square&logo=react)](https://react.dev)
 [![Node](https://img.shields.io/badge/Node.js-18%2B-green?style=flat-square&logo=node.js)](https://nodejs.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
@@ -19,10 +18,9 @@ A collaborative web application for sharing, discovering, and interacting with r
 
 A full-stack application with complete database integration featuring:
 
-- Frontend: React 19.2 + Vite 7.3 + Tailwind CSS 4.1
+- Frontend: React 19.2 + Vite 7.2 + Tailwind CSS 4.1
 - Backend: Plain PHP REST API with PDO + session-based authentication
 - Database: MySQL/MariaDB (cookhub) with 13 tables, views, stored procedures, and triggers
-- Testing: Playwright E2E test suite (127/127 tests passing)
 
 **Approval Workflow**: New users register with "Pending" status, admins review and activate accounts, contributors submit recipes for admin approval, and activity tracking provides insights into platform engagement.
 
@@ -51,29 +49,29 @@ A full-stack application with complete database integration featuring:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│               Recipe Sharing System                      │
+│               Recipe Sharing System                          │
 ├──────────────────────────────────────────────────────────────┤
-│  Authentication & Authorization                         │
-│  ├── Registration → Initial Status: Pending            │
-│  └── Role-based Access Control                         │
+│  Authentication & Authorization                              │
+│  ├── Registration → Initial Status: Pending                  │
+│  └── Role-based Access Control                               │
 ├──────────────────────────────────────────────────────────────┤
-│  Admin Module  Contributor Module   Guest Module (Pending)  │
+│  Admin Module  Contributor Module   Guest Module (Pending)   │
 │  ├── Dashboard   ├── Full Platform     ├── Browse Recipes    │
-│  ├── User Mgmt    ├── Create Recipe     ├── Search & Filter   │
-│  ├── Recipe Approv ├── My Recipes        ├── View Details      │
-│  ├── Analytics     ├── Profile Mgmt     ├── View Reviews      │
-│  └── Activity      ├── Favorites         └── Awaits Admin     │
-│                    ├── Reviews & Ratings         Approval          │
-│                    └── Likes & Engagement        Full Access        │
+│  ├── User Mgmt    ├── Create Recipe     ├── Search & Filter  │
+│  ├── Recipe Approv ├── My Recipes        ├── View Details    │
+│  ├── Analytics     ├── Profile Mgmt     ├── View Reviews     │
+│  └── Activity      ├── Favorites         └── Awaits Admin    │
+│                    ├── Reviews & Ratings         Approval    │
+│                    └── Likes & Engagement        Full Access │
 ├──────────────────────────────────────────────────────────────┤
-│  Data Layer: MySQL/MariaDB (cookhub) via PHP API       │
-│  ├── User Accounts (credentials, profiles, roles)          │
-│  ├── Recipes (content, status, metadata)                    │
-│  ├── Reviews & Ratings (one per user per recipe)            │
-│  ├── Daily Stats (views, active users, new users)           │
-│  └── Activity Logs (admin actions, user management)       │
+│  Data Layer: MySQL/MariaDB (cookhub) via PHP API             │
+│  ├── User Accounts (credentials, profiles, roles)            │
+│  ├── Recipes (content, status, metadata)                     │
+│  ├── Reviews & Ratings (one per user per recipe)             │
+│  ├── Daily Stats (views, active users, new users)            │
+│  └── Activity Logs (admin actions, user management)          │
 ├──────────────────────────────────────────────────────────────┤
-│  Testing: Playwright E2E (127 tests, full regression)  │
+│  Live Testing: Chrome DevTools verified feature coverage     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -176,7 +174,7 @@ npm run preview
 
 **Reset Seed Data:**
 1. Drop and recreate the `cookhub` database.
-2. Re-run SQL scripts in order (`01_create_database.sql` through `14_backup_restore.sql`) as documented in `guides/SETUP_GUIDE_PHPMYADMIN.md`.
+2. Run the master script: `mysql -u root < database/run_all_scripts.sql`
 3. Log in again from the frontend after the database is re-seeded.
 
 ## Tech Stack
@@ -232,8 +230,9 @@ The application includes comprehensive seed data for immediate exploration:
 | [API Documentation](docs/API_DOCUMENTATION.md) | Complete REST API reference (40+ endpoints) |
 | [Database Schema](docs/DATABASE_SCHEMA.md) | Full schema with ER diagram and table definitions |
 | [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) | XAMPP setup, database, and production deployment |
-| [Testing Guide](docs/TESTING_GUIDE.md) | Playwright E2E strategy and execution guide |
-| [Implementation Plan](plan/upgrade-database-integration-1.md) | MySQL + PHP backend migration plan (100% complete) |
+| [Testing Guide](docs/TESTING_GUIDE.md) | Chrome DevTools testing strategy and verification |
+| [SQL Scripts Guide](guides/SQL_SCRIPTS.md) | Database implementation scripts reference |
+| [phpMyAdmin Setup](guides/SETUP_GUIDE_PHPMYADMIN.md) | Step-by-step database setup via phpMyAdmin |
 | [Changelog](CHANGELOG.md) | Version history |
 
 ---

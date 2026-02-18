@@ -1,8 +1,4 @@
-/**
- * React class-based error boundary.
- * Catches unhandled render errors and shows a "Reload page" fallback
- * instead of a white screen.
- */
+// Error boundary - catches render errors and shows fallback UI
 import React from 'react';
 
 export class ErrorBoundary extends React.Component {
@@ -16,7 +12,7 @@ export class ErrorBoundary extends React.Component {
     }
 
     componentDidCatch(error, errorInfo) {
-        // Keep diagnostics in dev tools while showing a user-friendly fallback.
+        // Log error but show user-friendly fallback
         console.error('Unhandled UI error:', error, errorInfo);
     }
 

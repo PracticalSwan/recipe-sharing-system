@@ -8,10 +8,9 @@
 | **Project** | Recipe Sharing System - MySQL Database Integration |
 | **Course** | CSX3006 Database Systems |
 | **Created** | 2026-02-04 |
-| **Last Updated** | 2026-02-14 |
+| **Last Updated** | 2026-02-18 |
 | **Author** | AI Assistant (GitHub Copilot) |
-| **Related Plan** | [upgrade-database-integration-1.md](../plan/upgrade-database-integration-1.md) |
-| **Current Progress** | Phase 1-3 complete (53/138 tasks), Phase 4-6 pending |
+| **Current Progress** | ✅ Complete - All phases implemented and tested |
 
 ---
 
@@ -516,32 +515,31 @@ CREATE TABLE like_record (
 
 ```sql
 CREATE TABLE recipe_view (
-        id               INT AUTO_INCREMENT PRIMARY KEY,
-        recipe_id        INT NOT NULL,
-        user_id          INT NOT NULL,
-        viewed_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_recipe_viewed (recipe_id, viewed_at),
-        INDEX idx_user_viewed (user_id, viewed_at),
-        CONSTRAINT fk_recipe_view_recipe FOREIGN KEY (recipe_id REFERENCES recipe(id) ON DELETE CASCADE ON UPDATE CASCADE),
-        CONSTRAINT fk_recipe_view_user FOREIGN KEY (user_id REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE)
-);
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    recipe_id       INT NOT NULL,
+    user_id         INT NOT NULL,
+    viewed_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_recipe_viewed (recipe_id, viewed_at),
+    INDEX idx_user_viewed (user_id, viewed_at),
+    CONSTRAINT fk_recipe_view_recipe
+        FOREIGN KEY (recipe_id) REFERENCES recipe(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_recipe_view_user
+        FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
 **Design for Authenticated User-Only Tracking:**
 
-- `recipe_view` now requires a non-NULL `user_id` to associate each view with an authenticated user; guest/session-based tracking has been removed per project decision.
-- There is no `viewer_type` or `guest_identifier` column in this design; all analytics and personalization are derived from authenticated-user activity only.
-
-**Why use `ON DELETE CASCADE` for `user_id`?**
-
-- The chosen behavior is to cascade-delete views when a user is removed, aligning with stricter data-retention and user-deletion policies (removes user-related history). If the project prefers to retain anonymous analytics while removing personal identifiers, consider `ON DELETE SET NULL` and allow `user_id` to be nullable instead.
+- `recipe_view` requires a non-NULL `user_id` to associate each view with an authenticated user
+- All analytics and personalization are derived from authenticated-user activity only
+- ON DELETE CASCADE for both foreign keys removes views when recipe or user is deleted
 
 **Indexing:**
 
-- `idx_recipe_viewed (recipe_id, viewed_at)` supports fast aggregation of views per recipe and time-range queries.
-- `idx_user_viewed (user_id, viewed_at)` supports user activity queries (recent views, history).
+- `idx_recipe_viewed (recipe_id, viewed_at)` supports fast aggregation of views per recipe
+- `idx_user_viewed (user_id, viewed_at)` supports user activity queries
 
 ---
 
@@ -831,50 +829,66 @@ CREATE INDEX idx_activity_created ON activity_log(created_at);
 
 ```sql
 CREATE VIEW vw_recipe_with_stat AS
-SELECT 
-    r.id,
-    r.title,
-    r.description,
-    r.category,
-    r.difficulty,
-    r.prep_time,
-    r.cook_time,
-    r.servings,
-    r.author_id,
-    r.status,
-    r.created_at,
-    u.username AS author_name,
-    u.avatar_url AS author_avatar,
-    COALESCE(like_counts.like_count, 0) AS like_count,
-    COALESCE(view_counts.view_count, 0) AS view_count,
-    COALESCE(review_stats.avg_rating, 0) AS avg_rating,
-    COALESCE(review_stats.review_count, 0) AS review_count
+SELECT
+    r.id                AS recipe_id,
+    r.title             AS recipe_title,
+    r.description       AS recipe_description,
+    r.category          AS recipe_category,
+    r.difficulty        AS recipe_difficulty,
+    r.prep_time         AS prep_time,
+    r.cook_time         AS cook_time,
+    r.servings          AS servings,
+    r.status            AS recipe_status,
+    r.created_at        AS recipe_created_at,
+    r.updated_at        AS recipe_updated_at,
+    u.id                AS author_id,
+    u.username          AS author_username,
+    u.first_name        AS author_first_name,
+    u.last_name         AS author_last_name,
+    u.avatar_url        AS author_avatar_url,
+    COALESCE(lk.like_count, 0)      AS like_count,
+    COALESCE(vw.view_count, 0)      AS view_count,
+    COALESCE(rv.review_count, 0)    AS review_count,
+    COALESCE(rv.avg_rating, 0)      AS avg_rating,
+    COALESCE(fv.favorite_count, 0)  AS favorite_count,
+    (
+        SELECT ri.image_url
+        FROM recipe_image ri
+        WHERE ri.recipe_id = r.id
+        ORDER BY ri.display_order ASC
+        LIMIT 1
+    ) AS primary_image_url
 FROM recipe r
-JOIN user u ON r.author_id = u.id
-LEFT JOIN (
-    SELECT recipe_id, COUNT(*) AS like_count 
-    FROM like_record 
-    GROUP BY recipe_id
-) like_counts ON r.id = like_counts.recipe_id
-LEFT JOIN (
-    SELECT recipe_id, COUNT(*) AS view_count 
-    FROM recipe_view 
-    GROUP BY recipe_id
-) view_counts ON r.id = view_counts.recipe_id
-LEFT JOIN (
-    SELECT recipe_id, 
-           AVG(rating) AS avg_rating, 
-           COUNT(*) AS review_count 
-    FROM review 
-    GROUP BY recipe_id
-) review_stats ON r.id = review_stats.recipe_id;
+    INNER JOIN `user` u ON r.author_id = u.id
+    LEFT JOIN (
+        SELECT recipe_id, COUNT(*) AS like_count
+        FROM like_record
+        GROUP BY recipe_id
+    ) lk ON lk.recipe_id = r.id
+    LEFT JOIN (
+        SELECT recipe_id, COUNT(*) AS view_count
+        FROM recipe_view
+        GROUP BY recipe_id
+    ) vw ON vw.recipe_id = r.id
+    LEFT JOIN (
+        SELECT
+            recipe_id,
+            COUNT(*)            AS review_count,
+            ROUND(AVG(rating), 1) AS avg_rating
+        FROM review
+        GROUP BY recipe_id
+    ) rv ON rv.recipe_id = r.id
+    LEFT JOIN (
+        SELECT recipe_id, COUNT(*) AS favorite_count
+        FROM favorite
+        GROUP BY recipe_id
+    ) fv ON fv.recipe_id = r.id;
 ```
 
 **Why a View?**
 - Encapsulates complex JOIN logic
-- Reusable: `SELECT * FROM vw_recipe_with_stat WHERE status = 'published'`
+- Reusable: `SELECT * FROM vw_recipe_with_stat WHERE recipe_status = 'published'`
 - Single source of truth for "recipe with stats" query pattern
-- Can be indexed (materialized view in some databases)
 
 ### 8.2 `vw_user_dashboard_stat`
 
@@ -915,69 +929,75 @@ GROUP BY u.id, u.username, u.avatar_url, u.cooking_level;
 DELIMITER //
 
 CREATE PROCEDURE usp_CreateRecipe(
-    IN p_title VARCHAR(200),
-    IN p_description TEXT,
-    IN p_category VARCHAR(50),
-    IN p_difficulty ENUM('Easy', 'Medium', 'Hard'),
-    IN p_prep_time INT,
-    IN p_cook_time INT,
-    IN p_servings INT,
-    IN p_author_id INT,
-    IN p_ingredients JSON,     -- JSON array of ingredients
-    IN p_instructions JSON,    -- JSON array of instructions
-    IN p_images JSON,          -- JSON array of image URLs
-    OUT p_recipe_id INT
+    IN p_author_id    INT,
+    IN p_title        VARCHAR(200),
+    IN p_description  TEXT,
+    IN p_category     VARCHAR(50),
+    IN p_difficulty   ENUM('Easy', 'Medium', 'Hard'),
+    IN p_prep_time    INT,
+    IN p_cook_time    INT,
+    IN p_servings     INT,
+    IN p_image_url    VARCHAR(500),
+    IN p_ingredients  JSON,
+    IN p_instructions JSON,
+    OUT p_recipe_id   INT
 )
 BEGIN
+    DECLARE v_ingredientCount INT DEFAULT 0;
+    DECLARE v_instructionCount INT DEFAULT 0;
+    DECLARE v_index INT DEFAULT 0;
+
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
-        SET p_recipe_id = -1;
-        RESIGNAL;
+        SET p_recipe_id = NULL;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error creating recipe. Transaction rolled back.';
     END;
-    
+
     START TRANSACTION;
-    
-    -- Insert recipe
-    INSERT INTO recipe (title, description, category, difficulty, 
-                       prep_time, cook_time, servings, author_id, status)
-    VALUES (p_title, p_description, p_category, p_difficulty,
-            p_prep_time, p_cook_time, p_servings, p_author_id, 'pending');
-    
+
+    INSERT INTO recipe (author_id, title, description, category, difficulty,
+                       prep_time, cook_time, servings, status)
+    VALUES (p_author_id, p_title, p_description, p_category, p_difficulty,
+            p_prep_time, p_cook_time, p_servings, 'pending');
+
     SET p_recipe_id = LAST_INSERT_ID();
-    
+
+    IF p_image_url IS NOT NULL AND p_image_url != '' THEN
+        INSERT INTO recipe_image (recipe_id, image_url, display_order)
+        VALUES (p_recipe_id, p_image_url, 1);
+    END IF;
+
     -- Insert ingredients from JSON array
-    INSERT INTO ingredient (recipe_id, name, quantity, unit, sort_order)
-    SELECT p_recipe_id,
-           JSON_UNQUOTE(JSON_EXTRACT(ingredient, '$.name')),
-           JSON_UNQUOTE(JSON_EXTRACT(ingredient, '$.quantity')),
-           JSON_UNQUOTE(JSON_EXTRACT(ingredient, '$.unit')),
-           idx
-    FROM JSON_TABLE(p_ingredients, '$[*]' COLUMNS (
-        idx FOR ORDINALITY,
-        ingredient JSON PATH '$'
-    )) AS jt;
-    
+    SET v_ingredientCount = JSON_LENGTH(p_ingredients);
+    SET v_index = 0;
+
+    WHILE v_index < v_ingredientCount DO
+        INSERT INTO ingredient (recipe_id, name, quantity, unit, sort_order)
+        VALUES (
+            p_recipe_id,
+            JSON_UNQUOTE(JSON_EXTRACT(p_ingredients, CONCAT('$[', v_index, '].name'))),
+            JSON_UNQUOTE(JSON_EXTRACT(p_ingredients, CONCAT('$[', v_index, '].quantity'))),
+            JSON_UNQUOTE(JSON_EXTRACT(p_ingredients, CONCAT('$[', v_index, '].unit'))),
+            v_index + 1
+        );
+        SET v_index = v_index + 1;
+    END WHILE;
+
     -- Insert instructions from JSON array
-    INSERT INTO instruction (recipe_id, step_number, instruction_text)
-    SELECT p_recipe_id,
-           idx,
-           JSON_UNQUOTE(JSON_EXTRACT(instruction, '$.text'))
-    FROM JSON_TABLE(p_instructions, '$[*]' COLUMNS (
-        idx FOR ORDINALITY,
-        instruction JSON PATH '$'
-    )) AS jt;
-    
-    -- Insert images from JSON array
-    INSERT INTO recipe_image (recipe_id, image_url, display_order)
-    SELECT p_recipe_id,
-           JSON_UNQUOTE(image_url),
-           idx
-    FROM JSON_TABLE(p_images, '$[*]' COLUMNS (
-        idx FOR ORDINALITY,
-        image_url VARCHAR(500) PATH '$'
-    )) AS jt;
-    
+    SET v_instructionCount = JSON_LENGTH(p_instructions);
+    SET v_index = 0;
+
+    WHILE v_index < v_instructionCount DO
+        INSERT INTO instruction (recipe_id, step_number, instruction_text)
+        VALUES (
+            p_recipe_id,
+            v_index + 1,
+            JSON_UNQUOTE(JSON_EXTRACT(p_instructions, CONCAT('$[', v_index, '].instruction_text')))
+        );
+        SET v_index = v_index + 1;
+    END WHILE;
+
     COMMIT;
 END //
 
@@ -987,7 +1007,7 @@ DELIMITER ;
 **Transaction Logic:**
 - All inserts succeed or all fail (atomicity)
 - Error handler rolls back on any failure
-- Returns recipe_id on success, -1 on failure
+- Returns recipe_id on success, NULL on failure
 
 ### 9.2 `usp_ApproveRecipe`
 
@@ -1023,26 +1043,32 @@ END //
 DELIMITER ;
 ```
 
-### 9.3 `fn_CalculateAvgRating`
+### 9.4 `usp_GetRecipeStat`
 
-**Purpose:** Returns the average rating for a recipe.
+**Purpose:** Returns aggregated statistics for a specific recipe.
 
 ```sql
 DELIMITER //
 
-CREATE FUNCTION fn_CalculateAvgRating(p_recipe_id INT)
-RETURNS DECIMAL(3,2)
-DETERMINISTIC
-READS SQL DATA
+CREATE PROCEDURE usp_GetRecipeStat(IN p_recipe_id INT)
 BEGIN
-    DECLARE v_avg_rating DECIMAL(3,2);
-    
-    SELECT COALESCE(AVG(rating), 0.00)
-    INTO v_avg_rating
-    FROM review
-    WHERE recipe_id = p_recipe_id;
-    
-    RETURN v_avg_rating;
+    SELECT
+        r.id AS recipe_id,
+        r.title,
+        r.status,
+        u.username AS author_name,
+        DATE_FORMAT(r.created_at, '%Y-%m-%d') AS created_date,
+        (SELECT COUNT(*) FROM recipe_view WHERE recipe_id = p_recipe_id)                AS total_views,
+        (SELECT COUNT(*) FROM like_record WHERE recipe_id = p_recipe_id)                AS total_likes,
+        (SELECT COUNT(*) FROM favorite WHERE recipe_id = p_recipe_id)                AS total_favorites,
+        (SELECT COUNT(*) FROM review WHERE recipe_id = p_recipe_id)                AS total_reviews,
+        (SELECT ROUND(AVG(rating), 2) FROM review WHERE recipe_id = p_recipe_id)        AS avg_rating,
+        (SELECT MIN(rating) FROM review WHERE recipe_id = p_recipe_id)                  AS min_rating,
+        (SELECT MAX(rating) FROM review WHERE recipe_id = p_recipe_id)                  AS max_rating,
+        (SELECT COUNT(DISTINCT user_id) FROM recipe_view WHERE recipe_id = p_recipe_id) AS unique_viewers
+    FROM recipe r
+    INNER JOIN `user` u ON r.author_id = u.id
+    WHERE r.id = p_recipe_id;
 END //
 
 DELIMITER ;
@@ -1050,9 +1076,7 @@ DELIMITER ;
 
 **Usage:**
 ```sql
-SELECT id, title, fn_CalculateAvgRating(id) AS avg_rating
-FROM recipe
-WHERE status = 'published';
+CALL usp_GetRecipeStat(1);
 ```
 
 ---
@@ -1100,7 +1124,7 @@ User Registration
 
 ### 10.2 `trg_RecipeView_UpdateStat`
 
-**Purpose:** Increments recipe view count in daily_stat when a view is recorded.
+**Purpose:** Increments recipe view count and page view count in daily_stat when a view is recorded.
 
 ```sql
 DELIMITER //
@@ -1109,11 +1133,13 @@ CREATE TRIGGER trg_RecipeView_UpdateStat
 AFTER INSERT ON recipe_view
 FOR EACH ROW
 BEGIN
-    INSERT INTO daily_stat (stat_date, recipe_view_count)
-    VALUES (CURDATE(), 1)
-    ON DUPLICATE KEY UPDATE 
-        recipe_view_count = recipe_view_count + 1,
-        updated_at = CURRENT_TIMESTAMP;
+    IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
+        INSERT INTO daily_stat (stat_date, page_view_count, active_user_count, new_user_count, recipe_view_count)
+        VALUES (CURDATE(), 1, 0, 0, 1)
+        ON DUPLICATE KEY UPDATE
+            recipe_view_count = recipe_view_count + 1,
+            page_view_count   = page_view_count + 1;
+    END IF;
 END //
 
 DELIMITER ;
@@ -1121,7 +1147,7 @@ DELIMITER ;
 
 ### 10.3 `trg_Recipe_DeleteCleanup`
 
-**Purpose:** Logs admin action before recipe deletion.
+**Purpose:** Logs recipe deletion to activity_log with duplicate prevention.
 
 ```sql
 DELIMITER //
@@ -1130,13 +1156,24 @@ CREATE TRIGGER trg_Recipe_DeleteCleanup
 BEFORE DELETE ON recipe
 FOR EACH ROW
 BEGIN
-    -- Prefer explicit admin context; fallback keeps FK valid
-    INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
-    VALUES (COALESCE(@current_admin_id, OLD.author_id),
-            'recipe_delete',
-            'recipe',
-            OLD.id,
-            CONCAT('Recipe deleted: ', OLD.title));
+    IF @DISABLE_TRIGGERS IS NULL OR @DISABLE_TRIGGERS != 1 THEN
+        IF NOT EXISTS (
+            SELECT 1 FROM activity_log
+            WHERE target_type = 'recipe'
+              AND target_id = OLD.id
+              AND action_type = 'recipe_delete'
+              AND created_at >= DATE_SUB(NOW(), INTERVAL 5 SECOND)
+        ) THEN
+            INSERT INTO activity_log (admin_id, action_type, target_type, target_id, description)
+            VALUES (
+                COALESCE(@current_admin_id, OLD.author_id),
+                'recipe_delete',
+                'recipe',
+                OLD.id,
+                CONCAT('Trigger-logged deletion of recipe: ', OLD.title)
+            );
+        END IF;
+    END IF;
 END //
 
 DELIMITER ;

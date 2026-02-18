@@ -1,7 +1,4 @@
-/**
- * Inline status / category badge.
- * Variants: default, success, warning, error, outline.
- */
+// Inline badge component for status indicators and labels
 import { cn } from "../../lib/utils";
 
 export function Badge({ className, variant = "default", children, ...props }) {

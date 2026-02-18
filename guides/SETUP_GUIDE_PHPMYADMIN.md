@@ -10,7 +10,7 @@
 - ✅ Phase 3 complete: stored procedures, triggers, backup/restore script
 - ✅ Phase 4 complete: PHP backend API implemented
 - ✅ Phase 5 complete: frontend migrated to API service layer
-- ⏳ Phase 6 pending: integration testing and deployment docs
+- ✅ Phase 6 complete: live testing with Chrome DevTools and documentation
 
 ## Prerequisites
 
@@ -150,8 +150,10 @@ DROP DATABASE IF EXISTS cookhub;
 CREATE DATABASE cookhub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-## 7) Next Step
+## 7) Next Steps
 
-After DB setup is verified, proceed with Phase 6 testing/documentation tasks in:
+After DB setup is verified, the application is ready to use. For full documentation, see:
 
-- `plan/upgrade-database-integration-1.md`
+- [API Documentation](../docs/API_DOCUMENTATION.md) - Complete REST API reference
+- [Deployment Guide](../docs/DEPLOYMENT_GUIDE.md) - XAMPP setup and production deployment
+- [Testing Guide](../docs/TESTING_GUIDE.md) - Chrome DevTools testing verification

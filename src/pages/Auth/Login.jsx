@@ -1,17 +1,12 @@
-/**
- * Login page.
- * File: src/pages/Auth/Login.jsx
- *
- * Renders email + password form. On success, navigates to the home feed.
- * Shows demo credentials for quick testing.
- */
-import React, { useState } from 'react';
+// Login page: email + password form with demo credentials
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
 export function Login() {
+    // Form state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -40,11 +35,13 @@ export function Login() {
 
     return (
         <div className="space-y-6">
+            {/* Page header */}
             <div className="space-y-2 text-center">
                 <h2 className="text-3xl font-bold tracking-tight text-cool-gray-90">Welcome Back!</h2>
                 <p className="text-cool-gray-60">Enter your credentials to access your account</p>
             </div>
 
+            {/* Login form */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
                     id="email"
@@ -71,6 +68,7 @@ export function Login() {
                     />
                 </div>
 
+                {/* Error message display */}
                 {error && (
                     <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
                         {error}
@@ -82,6 +80,7 @@ export function Login() {
                 </Button>
             </form>
 
+            {/* Signup link */}
             <div className="text-center text-sm text-cool-gray-60">
                 Don't have an account?{' '}
                 <Link to="/signup" className="font-semibold text-cool-gray-90 hover:underline">
@@ -89,10 +88,13 @@ export function Login() {
                 </Link>
             </div>
 
+            {/* Demo credentials for testing */}
             <div className="text-center text-xs text-cool-gray-30 mt-4">
-                <p>Demo Credentials:</p>
+                <p className="font-semibold">Demo Credentials:</p>
                 <p>User: user@cookhub.com / user</p>
                 <p>Admin: admin@cookhub.com / admin</p>
+                <p>Pending: amy@cookhub.com / amy123</p>
+                <p>Suspended: tom@cookhub.com / tom123</p>
             </div>
         </div>
     );

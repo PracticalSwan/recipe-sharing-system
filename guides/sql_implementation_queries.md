@@ -1,9 +1,9 @@
 # Backend API SQL Queries Implementation Guide
 
-> **Project:** Recipe Sharing System - CSX3006 Database Systems  
-> **Created:** 2026-02-13  
-> **Last Updated:** 2026-02-14  
-> **Purpose:** Complete SQL query designs for Phase 4 backend implementation
+> **Project:** Recipe Sharing System - CSX3006 Database Systems
+> **Created:** 2026-02-13
+> **Last Updated:** 2026-02-18
+> **Purpose:** Complete SQL query designs for backend implementation (✅ Implemented)
 
 ---
 
@@ -22,10 +22,10 @@
 
 ### Where to Put These Queries
 
-**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. The frontend currently uses localStorage (storage.js). When Phase 4 begins, these queries will be implemented in PHP backend files.  
+**✅ Implementation Status:** These queries are implemented in the PHP backend API layer.
 
 **Backend Implementation Location:**
-When Phase 4 begins, authentication queries will be implemented in:
+Authentication queries are implemented in:
 - **File:** `backend/api/auth.php`
 - **Methods:** POST /api/auth/register, POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me
 - **Uses:** PDO prepared statements for security
@@ -412,10 +412,10 @@ SELECT ROW_COUNT() AS sessions_deleted;
 
 ## Recipe Management Queries
 
-**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. Some queries already exist in `09_common_queries.sql` and `12_stored_procedures.sql`. Additional queries will be implemented in PHP backend.
+**✅ Implementation Status:** These queries are implemented in the PHP backend API layer.
 
 ### Backend Implementation Location
-When Phase 4 begins, recipe queries will be implemented in:
+Recipe queries are implemented in:
 - **File:** `backend/api/recipes.php`
 - **Methods:** GET /api/recipes, GET /api/recipes/{id}, POST /api/recipes, PUT /api/recipes/{id}, DELETE /api/recipes/{id}
 - **Existing:** `usp_CreateRecipe` and `usp_DeleteRecipe` in `12_stored_procedures.sql`
@@ -818,10 +818,10 @@ ORDER BY display_order;
 
 ## Reviews & Interactions Queries
 
-### Where to Put These Queries
-Create a new file or add to: **`database/16_recipe_queries.sql`**
-
-**Why:** These power the engagement features (likes, favorites, reviews) on recipe cards and detail pages.
+### Backend Implementation Location
+Reviews and interactions queries are implemented in:
+- **Files:** `backend/api/reviews.php`, `backend/api/recipes.php`
+- **Why:** These power the engagement features (likes, favorites, reviews) on recipe cards and detail pages.
 
 ---
 
@@ -1205,10 +1205,10 @@ DELIMITER ;
 
 ## User Profile Management Queries
 
-**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. User operations will be implemented with PDO in PHP backend.
+**✅ Implementation Status:** These queries are implemented in the PHP backend API layer.
 
 ### Backend Implementation Location
-When Phase 4 begins, user queries will be implemented in:
+User queries are implemented in:
 - **File:** `backend/api/users.php`
 - **Methods:** GET /api/users, GET /api/users/{id}, PUT /api/users/{id}, DELETE /api/users/{id}, PUT /api/users/{id}/status
 
@@ -1426,10 +1426,10 @@ WHERE user_id = @pUserId;
 
 ## Admin Management Queries
 
-**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. Admin queries already exist in `10_admin_queries.sql`. Additional status management will be implemented in PHP backend.
+**✅ Implementation Status:** These queries are implemented in the PHP backend API layer.
 
 ### Backend Implementation Location
-When Phase 4 begins, admin queries will be implemented in:
+Admin queries are implemented in:
 - **File:** `backend/api/users.php` (status endpoints), `backend/api/activity.php` (activity logs)
 
 ---
@@ -1598,11 +1598,11 @@ ORDER BY last_active DESC;
 
 ## Advanced Features Queries
 
-**⚠️ Note:** These queries are concept designs for Phase 4 Backend API implementation. Search and analytics queries exist in `11_analytics_queries.sql`. Additional features will be implemented in PHP backend.
+**✅ Implementation Status:** These queries are implemented in the PHP backend API layer.
 
 ### Backend Implementation Location
-When Phase 4 begins, these queries will be implemented in:
-- **File:** `backend/api/search.php`, `backend/api/stats.php`
+Advanced feature queries are implemented in:
+- **Files:** `backend/api/search.php`, `backend/api/stats.php`
 - **Existing:** Search and analytics queries in `11_analytics_queries.sql`
 
 ---
@@ -1867,24 +1867,26 @@ const output = await pool.query('SELECT @success, @userId, @token, @msg');
 
 ### Frontend Integration
 
-The frontend React components already call these functions through the `AuthContext` and `storage` abstraction. To connect to the actual backend:
+The frontend React components are connected to the backend API through the service layer in `src/lib/api.js`:
 
-1. **Replace or modify** the `storage.js` functions to make actual API calls
-2. Create an API layer (e.g., `/api/login`, `/api/recipes`)
-3. Implement secure session handling via HTTP headers
-4. Return consistent JSON responses for all queries
+1. **API service layer** - `src/lib/api.js` handles all HTTP requests to backend endpoints
+2. **API endpoints** - PHP backend at `backend/api/*` handles all database operations
+3. **Session handling** - HttpOnly cookies for secure authentication
+4. **JSON responses** - Consistent response format across all endpoints
+
+For full API documentation, see [docs/API_DOCUMENTATION.md](../docs/API_DOCUMENTATION.md)
 
 ---
 
 ## Summary Table
 
-| Query Group | Priority | Frontend Consumer | Planned Backend Location |
-|-------------|----------|-------------------|--------------------------|
-| Authentication (login, register, logout, session) | 🔴 CRITICAL | Auth pages + route guards | `backend/api/auth.php`, `backend/helpers/auth.php` |
-| Recipe CRUD + publish workflow | 🟡 IMPORTANT | Home, Create, Detail, Admin Recipes | `backend/api/recipes.php` |
-| Reviews + likes + favorites + views | 🟡 IMPORTANT | Recipe cards/detail | `backend/api/reviews.php`, `backend/api/recipes.php` |
-| User profile and status management | 🟢 SUGGESTION | Profile, Admin User List | `backend/api/users.php` |
-| Search history + analytics endpoints | 💎 OPTIONAL | Search, Admin Stats | `backend/api/search.php`, `backend/api/stats.php` |
+| Query Group | Status | Frontend Consumer | Backend Location |
+|-------------|--------|-------------------|--------------------------|
+| Authentication (login, register, logout, session) | ✅ Implemented | Auth pages + route guards | `backend/api/auth.php`, `backend/helpers/auth.php` |
+| Recipe CRUD + publish workflow | ✅ Implemented | Home, Create, Detail, Admin Recipes | `backend/api/recipes.php` |
+| Reviews + likes + favorites + views | ✅ Implemented | Recipe cards/detail | `backend/api/reviews.php`, `backend/api/recipes.php` |
+| User profile and status management | ✅ Implemented | Profile, Admin User List | `backend/api/users.php` |
+| Search history + analytics endpoints | ✅ Implemented | Search, Admin Stats | `backend/api/search.php`, `backend/api/stats.php` |
 
 ---
 
@@ -1906,7 +1908,7 @@ The frontend React components already call these functions through the `AuthCont
 - `database/13_triggers.sql`
 - `database/14_backup_restore.sql`
 
-### Planned Backend Integration (⏳ Not Started)
+### Backend Integration (✅ Completed)
 - `backend/config/database.php`
 - `backend/helpers/cors.php`
 - `backend/helpers/auth.php`
@@ -1919,9 +1921,9 @@ The frontend React components already call these functions through the `AuthCont
 - `backend/api/stats.php`
 - `backend/api/activity.php`
 
-### Frontend Integration (⏳ Not Started)
-- `src/lib/api.js` (to create)
-- `src/lib/storage.js` (to remove after migration)
+### Frontend Integration (✅ Completed)
+- `src/lib/api.js` (service layer)
 - `src/context/AuthContext.jsx`
 - `src/pages/Auth/Login.jsx`
 - `src/pages/Auth/Signup.jsx`
+- All frontend pages connected to API

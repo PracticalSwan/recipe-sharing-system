@@ -1,23 +1,5 @@
 <?php
-// ============================================================================
-// Search API Endpoints
-// File: backend/api/search.php
-//
-// Recipe search with full-text title matching, category/difficulty filters,
-// sorting, and pagination. Also manages per-user search history for recent
-// search suggestions.
-//
-// Routes:
-//   GET    /api/search              - Search published recipes
-//   GET    /api/search/history      - Get user's recent search terms (last 20)
-//   POST   /api/search/history      - Save a search term to history
-//   DELETE /api/search/history      - Clear all search history for user
-//   DELETE /api/search/history/{id} - Delete a single history entry
-//
-// Related tables: recipe, user, like_record, recipe_view, review, favorite,
-//                 recipe_image, search_history
-// ============================================================================
-
+// Search API: recipe search with filters and search history management
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/cors.php';
 require_once __DIR__ . '/../helpers/auth.php';
@@ -28,12 +10,11 @@ setCorsHeaders();
 $pdo = Database::getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 $route = $_GET['route'] ?? '';
-
 $segments = $route ? array_values(array_filter(explode('/', $route))) : [];
 
-// Route dispatcher: /api/search or /api/search/history[/{id}]
+// Route dispatcher
 if (empty($segments)) {
-    handleSearch($pdo, $method);              // Search recipes
+    handleSearch($pdo, $method);
 } elseif ($segments[0] === 'history') {
     if (count($segments) === 1) {
         handleSearchHistory($pdo, $method);
@@ -46,37 +27,29 @@ if (empty($segments)) {
     errorResponse('Not found', 404);
 }
 
-// ============================================================================
-// GET /api/search — Search published recipes
-//
-// Query params:  q (title search), category, difficulty, sort, page, limit
-// Sort options:  newest (default), rating, difficulty-asc
-// ============================================================================
+// GET /api/search — Search published recipes with filters
 function handleSearch(PDO $pdo, string $method): void {
     if ($method !== 'GET') {
         errorResponse('Method not allowed', 405);
     }
 
-    $user       = requireAuth($pdo);
-    $query      = trim($_GET['q'] ?? '');
-    $category   = trim($_GET['category'] ?? '');
-    $difficulty  = $_GET['difficulty'] ?? null;
-    $sort       = $_GET['sort'] ?? 'newest';
-    $page       = max(1, (int) ($_GET['page'] ?? 1));
-    $limit      = min(50, max(1, (int) ($_GET['limit'] ?? 20)));
-    $offset     = ($page - 1) * $limit;
+    $user      = requireAuth($pdo);
+    $query     = trim($_GET['q'] ?? '');
+    $category  = trim($_GET['category'] ?? '');
+    $difficulty = $_GET['difficulty'] ?? null;
+    $sort      = $_GET['sort'] ?? 'newest';
+    $page      = max(1, (int) ($_GET['page'] ?? 1));
+    $limit     = min(50, max(1, (int) ($_GET['limit'] ?? 20)));
+    $offset    = ($page - 1) * $limit;
 
-    // Only published recipes are searchable
     $where = ["r.status = 'published'"];
     $params = [];
 
-    // Title search: LIKE match on recipe title
     if ($query !== '') {
         $where[] = "r.title LIKE :title_query";
         $params[':title_query'] = '%' . $query . '%';
     }
     if ($category !== '') {
-        // Support multiple comma-separated categories with OR logic
         $categories = array_values(array_filter(array_map('trim', explode(',', $category))));
         if (!empty($categories)) {
             $catConditions = [];
@@ -95,19 +68,16 @@ function handleSearch(PDO $pdo, string $method): void {
 
     $whereClause = 'WHERE ' . implode(' AND ', $where);
 
-    // Map sort parameter to SQL ORDER BY
     $orderBy = match ($sort) {
         'rating' => 'like_count DESC, r.created_at DESC',
         'difficulty-asc' => "FIELD(r.difficulty, 'Easy', 'Medium', 'Hard') ASC, r.created_at DESC",
         default => 'r.created_at DESC',
     };
 
-    // Count total matches for pagination
     $countStmt = $pdo->prepare("SELECT COUNT(*) FROM recipe r $whereClause");
     $countStmt->execute($params);
     $total = (int) $countStmt->fetchColumn();
 
-    // Main query: recipes with author info and aggregated stats
     $sql = "
         SELECT r.*, u.username AS author_name, u.avatar_url AS author_avatar,
                u.first_name AS author_first_name, u.last_name AS author_last_name,
@@ -135,7 +105,7 @@ function handleSearch(PDO $pdo, string $method): void {
     $stmt->execute();
     $recipes = $stmt->fetchAll();
 
-    // Batch-fetch like/favorite status for the current user (avoids N+1)
+    // Batch-fetch like/favorite status (avoid N+1 queries)
     $likedMap = [];
     $favMap = [];
     $recipeIds = array_map(fn($r) => (int)$r['id'], $recipes);
@@ -150,7 +120,6 @@ function handleSearch(PDO $pdo, string $method): void {
         $favMap = array_flip($fs->fetchAll(PDO::FETCH_COLUMN));
     }
 
-    // Format results: snake_case to camelCase for frontend
     $formatted = array_map(fn($r) => [
         'id'          => (int) $r['id'],
         'title'       => $r['title'],
@@ -191,27 +160,17 @@ function handleSearch(PDO $pdo, string $method): void {
     ]);
 }
 
-// ============================================================================
-// Search History — GET/POST/DELETE /api/search/history
-// Dispatches by HTTP method to individual handlers.
-// ============================================================================
+// GET/POST/DELETE /api/search/history — Search history CRUD
 function handleSearchHistory(PDO $pdo, string $method): void {
     switch ($method) {
-        case 'GET':
-            handleGetHistory($pdo);
-            break;
-        case 'POST':
-            handleSaveHistory($pdo);
-            break;
-        case 'DELETE':
-            handleClearHistory($pdo);
-            break;
-        default:
-            errorResponse('Method not allowed', 405);
+        case 'GET':    handleGetHistory($pdo);     break;
+        case 'POST':   handleSaveHistory($pdo);    break;
+        case 'DELETE': handleClearHistory($pdo);   break;
+        default:       errorResponse('Method not allowed', 405);
     }
 }
 
-/** Get the user's 20 most recent search terms */
+// Get user's 20 most recent searches
 function handleGetHistory(PDO $pdo): void {
     $user = requireAuth($pdo);
     $stmt = $pdo->prepare("
@@ -225,7 +184,7 @@ function handleGetHistory(PDO $pdo): void {
     jsonResponse(['history' => $stmt->fetchAll()]);
 }
 
-/** Save a search term to the user's search history */
+// Save a search term to history
 function handleSaveHistory(PDO $pdo): void {
     $user = requireAuth($pdo);
     $data = json_decode(file_get_contents('php://input'), true);
@@ -235,32 +194,26 @@ function handleSaveHistory(PDO $pdo): void {
         errorResponse('Search term required');
     }
 
-    $stmt = $pdo->prepare("
-        INSERT INTO search_history (user_id, query)
-        VALUES (:uid, :term)
-    ");
-    $stmt->execute([
-        ':uid'   => $user['id'],
-        ':term'  => $term,
-    ]);
+    $pdo->prepare("INSERT INTO search_history (user_id, query) VALUES (:uid, :term)")
+        ->execute([':uid' => $user['id'], ':term' => $term]);
 
     successResponse(null, 'Search saved', 201);
 }
 
-/** Clear all search history entries for the current user */
+// Clear all search history for current user
 function handleClearHistory(PDO $pdo): void {
     $user = requireAuth($pdo);
     $pdo->prepare("DELETE FROM search_history WHERE user_id = :uid")->execute([':uid' => $user['id']]);
     successResponse(null, 'History cleared');
 }
 
-/** Delete a single search history entry (owned by current user) */
+// Delete a single search history entry
 function handleDeleteHistoryItem(PDO $pdo, string $method, int $id): void {
     if ($method !== 'DELETE') {
         errorResponse('Method not allowed', 405);
     }
     $user = requireAuth($pdo);
-    $stmt = $pdo->prepare("DELETE FROM search_history WHERE id = :id AND user_id = :uid");
-    $stmt->execute([':id' => $id, ':uid' => $user['id']]);
+    $pdo->prepare("DELETE FROM search_history WHERE id = :id AND user_id = :uid")
+        ->execute([':id' => $id, ':uid' => $user['id']]);
     successResponse(null, 'History entry deleted');
 }

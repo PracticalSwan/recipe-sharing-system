@@ -1,18 +1,10 @@
-/**
- * Admin sidebar navigation.
- * File: src/components/layout/Sidebar.jsx
- *
- * Fixed left sidebar (w-64) with nav links (Dashboard, Users, Recipes)
- * and a sign-out button. Active link is highlighted using the current
- * route path. Used exclusively inside AdminLayout.
- */
-import React from 'react';
+// Admin sidebar navigation with highlighted active link
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
-import { LayoutDashboard, Users, FileText, LogOut, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, LogOut } from 'lucide-react';
 
-/** Admin navigation menu items — each maps to an admin route. */
+// Admin navigation menu items
 const NAV_ITEMS = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Users', href: '/admin/users', icon: Users },
@@ -31,12 +23,14 @@ export function Sidebar() {
 
     return (
         <aside className="fixed inset-y-0 left-0 z-50 w-64 border-r border-cool-gray-20 bg-white shadow-sm flex flex-col">
+            {/* Sidebar header with logo */}
             <div className="flex h-16 items-center border-b border-cool-gray-20 px-6">
                 <Link to="/admin" className="text-xl font-bold text-cool-gray-90">
                     CookHub <span className="text-xs font-normal text-cool-gray-60 bg-cool-gray-10 px-2 py-1 rounded-full ml-2">Admin</span>
                 </Link>
             </div>
 
+            {/* Navigation links */}
             <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
                 {NAV_ITEMS.map((item) => {
                     const isActive = location.pathname === item.href;
@@ -58,6 +52,7 @@ export function Sidebar() {
                 })}
             </div>
 
+            {/* Sign-out button */}
             <div className="border-t border-cool-gray-20 p-4">
                 <button
                     onClick={handleLogout}

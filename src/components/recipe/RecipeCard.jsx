@@ -1,16 +1,5 @@
-/**
- * Recipe summary card displayed in grids.
- * File: src/components/recipe/RecipeCard.jsx
- *
- * Shows recipe image, title, categories, difficulty, cook time,
- * rating stars, like/save buttons, author link, and view/like counts.
- *
- * Props:
- *   recipe          — recipe data object from the API
- *   onFavoriteToggle — optional callback after like/favorite toggle
- *   actionOverlay    — optional React element rendered over the image
- */
-import React, { useState } from 'react';
+// Recipe summary card displayed in grids with like/save functionality
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, User, Heart, Eye, Bookmark } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '../ui/Card';
@@ -22,7 +11,7 @@ import { cn, normalizeCategories } from '../../lib/utils';
 export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
     const { user, canInteract, isPending, isSuspended } = useAuth();
 
-    // --- Derived / local state from the recipe prop ---
+    // Local state for interactive elements
     const [isLiked, setIsLiked] = useState(recipe.isLiked || false);
     const [isFavorited, setIsFavorited] = useState(recipe.isFavorited || false);
     const [likeCount, setLikeCount] = useState(recipe.likeCount || 0);
@@ -32,6 +21,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
 
     const categories = normalizeCategories(recipe.categories ?? recipe.category);
     const authorName = recipe.author?.username || `User ${recipe.author?.id || recipe.authorId}`;
+
     // Tooltip text for disabled interaction states
     const likeDisabledText = isSuspended
         ? 'Suspended accounts cannot like recipes'
@@ -44,7 +34,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
             ? 'Pending accounts cannot save recipes'
             : 'Only active user accounts can save recipes';
 
-    /** Toggle like, update local count, and notify parent + global listeners. */
+    // Toggle like and update local state
     const handleLikeClick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -58,7 +48,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
         } catch { /* ignore */ }
     };
 
-    /** Toggle favorite/save and dispatch 'favoriteToggled' event for AuthContext sync. */
+    // Toggle favorite and dispatch event for AuthContext sync
     const handleSaveClick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -74,18 +64,20 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
     return (
         <Link to={`/recipes/${recipe.id}`} className="group block h-full">
             <Card className="h-full flex flex-col overflow-hidden transition-all hover:shadow-lg border-cool-gray-20 hover-lift cursor-pointer">
+                {/* Recipe image with overlays */}
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-cool-gray-10">
                     <img
                         src={recipe.image || recipe.images?.[0]?.url || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=400"}
                         alt={recipe.title}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
+                    {/* Difficulty badge */}
                     <div className="absolute top-1.5 right-1.5">
                         <Badge variant="default" className="bg-white/90 backdrop-blur-sm text-cool-gray-90 shadow-sm text-[10px] px-1.5 py-0.5">
                             {recipe.difficulty}
                         </Badge>
                     </div>
-                    {/* Like Heart Overlay */}
+                    {/* Like heart button */}
                     <button
                         onClick={handleLikeClick}
                         className={`absolute top-1.5 left-1.5 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-cool-gray-90 focus-visible:ring-offset-1 ${canInteract ? 'hover:bg-white' : 'opacity-60 cursor-not-allowed'}`}
@@ -98,12 +90,13 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                             className={`h-3.5 w-3.5 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-cool-gray-60 hover:text-red-400'}`}
                         />
                     </button>
-                    
-                    {/* External Actions Overlay */}
+
+                    {/* External actions overlay (for edit/delete on own recipes) */}
                     {actionOverlay}
                 </div>
 
                 <CardContent className="p-2.5 flex-1">
+                    {/* Categories and cook time */}
                     <div className="mb-1.5 flex items-center justify-between">
                         <div className="flex items-center gap-1 flex-wrap">
                             {categories.slice(0, 2).map((category) => (
@@ -123,6 +116,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                         </div>
                     </div>
 
+                    {/* Title and save button */}
                     <div className="mb-0.5 flex items-center justify-between gap-2">
                         <h3 className="text-sm font-bold text-cool-gray-90 line-clamp-1 group-hover:text-black flex-1">
                             {recipe.title}
@@ -139,15 +133,15 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                         </button>
                     </div>
 
-                    {/* Rating Stars - Grey if no reviews */}
+                    {/* Rating stars */}
                     <div
                         className="flex items-center gap-0.5 mb-1.5"
                         role="img"
                         aria-label={`Rating: ${averageRating} out of 5 stars`}
                     >
                         {[1, 2, 3, 4, 5].map((star) => (
-                            <span 
-                                key={star} 
+                            <span
+                                key={star}
                                 aria-hidden="true"
                                 className={`text-[10px] ${averageRating >= star ? 'text-yellow-400' : 'text-cool-gray-30'}`}
                             >
@@ -157,10 +151,12 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                         <span className="text-[10px] text-cool-gray-60 ml-1" aria-label={`${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}`}>({reviewCount})</span>
                     </div>
 
+                    {/* Description */}
                     <p className="text-[11px] text-cool-gray-60 line-clamp-2 mb-1.5 h-8">
                         {recipe.description}
                     </p>
 
+                    {/* Author link */}
                     <div className="flex items-center gap-1.5 text-[10px] text-cool-gray-60">
                         <User className="h-2.5 w-2.5" />
                         <span
@@ -176,6 +172,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, actionOverlay }) {
                     </div>
                 </CardContent>
 
+                {/* Footer with view and like counts */}
                 <CardFooter className="px-2.5 pb-2.5 pt-0 flex items-center justify-between text-[10px] text-cool-gray-60">
                     <div className="inline-flex items-center gap-1 leading-none">
                         <Eye className="h-3 w-2.5" />
