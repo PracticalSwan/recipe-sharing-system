@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { getErrorMessage } from '../../lib/api';
 
 export function Signup() {
     const [formData, setFormData] = useState({
@@ -65,8 +66,8 @@ export function Signup() {
             });
 
             navigate('/');
-        } catch {
-            setError('Failed to create account');
+        } catch (err) {
+            setError(getErrorMessage(err, 'Failed to create account.'));
         } finally {
             setIsLoading(false);
         }

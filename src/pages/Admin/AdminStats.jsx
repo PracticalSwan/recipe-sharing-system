@@ -1,8 +1,9 @@
 // Admin dashboard - displays system stats, KPIs, and activity feed
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import api from '../../lib/api';
+import api, { getErrorMessage } from '../../lib/api';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../../components/ui/ErrorMessage';
 import { Users, FileText, Activity, UserPlus, ChefHat, Eye } from 'lucide-react';
 
 // Reusable KPI card component
@@ -27,10 +28,12 @@ const StatCard = ({ title, value, icon, subtext }) => {
 export function AdminStats() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const loadStats = async () => {
             try {
+                setError('');
                 const data = await api.stats.dashboard();
                 setStats({
                     totalUsers: data.totals?.users || 0,
@@ -49,7 +52,8 @@ export function AdminStats() {
                     })),
                 });
             } catch (err) {
-                console.error('Failed to load stats:', err);
+                setStats(null);
+                setError(getErrorMessage(err, 'Failed to load admin dashboard stats.'));
             } finally {
                 setLoading(false);
             }
@@ -61,7 +65,13 @@ export function AdminStats() {
     }, []);
 
     if (loading) return <LoadingSpinner className="py-20" />;
-    if (!stats) return <div className="p-10 text-center text-cool-gray-60">Failed to load stats.</div>;
+    if (!stats) {
+        return (
+            <div className="rounded-lg border border-cool-gray-20 bg-white">
+                <ErrorMessage message={error || 'Failed to load stats.'} />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

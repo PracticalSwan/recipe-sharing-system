@@ -1,7 +1,8 @@
 // Admin user management - search, filter, approve, suspend, and delete users
 import React, { useEffect, useState, useCallback } from 'react';
-import api from '../../lib/api';
+import api, { getErrorMessage } from '../../lib/api';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../../components/ui/ErrorMessage';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -15,16 +16,19 @@ const SESSION_TIMEOUT = 5 * 60 * 1000;
 export function UserList() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const [deleteId, setDeleteId] = useState(null);
 
     const loadUsers = useCallback(async () => {
         try {
+            setError('');
             const data = await api.users.list();
             setUsers(data.users || data);
         } catch (err) {
-            console.error('Failed to load users:', err);
+            setUsers([]);
+            setError(getErrorMessage(err, 'Failed to load users.'));
         } finally {
             setLoading(false);
         }
@@ -55,10 +59,11 @@ export function UserList() {
 
     const handleStatusChange = async (userId, newStatus) => {
         try {
+            setError('');
             await api.users.updateStatus(userId, newStatus);
             await loadUsers();
         } catch (err) {
-            console.error('Failed to update user status:', err);
+            setError(getErrorMessage(err, 'Failed to update user status.'));
         }
     };
 
@@ -69,10 +74,11 @@ export function UserList() {
     const confirmDelete = async () => {
         if (deleteId) {
             try {
+                setError('');
                 await api.users.delete(deleteId);
                 await loadUsers();
             } catch (err) {
-                console.error('Failed to delete user:', err);
+                setError(getErrorMessage(err, 'Failed to delete user.'));
             }
             setDeleteId(null);
         }
@@ -89,6 +95,11 @@ export function UserList() {
 
     return (
         <div className="space-y-6">
+            {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50">
+                    <ErrorMessage message={error} />
+                </div>
+            )}
             <div>
                 <h1 className="text-3xl font-bold tracking-tight text-cool-gray-90">User Management</h1>
                 <p className="text-cool-gray-60">Manage user accounts and permissions.</p>

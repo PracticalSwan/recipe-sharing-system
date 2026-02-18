@@ -38,21 +38,15 @@ function getCurrentUser(PDO $pdo): ?array {
 function requireAuth(PDO $pdo): array {
     $user = getCurrentUser($pdo);
     if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
+        errorResponse('Authentication required', 401, 'authentication_required');
     }
 
     if ($user['status'] === 'suspended') {
-        http_response_code(403);
-        echo json_encode(['error' => 'Your account has been suspended. Please contact support.']);
-        exit;
+        errorResponse('Your account has been suspended. Please contact support.', 403, 'account_suspended');
     }
 
     if ($user['status'] === 'pending') {
-        http_response_code(403);
-        echo json_encode(['error' => 'Your account is pending approval.']);
-        exit;
+        errorResponse('Your account is pending approval.', 403, 'account_pending');
     }
 
     return $user;
@@ -62,9 +56,7 @@ function requireAuth(PDO $pdo): array {
 function requireAdmin(PDO $pdo): array {
     $user = requireAuth($pdo);
     if ($user['role'] !== 'admin') {
-        http_response_code(403);
-        echo json_encode(['error' => 'Admin access required']);
-        exit;
+        errorResponse('Admin access required', 403, 'admin_access_required');
     }
     return $user;
 }

@@ -1,25 +1,29 @@
 // Home page - search bar and feed of latest published recipes
 import React, { useCallback, useEffect, useState } from 'react';
-import api from '../../lib/api';
+import api, { getErrorMessage } from '../../lib/api';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../../components/ui/ErrorMessage';
 import { Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function Home() {
     const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
     const loadRecipes = useCallback(async () => {
         try {
+            setError('');
             const data = await api.recipes.list({ status: 'published', sort: 'newest' });
             setRecipes(data.recipes || []);
-        } catch {
-            console.error('Failed to load recipes');
+        } catch (err) {
+            setRecipes([]);
+            setError(getErrorMessage(err, 'Failed to load recipes.'));
         } finally {
             setLoading(false);
         }
@@ -87,6 +91,10 @@ export function Home() {
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {loading ? (
                         <div className="col-span-full"><LoadingSpinner className="py-10" /></div>
+                    ) : error ? (
+                        <div className="col-span-full rounded-lg border border-cool-gray-20 bg-white">
+                            <ErrorMessage message={error} onRetry={loadRecipes} />
+                        </div>
                     ) : recipes.length > 0 ? (
                         recipes.map(recipe => (
                             <RecipeCard key={recipe.id} recipe={recipe} onFavoriteToggle={loadRecipes} />

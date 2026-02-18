@@ -1,4 +1,4 @@
-# Backend API SQL Queries Implementation Guide
+# Backend API SQL Queries Implementation Reference
 
 > **Project:** Recipe Sharing System - CSX3006 Database Systems
 > **Created:** 2026-02-13

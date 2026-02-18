@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { getErrorMessage } from '../../lib/api';
 
 export function Login() {
     // Form state
@@ -26,8 +27,8 @@ export function Login() {
             } else {
                 setError(result.error);
             }
-        } catch {
-            setError('An unexpected error occurred');
+        } catch (err) {
+            setError(getErrorMessage(err, 'An unexpected error occurred.'));
         } finally {
             setIsLoading(false);
         }

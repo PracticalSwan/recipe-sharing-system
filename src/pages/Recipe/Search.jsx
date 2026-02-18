@@ -1,12 +1,13 @@
 // Advanced search - keyword, category, difficulty filters with history and URL persistence
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import api from '../../lib/api';
+import api, { getErrorMessage } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { RecipeCard } from '../../components/recipe/RecipeCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../../components/ui/ErrorMessage';
 import { Search as SearchIcon, X, Clock } from 'lucide-react';
 import { RECIPE_CATEGORIES, RECIPE_DIFFICULTIES } from '../../lib/utils';
 
@@ -21,6 +22,7 @@ export function Search() {
 
     const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     const [filters, setFilters] = useState({
         keyword: query,
@@ -82,6 +84,7 @@ export function Search() {
         const loadRecipes = async () => {
             try {
                 setLoading(true);
+                setError('');
                 const params = {
                     q: filters.keyword?.trim() || undefined,
                     category: Array.isArray(filters.category) && filters.category.length > 0
@@ -99,8 +102,8 @@ export function Search() {
             } catch (err) {
                 if (!cancelled) {
                     setRecipes([]);
+                    setError(getErrorMessage(err, 'Failed to load recipes.'));
                 }
-                console.error('Failed to load recipes:', err);
             } finally {
                 if (!cancelled) {
                     setLoading(false);
@@ -167,7 +170,9 @@ export function Search() {
     const clearHistory = async () => {
         try {
             await api.search.clearHistory();
-        } catch (err) { console.error('Failed to clear history:', err); }
+        } catch (err) {
+            setError(getErrorMessage(err, 'Failed to clear search history.'));
+        }
         setSearchHistory([]);
     };
 
@@ -308,6 +313,10 @@ export function Search() {
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {loading ? (
                         <div className="col-span-full"><LoadingSpinner className="py-12" /></div>
+                    ) : error ? (
+                        <div className="col-span-full rounded-lg border border-cool-gray-20 bg-white">
+                            <ErrorMessage message={error} />
+                        </div>
                     ) : recipes.length > 0 ? (
                         recipes.map(r => <RecipeCard key={r.id} recipe={r} />)
                     ) : (

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/response.php';
 
 setCorsHeaders();
+initializeErrorHandling();
 
 $pdo = Database::getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -254,8 +255,10 @@ function handleCreateRecipe(PDO $pdo): void {
         jsonResponse($recipe, 201);
 
     } catch (\Exception $e) {
-        $pdo->rollBack();
-        errorResponse('Failed to create recipe: ' . $e->getMessage(), 500);
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        errorResponse('Failed to create recipe', 500, 'recipe_create_failed');
     }
 }
 
@@ -401,8 +404,10 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
         jsonResponse($recipe);
 
     } catch (\Exception $e) {
-        $pdo->rollBack();
-        errorResponse('Failed to update recipe: ' . $e->getMessage(), 500);
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        errorResponse('Failed to update recipe', 500, 'recipe_update_failed');
     }
 }
 
@@ -433,8 +438,10 @@ function handleDeleteRecipe(PDO $pdo, int $id): void {
         $pdo->commit();
         successResponse(null, 'Recipe deleted');
     } catch (\Exception $e) {
-        $pdo->rollBack();
-        errorResponse('Failed to delete recipe: ' . $e->getMessage(), 500);
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        errorResponse('Failed to delete recipe', 500, 'recipe_delete_failed');
     }
 }
 
@@ -540,13 +547,16 @@ function handleRecipeFavorite(PDO $pdo, string $method, int $recipeId): void {
     jsonResponse(['favorited' => $favorited]);
 }
 
-// POST /api/recipes/{id}/view — Record unique view per user
+// POST /api/recipes/{id}/view — Record unique view per user (any authenticated user, including pending/suspended)
 function handleRecipeView(PDO $pdo, string $method, int $recipeId): void {
     if ($method !== 'POST') {
         errorResponse('Method not allowed', 405);
     }
 
-    $user = requireAuth($pdo);
+    $user = getCurrentUser($pdo);
+    if (!$user) {
+        errorResponse('Authentication required', 401);
+    }
     $userId = (int) $user['id'];
 
     $stmt = $pdo->prepare("SELECT id FROM recipe WHERE id = :id");

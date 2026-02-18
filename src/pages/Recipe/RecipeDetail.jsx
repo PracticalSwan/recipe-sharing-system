@@ -1,13 +1,14 @@
 // Recipe detail page - view recipe, ingredients, instructions, reviews, and actions
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../../lib/api';
+import api, { getErrorMessage } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../../components/ui/ErrorMessage';
 import { Clock, Heart, ArrowLeft, Eye, Bookmark, Trash2, Edit, Check } from 'lucide-react';
 import { cn, normalizeCategories } from '../../lib/utils';
 
@@ -27,6 +28,8 @@ export function RecipeDetail() {
     const [deleteReviewId, setDeleteReviewId] = useState(null);
     const [checkedIngredients, setCheckedIngredients] = useState({});
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+    const [actionError, setActionError] = useState('');
 
     // Toggle ingredient checked state
     const toggleIngredient = (index) => {
@@ -41,6 +44,7 @@ export function RecipeDetail() {
 
         async function loadRecipe() {
             try {
+                setLoadError('');
                 const data = await api.recipes.get(id);
                 if (cancelled) return;
                 const r = data?.recipe ?? data;
@@ -67,8 +71,10 @@ export function RecipeDetail() {
                         }
                     })
                     .catch(() => {});
-            } catch {
-                navigate('/');
+            } catch (err) {
+                if (!cancelled) {
+                    setLoadError(getErrorMessage(err, 'Failed to load recipe.'));
+                }
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -81,19 +87,25 @@ export function RecipeDetail() {
     const handleToggleLike = async () => {
         if (!user || !canInteract) return;
         try {
+            setActionError('');
             const result = await api.recipes.toggleLike(id);
             setIsLiked(result.liked);
             setLikeCount(result.likeCount);
-        } catch { /* ignore */ }
+        } catch (err) {
+            setActionError(getErrorMessage(err, 'Failed to update like status.'));
+        }
     };
 
     const handleToggleFavorite = async () => {
         if (!user || !canInteract) return;
         try {
+            setActionError('');
             const result = await api.recipes.toggleFavorite(id);
             setIsFavorited(result.favorited);
             window.dispatchEvent(new CustomEvent('favoriteToggled'));
-        } catch { /* ignore */ }
+        } catch (err) {
+            setActionError(getErrorMessage(err, 'Failed to update saved status.'));
+        }
     };
 
     const handleSubmitReview = async (e) => {
@@ -102,6 +114,7 @@ export function RecipeDetail() {
         if (!newComment.trim()) return;
 
         try {
+            setActionError('');
             const myExistingReview = reviews.find((review) => Number(review.user?.id) === Number(user?.id));
             if (myExistingReview) {
                 await api.reviews.update(myExistingReview.id, {
@@ -118,7 +131,9 @@ export function RecipeDetail() {
             const reviewData = await api.reviews.list(id);
             setReviews(reviewData.reviews || []);
             setNewComment('');
-        } catch { /* ignore */ }
+        } catch (err) {
+            setActionError(getErrorMessage(err, 'Failed to submit review.'));
+        }
     };
 
     const handleDeleteReview = (reviewId) => {
@@ -128,10 +143,13 @@ export function RecipeDetail() {
     const confirmDeleteReview = async () => {
         if (!deleteReviewId) return;
         try {
+            setActionError('');
             await api.reviews.delete(deleteReviewId);
             const reviewData = await api.reviews.list(id);
             setReviews(reviewData.reviews || []);
-        } catch { /* ignore */ }
+        } catch (err) {
+            setActionError(getErrorMessage(err, 'Failed to delete review.'));
+        }
         setDeleteReviewId(null);
     };
 
@@ -145,11 +163,14 @@ export function RecipeDetail() {
 
     const confirmDeleteRecipe = async () => {
         try {
+            setActionError('');
             await api.recipes.delete(id);
             window.dispatchEvent(new CustomEvent('recipeUpdated'));
             setIsDeleteConfirmOpen(false);
             navigate('/profile?tab=recipes');
-        } catch { /* ignore */ }
+        } catch (err) {
+            setActionError(getErrorMessage(err, 'Failed to delete recipe.'));
+        }
     };
 
     const isOwner = user && recipe?.author?.id === user.id;
@@ -171,12 +192,25 @@ export function RecipeDetail() {
         ? Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length)
         : 0;
 
-    if (loading || !recipe) return <LoadingSpinner className="py-20" />;
+    if (loading) return <LoadingSpinner className="py-20" />;
+    if (loadError) {
+        return (
+            <div className="max-w-2xl mx-auto py-20">
+                <ErrorMessage message={loadError} onRetry={() => window.location.reload()} />
+            </div>
+        );
+    }
+    if (!recipe) return <LoadingSpinner className="py-20" />;
 
     const categories = normalizeCategories(recipe.categories ?? recipe.category);
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-page-in">
+            {actionError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                    {actionError}
+                </div>
+            )}
             <Button variant="ghost" className="mb-2 pl-0 hover:bg-transparent hover:text-cool-gray-90" onClick={() => navigate(-1)}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
             </Button>

@@ -1,7 +1,7 @@
 // Create/edit recipe form - validates inputs, supports ingredients and instructions
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import api from '../../lib/api';
+import api, { getErrorMessage } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -35,6 +35,7 @@ export function CreateRecipe() {
     const [instructions, setInstructions] = useState(['']);
     const [originalRecipe, setOriginalRecipe] = useState(null);
     const [errors, setErrors] = useState({});
+    const [submitError, setSubmitError] = useState('');
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
     // Load existing recipe data when editing
@@ -225,6 +226,7 @@ export function CreateRecipe() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitError('');
         
         if (!validateForm()) {
             return;
@@ -255,7 +257,7 @@ export function CreateRecipe() {
             window.dispatchEvent(new CustomEvent('recipeUpdated'));
             navigate('/profile?tab=recipes');
         } catch (err) {
-            console.error(err);
+            setSubmitError(getErrorMessage(err, 'Failed to save recipe.'));
         } finally {
             setIsLoading(false);
         }
@@ -292,6 +294,11 @@ export function CreateRecipe() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
+                {submitError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                        {submitError}
+                    </div>
+                )}
                 {/* Basic Info */}
                 <Card>
                     <CardContent className="space-y-4 p-6">

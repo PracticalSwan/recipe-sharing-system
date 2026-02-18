@@ -3,6 +3,8 @@
 
 // Base URL from env, with trailing slashes stripped
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
+const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_NETWORK_ERROR_MESSAGE = 'Unable to reach the server. Please check your connection and try again.';
 
 // Pre-built avatar URLs from DiceBear API for user registration
 export const DEFAULT_AVATARS = [
@@ -15,43 +17,145 @@ export const DEFAULT_AVATARS = [
 ];
 
 // Custom error class carrying HTTP status and response data
-class ApiError extends Error {
-    constructor(message, status, data = null) {
+export class ApiError extends Error {
+    constructor(message, status = 0, data = null, code = null, cause = null) {
         super(message);
         this.name = 'ApiError';
         this.status = status;
         this.data = data;
+        this.code = code;
+        if (cause) {
+            this.cause = cause;
+        }
     }
+}
+
+function extractErrorMessage(payload) {
+    if (!payload || typeof payload !== 'object') return null;
+
+    if (typeof payload.error === 'string' && payload.error.trim() !== '') {
+        return payload.error;
+    }
+
+    if (payload.error && typeof payload.error === 'object' && typeof payload.error.message === 'string') {
+        return payload.error.message;
+    }
+
+    if (typeof payload.message === 'string' && payload.message.trim() !== '') {
+        return payload.message;
+    }
+
+    return null;
+}
+
+function extractErrorCode(payload) {
+    if (!payload || typeof payload !== 'object') return null;
+
+    if (typeof payload.code === 'string' && payload.code.trim() !== '') {
+        return payload.code;
+    }
+
+    if (payload.error && typeof payload.error === 'object' && typeof payload.error.code === 'string') {
+        return payload.error.code;
+    }
+
+    return null;
+}
+
+async function parseResponsePayload(response) {
+    const rawBody = await response.text();
+    if (!rawBody) {
+        return null;
+    }
+
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    const likelyJson = contentType.includes('application/json') || /^[[{]/.test(rawBody.trim());
+    if (!likelyJson) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(rawBody);
+    } catch {
+        return null;
+    }
+}
+
+export function getErrorMessage(error, fallback = 'Something went wrong. Please try again.') {
+    if (error instanceof ApiError && typeof error.message === 'string' && error.message.trim() !== '') {
+        return error.message;
+    }
+    if (error instanceof Error && typeof error.message === 'string' && error.message.trim() !== '') {
+        return error.message;
+    }
+    return fallback;
 }
 
 // Core fetch wrapper: sends JSON requests with credentials and maps errors to ApiError
 async function apiFetch(endpoint, options = {}) {
     const url = `${API_BASE}${endpoint}`;
+    const { timeoutMs = DEFAULT_TIMEOUT_MS, ...requestOptions } = options;
+    const controller = requestOptions.signal ? null : new AbortController();
+
     const config = {
         credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
-            ...options.headers,
+            ...requestOptions.headers,
         },
-        ...options,
+        ...requestOptions,
     };
 
     if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
         config.body = JSON.stringify(config.body);
     }
 
-    const response = await fetch(url, config);
-    const data = await response.json().catch(() => null);
+    if (controller) {
+        config.signal = controller.signal;
+    }
+
+    const timeoutId = controller
+        ? setTimeout(() => controller.abort(), Math.max(1, Number(timeoutMs) || DEFAULT_TIMEOUT_MS))
+        : null;
+
+    let response;
+    try {
+        response = await fetch(url, config);
+    } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+            throw new ApiError(
+                'The request timed out. Please try again.',
+                0,
+                null,
+                'request_timeout',
+                error
+            );
+        }
+        throw new ApiError(
+            DEFAULT_NETWORK_ERROR_MESSAGE,
+            0,
+            null,
+            'network_error',
+            error instanceof Error ? error : null
+        );
+    } finally {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+    }
+
+    const data = await parseResponsePayload(response);
 
     if (!response.ok) {
         throw new ApiError(
-            data?.error || `Request failed with status ${response.status}`,
+            extractErrorMessage(data) || `Request failed with status ${response.status}`,
             response.status,
-            data
+            data,
+            extractErrorCode(data) || `http_${response.status}`
         );
     }
 
-    return data;
+    return data ?? {};
 }
 
 // Build a query string from an object, omitting empty/null values

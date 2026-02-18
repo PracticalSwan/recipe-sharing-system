@@ -1,7 +1,8 @@
 // Admin recipe management - view, approve, reject, and delete recipes by status
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../../lib/api';
+import api, { getErrorMessage } from '../../lib/api';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { ErrorMessage } from '../../components/ui/ErrorMessage';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -85,16 +86,19 @@ const RecipeTable = ({ statusFilter, recipes, handlePreview, updateStatus, handl
 export function AdminRecipes() {
     const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [selectedRecipe, setSelectedRecipe] = useState(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [deleteRecipeId, setDeleteRecipeId] = useState(null);
 
     const loadRecipes = useCallback(async () => {
         try {
+            setError('');
             const data = await api.recipes.list({ status: 'all', limit: 50 });
             setRecipes(data.recipes || []);
         } catch (err) {
-            console.error('Failed to load recipes:', err);
+            setRecipes([]);
+            setError(getErrorMessage(err, 'Failed to load recipes.'));
         } finally {
             setLoading(false);
         }
@@ -104,11 +108,12 @@ export function AdminRecipes() {
 
     const updateStatus = async (id, status) => {
         try {
+            setError('');
             await api.recipes.updateStatus(id, status);
             await loadRecipes();
             setIsPreviewOpen(false);
         } catch (err) {
-            console.error('Failed to update recipe status:', err);
+            setError(getErrorMessage(err, 'Failed to update recipe status.'));
         }
     };
 
@@ -119,20 +124,23 @@ export function AdminRecipes() {
     const confirmDelete = async () => {
         if (!deleteRecipeId) return;
         try {
+            setError('');
             await api.recipes.delete(deleteRecipeId);
             await loadRecipes();
         } catch (err) {
-            console.error('Failed to delete recipe:', err);
+            setError(getErrorMessage(err, 'Failed to delete recipe.'));
         }
         setDeleteRecipeId(null);
     };
 
     const handlePreview = async (recipe) => {
         try {
+            setError('');
             const full = await api.recipes.get(recipe.id);
             setSelectedRecipe(full);
-        } catch {
+        } catch (err) {
             setSelectedRecipe(recipe);
+            setError(getErrorMessage(err, 'Failed to load full recipe details.'));
         }
         setIsPreviewOpen(true);
     };
@@ -140,6 +148,11 @@ export function AdminRecipes() {
     if (loading) return <LoadingSpinner className="py-20" />;
     return (
         <div className="space-y-6">
+            {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50">
+                    <ErrorMessage message={error} />
+                </div>
+            )}
             <div>
                 <h1 className="text-3xl font-bold tracking-tight text-cool-gray-90">Recipe Management</h1>
                 <p className="text-cool-gray-60">Approve, reject, and manage user submissions.</p>

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/response.php';
 
 setCorsHeaders();
+initializeErrorHandling();
 
 $pdo = Database::getConnection();
 $method = $_SERVER['REQUEST_METHOD'];

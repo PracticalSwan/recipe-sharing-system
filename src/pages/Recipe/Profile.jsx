@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSearchParams, Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import api, { DEFAULT_AVATARS } from '../../lib/api';
+import api, { DEFAULT_AVATARS, getErrorMessage } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
@@ -32,6 +32,7 @@ export function Profile() {
     const [myRecipes, setMyRecipes] = useState([]);
     const [favorites, setFavorites] = useState([]);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [error, setError] = useState('');
 
     const buildEditForm = (user) => ({
         username: user?.username || '',
@@ -50,7 +51,12 @@ export function Profile() {
         let cancelled = false;
         api.users.get(userId)
             .then(data => { if (!cancelled) setFetchedProfile({ userId, user: data }); })
-            .catch(() => { if (!cancelled) setFetchedProfile({ userId, user: null }); });
+            .catch((err) => {
+                if (!cancelled) {
+                    setFetchedProfile({ userId, user: null });
+                    setError(getErrorMessage(err, 'Failed to load user profile.'));
+                }
+            });
         return () => { cancelled = true; };
     }, [userId, isOwnProfile]);
 
@@ -66,8 +72,14 @@ export function Profile() {
                 if (cancelled) return;
                 const all = data.recipes || [];
                 setMyRecipes(isOwnProfile ? all : all.filter(r => r.status === 'published'));
+                setError('');
             })
-            .catch(() => { if (!cancelled) setMyRecipes([]); });
+            .catch((err) => {
+                if (!cancelled) {
+                    setMyRecipes([]);
+                    setError(getErrorMessage(err, 'Failed to load recipes.'));
+                }
+            });
         return () => { cancelled = true; };
     }, [profileUser, isOwnProfile, refreshKey]);
 
@@ -81,8 +93,14 @@ export function Profile() {
                 const all = data.recipes || [];
                 const favIds = profileUser.favorites.map(id => Number(id));
                 setFavorites(all.filter(r => favIds.includes(r.id)));
+                setError('');
             })
-            .catch(() => { if (!cancelled) setFavorites([]); });
+            .catch((err) => {
+                if (!cancelled) {
+                    setFavorites([]);
+                    setError(getErrorMessage(err, 'Failed to load favorite recipes.'));
+                }
+            });
         return () => { cancelled = true; };
     }, [profileUser, refreshKey]);
 
@@ -107,10 +125,13 @@ export function Profile() {
     const confirmDeleteRecipe = async () => {
         if (deleteRecipeId) {
             try {
+                setError('');
                 await api.recipes.delete(deleteRecipeId);
                 triggerRefresh();
                 window.dispatchEvent(new CustomEvent('recipeUpdated'));
-            } catch { /* ignore */ }
+            } catch (err) {
+                setError(getErrorMessage(err, 'Failed to delete recipe.'));
+            }
             setDeleteRecipeId(null);
         }
     };
@@ -119,10 +140,15 @@ export function Profile() {
         navigate(`/recipes/edit/${recipeId}`);
     };
 
-    const handleSaveProfile = () => {
+    const handleSaveProfile = async () => {
         if (!isOwnProfile || !canInteract) return;
-        updateProfile(editForm);
-        setIsEditing(false);
+        try {
+            setError('');
+            await updateProfile(editForm);
+            setIsEditing(false);
+        } catch (err) {
+            setError(getErrorMessage(err, 'Failed to update profile.'));
+        }
     };
 
     const handleEditProfile = () => {
@@ -140,6 +166,11 @@ export function Profile() {
 
     return (
         <div className="space-y-6 animate-page-in">
+            {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                    {error}
+                </div>
+            )}
             {/* Profile Header */}
             <div className="bg-white p-6 rounded-2xl border border-cool-gray-20 shadow-sm">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-5">

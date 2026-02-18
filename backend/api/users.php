@@ -6,6 +6,7 @@ require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/response.php';
 
 setCorsHeaders();
+initializeErrorHandling();
 
 $pdo = Database::getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -334,8 +335,10 @@ function handleDeleteUser(PDO $pdo, int $id): void {
         $pdo->commit();
         successResponse(null, 'User deleted');
     } catch (\Exception $e) {
-        $pdo->rollBack();
-        errorResponse('Failed to delete user: ' . $e->getMessage(), 500);
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        errorResponse('Failed to delete user', 500, 'user_delete_failed');
     }
 }
 

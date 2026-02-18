@@ -1,6 +1,6 @@
 // Authentication context: manages global auth state, session persistence, and user interactions
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api from '../lib/api';
+import api, { getErrorMessage } from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
             setUser(loggedUser);
             return { success: true };
         } catch (error) {
-            return { success: false, error: error.message };
+            return { success: false, error: getErrorMessage(error, 'Login failed. Please try again.') };
         }
     };
 
