@@ -2,6 +2,20 @@
 
 All notable changes to the CookHub Recipe Sharing System are documented here.
 
+## [1.0.4] - 2026-02-18
+
+### Fixed
+- Implemented centralized backend error handling in `backend/helpers/response.php` with JSON-safe exception/error/shutdown handling (`initializeErrorHandling()`), consistent error payloads, and optional error codes.
+- Enabled centralized backend error initialization in all API entry points: `auth`, `recipes`, `reviews`, `search`, `stats`, `activity`, and `users`.
+- Removed sensitive exception message leakage from recipe/user destructive-operation API responses by returning safe 500-level messages with stable error codes.
+- Standardized authorization failure responses in `backend/helpers/auth.php` via shared `errorResponse(...)` contract.
+- Hardened frontend API client (`src/lib/api.js`) with request timeout handling, network-failure mapping, resilient JSON parsing, richer `ApiError`, and reusable `getErrorMessage(...)` extraction.
+- Replaced silent frontend catches with user-visible error feedback across core flows: home feed, search, recipe detail actions, recipe create/edit, profile operations, admin stats/recipe/user pages, and auth pages.
+
+### Validated
+- Lint passed: `npm run lint`.
+- Production build passed: `npm run build`.
+
 ## [1.0.3] - 2026-02-16
 
 ### Fixed
