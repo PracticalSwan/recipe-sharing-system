@@ -17,3 +17,7 @@
 ## 2025-05-24 - [Form Input Accessibility and Required Indicators]
 **Learning:** Form inputs often lack visual 'required' indicators and proper ARIA associations for error messages. This makes it difficult for users to know which fields are mandatory and prevents screen reader users from hearing error messages associated with the correct input field.
 **Action:** Enhance the `Input` component to automatically show a red asterisk when `required` is true (using `aria-hidden="true"` to avoid noise). Use `aria-describedby` to link the input to its error message ID, and apply `aria-invalid` when errors are present. Add `transition-all` for smoother focus states.
+
+## 2025-05-25 - [Accessible Tabs and Keyboard Navigation]
+**Learning:** Implementing ARIA roles for tabs (tablist, tab, tabpanel) without corresponding keyboard navigation (arrow keys) can actually decrease accessibility by creating a focus trap. Using `tabIndex={-1}` on inactive tabs (roving tabindex) requires handling `keydown` events to allow users to move between tabs.
+**Action:** Always implement arrow key navigation when using the roving tabindex pattern for tabs. Use `useId` to reliably link triggers and panels with `aria-controls` and `aria-labelledby`.
