@@ -308,15 +308,18 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
     if (!$recipe) {
         errorResponse('Recipe not found', 404);
     }
-    if ((int) $recipe['author_id'] !== (int) $user['id'] && $user['role'] !== 'admin') {
+    // Only the recipe author can edit (admins cannot edit content)
+    if ((int) $recipe['author_id'] !== (int) $user['id']) {
         errorResponse('Not authorized', 403);
     }
 
-    // Preserve status unless admin explicitly changes it
-    $nextStatus = $recipe['status'];
-    if (isset($data['status']) && in_array($data['status'], ['published', 'pending', 'rejected'], true) && $user['role'] === 'admin') {
-        $nextStatus = $data['status'];
+    // Explicitly block admins from editing recipe content
+    if ($user['role'] === 'admin') {
+        errorResponse('Admins cannot edit recipe content. Use the status endpoint to approve/reject.', 403);
     }
+
+    // Preserve current status (contributors cannot change it)
+    $nextStatus = $recipe['status'];
 
     $category = '';
     if (!empty($data['categories'])) {
