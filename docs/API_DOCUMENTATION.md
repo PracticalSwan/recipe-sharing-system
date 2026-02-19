@@ -289,15 +289,16 @@ Get full recipe detail including ingredients, instructions, images, and reviews.
 
 ### PUT `/recipes/{id}`
 
-Update a recipe. Only the recipe owner or an admin can update.
+Update a recipe. Only the recipe owner (author) can update.
 
-**Auth Required**: Yes (owner or admin)
+**Auth Required**: Yes (recipe owner only)
 
 **Request Body**: Same as POST
 
 **Status behavior**:
-- Owner edits preserve the recipe's current status by default.
-- Admin can set `status` in the same update request (`published`, `pending`, `rejected`).
+- All recipe edits by the owner automatically change status to 'pending'
+- Requires admin reapproval after any edit
+- Admins cannot edit recipe content directly (use the `/status` endpoint instead)
 
 **Response** `200`:
 ```json
