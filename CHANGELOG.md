@@ -2,6 +2,12 @@
 
 All notable changes to the CookHub Recipe Sharing System are documented here.
 
+## [Unreleased]
+
+### Changed
+- Recipe edits by contributors now automatically change status to 'pending' requiring admin reapproval
+- Admins can no longer edit recipe content directly (must use approve/reject workflow)
+
 ## [1.0.4] - 2026-02-18
 
 ### Fixed
