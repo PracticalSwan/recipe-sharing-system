@@ -318,8 +318,8 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
         errorResponse('Admins cannot edit recipe content. Use the status endpoint to approve/reject.', 403);
     }
 
-    // Preserve current status (contributors cannot change it)
-    $nextStatus = $recipe['status'];
+    // Always require re-approval when recipe is edited
+    $nextStatus = 'pending';
 
     $category = '';
     if (!empty($data['categories'])) {
