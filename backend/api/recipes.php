@@ -318,15 +318,101 @@ function handleUpdateRecipe(PDO $pdo, int $id): void {
         errorResponse('Admins cannot edit recipe content. Use the status endpoint to approve/reject.', 403);
     }
 
-    // Always require re-approval when recipe is edited
-    $nextStatus = 'pending';
+    // Fetch current recipe data for change detection
+    $stmt = $pdo->prepare("
+        SELECT title, description, category, difficulty, prep_time, cook_time, servings
+        FROM recipe WHERE id = :id
+    ");
+    $stmt->execute([':id' => $id]);
+    $currentRecipe = $stmt->fetch();
 
+    // Fetch current ingredients
+    $stmt = $pdo->prepare("SELECT name, quantity, unit, sort_order FROM ingredient WHERE recipe_id = :id ORDER BY sort_order");
+    $stmt->execute([':id' => $id]);
+    $currentIngredients = $stmt->fetchAll();
+
+    // Fetch current instructions
+    $stmt = $pdo->prepare("SELECT instruction_text FROM instruction WHERE recipe_id = :id ORDER BY step_number");
+    $stmt->execute([':id' => $id]);
+    $currentInstructions = $stmt->fetchAll();
+
+    // Fetch current images
+    $stmt = $pdo->prepare("SELECT image_url FROM recipe_image WHERE recipe_id = :id ORDER BY display_order");
+    $stmt->execute([':id' => $id]);
+    $currentImages = $stmt->fetchAll();
+
+    // Normalize incoming category
     $category = '';
     if (!empty($data['categories'])) {
         $cats = is_array($data['categories']) ? $data['categories'] : [$data['categories']];
         $category = implode(',', array_map('trim', $cats));
     } elseif (!empty($data['category'])) {
         $category = trim($data['category']);
+    }
+
+    // Detect if any actual changes were made
+    $hasChanges = false;
+
+    // Check main recipe fields
+    if (trim($data['title'] ?? '') !== $currentRecipe['title']) $hasChanges = true;
+    if (trim($data['description'] ?? '') !== $currentRecipe['description']) $hasChanges = true;
+    if ($category !== $currentRecipe['category']) $hasChanges = true;
+    if (($data['difficulty'] ?? 'Easy') !== $currentRecipe['difficulty']) $hasChanges = true;
+    if ((int)($data['prepTime'] ?? 0) !== (int)$currentRecipe['prep_time']) $hasChanges = true;
+    if ((int)($data['cookTime'] ?? 0) !== (int)$currentRecipe['cook_time']) $hasChanges = true;
+    if ((int)($data['servings'] ?? 1) !== (int)$currentRecipe['servings']) $hasChanges = true;
+
+    // Check ingredients
+    $newIngredients = $data['ingredients'] ?? [];
+    if (count($newIngredients) !== count($currentIngredients)) {
+        $hasChanges = true;
+    } else {
+        foreach ($newIngredients as $i => $ing) {
+            if (!isset($currentIngredients[$i])) {
+                $hasChanges = true;
+                break;
+            }
+            if (trim($ing['name'] ?? '') !== $currentIngredients[$i]['name']) $hasChanges = true;
+            if (trim($ing['quantity'] ?? '') !== $currentIngredients[$i]['quantity']) $hasChanges = true;
+            if (trim($ing['unit'] ?? '') !== $currentIngredients[$i]['unit']) $hasChanges = true;
+        }
+    }
+
+    // Check instructions
+    $newInstructions = $data['instructions'] ?? [];
+    if (count($newInstructions) !== count($currentInstructions)) {
+        $hasChanges = true;
+    } else {
+        foreach ($newInstructions as $i => $text) {
+            if (!isset($currentInstructions[$i])) {
+                $hasChanges = true;
+                break;
+            }
+            $instruction = is_array($text) ? ($text['text'] ?? $text['instruction'] ?? '') : $text;
+            if (trim($instruction) !== $currentInstructions[$i]['instruction_text']) $hasChanges = true;
+        }
+    }
+
+    // Check images
+    $newImages = $data['images'] ?? [];
+    if (count($newImages) !== count($currentImages)) {
+        $hasChanges = true;
+    } else {
+        foreach ($newImages as $i => $img) {
+            if (!isset($currentImages[$i])) {
+                $hasChanges = true;
+                break;
+            }
+            $url = is_array($img) ? ($img['url'] ?? $img['image_url'] ?? '') : $img;
+            if (trim($url) !== $currentImages[$i]['image_url']) $hasChanges = true;
+        }
+    }
+
+    // Set status based on whether actual changes were made
+    if ($hasChanges) {
+        $nextStatus = 'pending'; // Require re-approval when content changes
+    } else {
+        $nextStatus = $recipe['status']; // Preserve status if no actual changes
     }
 
     $pdo->beginTransaction();
